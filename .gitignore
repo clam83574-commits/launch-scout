@@ -10,3 +10,4 @@ __pycache__/
 # секрет вебхука, локальный
 .webhook-secret
 out/
+.access-code

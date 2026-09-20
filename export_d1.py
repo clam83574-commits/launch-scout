@@ -51,6 +51,20 @@ CREATE TABLE IF NOT EXISTS findings (
 CREATE INDEX IF NOT EXISTS findings_score ON findings (score DESC);
 CREATE INDEX IF NOT EXISTS findings_seen  ON findings (first_seen DESC);
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, updated INTEGER);
+
+-- Кому открыт доступ по коду. Таблица НЕ очищается при заливке (в отличие
+-- от findings): выданный доступ должен переживать обновление находок,
+-- иначе друг терял бы его каждые десять минут.
+CREATE TABLE IF NOT EXISTS access (
+    chat_id    TEXT PRIMARY KEY,
+    who        TEXT,
+    granted_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS access_tries (
+    chat_id      TEXT PRIMARY KEY,
+    tries        INTEGER,
+    locked_until INTEGER
+);
 """
 
 

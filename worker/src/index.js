@@ -196,16 +196,79 @@ async function status(env, chatId) {
   });
 }
 
-function allowed(env, chatId) {
-  const list = (env.LS_BOT_ALLOW || "")
+/**
+ * Доступ: владелец из LS_BOT_ALLOW плюс все, кто ввёл код.
+ *
+ * Код, а не список id: чтобы добавить человека, не надо заранее узнавать
+ * его Telegram id — достаточно переслать ему ссылку на бота и код. Он
+ * вводит, бот запоминает его id в таблице access, дальше код не нужен.
+ *
+ * Открытым «для всех» бот не делается сознательно: найти его в поиске
+ * Telegram может кто угодно, а внутри — находки, ради которых всё считается.
+ */
+function isOwner(env, chatId) {
+  return (env.LS_BOT_ALLOW || "")
     .split(",")
     .map((s) => s.trim())
-    .filter(Boolean);
-  // Пустой список НЕ означает «пускать всех»: бота может найти в поиске
-  // Telegram кто угодно, и открытый по умолчанию доступ показывал бы чужим
-  // людям находки, ради которых всё считается.
-  if (!list.length) return false;
-  return list.includes(String(chatId));
+    .filter(Boolean)
+    .includes(String(chatId));
+}
+
+async function hasAccess(env, chatId) {
+  if (isOwner(env, chatId)) return true;
+  const row = await env.DB.prepare("SELECT 1 FROM access WHERE chat_id = ?1")
+    .bind(String(chatId))
+    .first()
+    .catch(() => null);
+  return !!row;
+}
+
+const MAX_TRIES = 5;
+const LOCK_SECONDS = 3600;
+
+/**
+ * Попытка входа по коду. Возвращает текст ответа.
+ *
+ * Перебор шестизначного кода машиной — минуты, поэтому счётчик попыток
+ * обязателен: пять промахов запирают этот чат на час. Счётчик живёт в той
+ * же таблице, так что переживает перезапуск Worker.
+ */
+async function tryCode(env, chatId, text, who) {
+  const now = Math.floor(Date.now() / 1000);
+  const id = String(chatId);
+  const row = await env.DB.prepare(
+    "SELECT tries, locked_until FROM access_tries WHERE chat_id = ?1"
+  )
+    .bind(id)
+    .first()
+    .catch(() => null);
+
+  if (row && row.locked_until && row.locked_until > now) {
+    const mins = Math.ceil((row.locked_until - now) / 60);
+    return `Слишком много попыток. Попробуйте через ${mins} мин.`;
+  }
+
+  const code = (env.LS_ACCESS_CODE || "").trim();
+  const given = text.replace(/^\/code\s*/i, "").trim();
+  if (code && given && given.toLowerCase() === code.toLowerCase()) {
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO access (chat_id, who, granted_at) VALUES (?1, ?2, ?3)"
+    )
+      .bind(id, who || "", now)
+      .run();
+    await env.DB.prepare("DELETE FROM access_tries WHERE chat_id = ?1").bind(id).run();
+    return null; // null = пустить
+  }
+
+  const tries = (row ? row.tries : 0) + 1;
+  const locked = tries >= MAX_TRIES ? now + LOCK_SECONDS : 0;
+  await env.DB.prepare(
+    "INSERT OR REPLACE INTO access_tries (chat_id, tries, locked_until) VALUES (?1, ?2, ?3)"
+  )
+    .bind(id, tries, locked)
+    .run();
+  if (locked) return "Слишком много попыток. Доступ к вводу закрыт на час.";
+  return `Код не подошёл. Осталось попыток: ${MAX_TRIES - tries}`;
 }
 
 async function handleUpdate(env, update) {
@@ -218,13 +281,49 @@ async function handleUpdate(env, update) {
     // Ответить Telegram надо сразу, иначе кнопка «крутится» до таймаута.
     await tg(env, "answerCallbackQuery", { callback_query_id: cb.id });
   }
-  if (!allowed(env, chatId)) {
-    await tg(env, "sendMessage", { chat_id: chatId, text: "Это личный бот, доступа нет." });
+
+  const data = cb ? cb.data || "" : "";
+  const raw = msg ? (msg.text || "").trim() : "";
+  const text = raw.toLowerCase();
+
+  // /whoami отвечает всем: человеку, которому доступ ещё не выдан, нужно
+  // чем-то представиться владельцу.
+  if (text.startsWith("/whoami")) {
+    await tg(env, "sendMessage", {
+      chat_id: chatId,
+      text: `Ваш Telegram id: <code>${chatId}</code>`,
+      parse_mode: "HTML",
+    });
     return;
   }
 
-  const data = cb ? cb.data || "" : "";
-  const text = msg ? (msg.text || "").trim().toLowerCase() : "";
+  if (!(await hasAccess(env, chatId))) {
+    const from = msg && msg.from ? msg.from : cb && cb.from ? cb.from : {};
+    const who = from.username ? "@" + from.username : from.first_name || "";
+    // Любое сообщение от незнакомца считается попыткой ввести код: просить
+    // писать «/code XXXX» — лишний шаг там, где человеку и так прислали код.
+    if (raw && !raw.startsWith("/start") && !raw.startsWith("/help")) {
+      const err = await tryCode(env, chatId, raw, who);
+      if (err) {
+        await tg(env, "sendMessage", { chat_id: chatId, text: err });
+        return;
+      }
+      await tg(env, "sendMessage", {
+        chat_id: chatId,
+        text: "Доступ открыт.\n\n" + HELLO,
+        parse_mode: "HTML",
+        reply_markup: KEYBOARD,
+      });
+      return;
+    }
+    await tg(env, "sendMessage", {
+      chat_id: chatId,
+      text:
+        "Бот закрытый. Пришлите код доступа одним сообщением.\n\n" +
+        "Кода нет — попросите у владельца.",
+    });
+    return;
+  }
 
   if (data.startsWith("top:")) {
     await listTop(env, chatId, Number(data.split(":")[1]) || 0, 72, "Топ находок");
