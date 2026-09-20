@@ -1,0 +1,25 @@
+name = "launch-scout-bot"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Аккаунт указан явно. Без него wrangler на этой машине уходит в чужой
+# account id и отвечает «Authentication error [code: 10000]» — при том что
+# права в токене есть, а `whoami` показывает совсем другой аккаунт
+# (замерено 2026-09-20).
+account_id = "21869b3e20e58e47ff17e4b4b34944a5"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "launch-scout"
+database_id = "b4aee1b4-a562-4767-b5ed-11f7b764b1fe"
+
+[vars]
+# Кому отвечать: Telegram id через запятую. ПУСТО = отвечает всем подряд,
+# а бота может найти в поиске кто угодно — поэтому здесь всегда должен
+# стоять id владельца.
+LS_BOT_ALLOW = "6918708510"
+
+# Секреты ставятся отдельно (`wrangler secret put`), в файл не попадают:
+#   LS_BOT_TOKEN      - токен от @BotFather
+#   LS_WEBHOOK_SECRET - произвольная строка, ею Telegram подписывает каждый
+#                       запрос; без неё в Worker может постучаться кто угодно
