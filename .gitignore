@@ -1,0 +1,8 @@
+.env
+data/*.sqlite
+data/*.sqlite-wal
+data/*.sqlite-shm
+data/x_account_ids.json
+data/x_queries.json
+__pycache__/
+*.pyc

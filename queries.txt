@@ -1,0 +1,27 @@
+# Поисковые запросы к X. Одна строка — один запрос, # — комментарий.
+#
+# Синтаксис — операторы поиска самого X:
+#   filter:links      только посты со ссылкой (без неё это не запуск продукта)
+#   -filter:replies   не ответы в чужих ветках
+#   min_faves:N       порог лайков НА МОМЕНТ ЗАПРОСА
+#   lang:en           язык
+#
+# Про min_faves. Это грубый предфильтр, а не метрика отбора: он нужен
+# только чтобы не тащить из X тысячи пустых постов. Настоящий отбор
+# делает score.py по скорости и аномалии. Ставить его высоко — значит
+# увидеть пост, когда он уже разошёлся, то есть опоздать. Держим низко.
+
+"just launched" filter:links -filter:replies min_faves:20 lang:en
+"introducing" (app OR tool OR platform OR agent) filter:links -filter:replies min_faves:30 lang:en
+"we built" filter:links -filter:replies min_faves:25 lang:en
+"just shipped" filter:links -filter:replies min_faves:15 lang:en
+"launch day" filter:links -filter:replies min_faves:20 lang:en
+("now live" OR "out now") (beta OR launch OR v1) filter:links -filter:replies min_faves:20 lang:en
+"excited to announce" (launch OR launching OR built) filter:links -filter:replies min_faves:30 lang:en
+
+# Подтверждённый интерес инвесторов — то, ради чего заводился этот фильтр.
+("we raised" OR "raised $") (seed OR "Series A" OR pre-seed) -filter:replies min_faves:30 lang:en
+("backed by" OR "joining") (YC OR "Y Combinator" OR a16z OR Sequoia) filter:links -filter:replies min_faves:20 lang:en
+
+# Батчи YC: формулировка «S26 / W26» — то, как об этом пишут сами основатели.
+("S26" OR "W26" OR "F26") ("Y Combinator" OR YC) filter:links -filter:replies min_faves:10 lang:en

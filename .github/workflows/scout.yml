@@ -1,0 +1,131 @@
+# Сбор свежих запусков на GitHub Actions — чтобы ноутбук можно было закрыть.
+#
+# КУДА ПОЛОЖИТЬ: в репозитории launch-scout это файл
+#   .github/workflows/scout.yml
+# (GitHub видит workflow только в корне репозитория, не в подпапке).
+#
+# ПРО РАСПИСАНИЕ И ЧЕСТНОЕ ОЖИДАНИЕ. В cron у Actions минимальный шаг
+# пять минут, но GitHub НЕ обещает точности: при нагрузке запуск
+# задерживается, обычной практикой считается опоздание на 5-15 минут.
+# Поэтому здесь стоит */15, а не */25: с учётом дрейфа это даёт примерно
+# те же полчаса между замерами, что и локальная задача, и не притворяется
+# более точным, чем платформа умеет.
+#
+# ПРО БАЗУ. Она живёт в кэше Actions и переносится из прогона в прогон по
+# restore-keys. Без неё каждый запуск считал бы все записи новыми, а
+# скорость набора лайков не считалась бы вовсе — ей нужны ДВА замера в
+# разные моменты, то есть память между прогонами.
+
+name: scout
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Источники через запятую (x,hn,yc,gh)"
+        default: "hn,yc,gh"
+      digest:
+        description: "Прислать сводку (yes/no)"
+        default: "no"
+      top:
+        description: "Прислать N лучших прямо сейчас (пусто = не слать)"
+        default: ""
+
+# Два прогона одновременно писали бы в одну базу и мешали друг другу.
+concurrency:
+  group: scout
+  cancel-in-progress: false
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+      TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+      X_AUTH_TOKEN: ${{ secrets.X_AUTH_TOKEN }}
+      X_CT0: ${{ secrets.X_CT0 }}
+      # Встроенный токен раннера: снимает лимит GitHub API (60 запросов в
+      # час на адрес) без заведения личного токена.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Поставить зависимости
+        run: pip install -r requirements.txt
+
+      # Ключ уникален для прогона, а restore-keys подхватывает последнюю
+      # сохранённую базу: так кэш обновляется каждый раз, а не залипает
+      # на первой версии (кэш в Actions неизменяем после записи).
+      - name: Забрать базу прошлого прогона
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: scout-db-${{ github.run_id }}
+          restore-keys: scout-db-
+
+      - name: Проверить, пускает ли X с раннера
+        # Диагностика, а не сбор: с адресов дата-центров X ведёт себя иначе,
+        # чем с домашнего, и это надо ЗНАТЬ, а не предполагать. Шаг никогда
+        # не роняет прогон — он только пишет вердикт в лог.
+        continue-on-error: true
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" -m 20 \
+            -X POST "https://api.x.com/1.1/guest/activate.json" \
+            -H "Authorization: Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA" || echo "000")
+          syn=$(curl -s -o /dev/null -w "%{http_code}" -m 20 \
+            "https://cdn.syndication.twimg.com/tweet-result?id=20&lang=en&token=a" || echo "000")
+          echo "guest/activate: $code | syndication: $syn"
+          if [ "$code" = "200" ] && [ "$syn" = "200" ]; then
+            echo "::notice::X отвечает с раннера GitHub (guest $code, syndication $syn)"
+          else
+            echo "::warning::X с раннера отвечает не как с домашнего адреса (guest $code, syndication $syn) — твиттер-слой может потребовать локального запуска"
+          fi
+
+      - name: Прогон
+        env:
+          SOURCES: ${{ github.event.inputs.sources || 'x,hn,yc,gh' }}
+          DIGEST: ${{ github.event.inputs.digest }}
+        run: |
+          ARGS="--sources $SOURCES"
+          if [ "$DIGEST" = "yes" ]; then ARGS="$ARGS --digest"; fi
+          echo "запускаю: scout.py $ARGS"
+          python scout.py $ARGS
+
+      - name: Прислать топ по требованию
+        if: ${{ github.event.inputs.top != '' }}
+        run: python scout.py --top ${{ github.event.inputs.top }}
+
+      # Сводка дважды в день, в 07:00 и 19:00 UTC. Отдельным условием,
+      # а не своим расписанием: у cron-расписаний Actions тот же дрейф,
+      # и два независимых графика разъезжались бы между собой.
+      - name: Сводка утром и вечером
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          H=$(date -u +%H); M=$(date -u +%M)
+          if { [ "$H" = "07" ] || [ "$H" = "19" ]; } && [ "$M" -lt 15 ]; then
+            python scout.py --digest --sources hn
+          else
+            echo "не время сводки (сейчас $H:$M UTC)"
+          fi
+
+      - name: Что в базе
+        if: always()
+        run: python scout.py --status || true
+
+      - name: Сохранить лог прогона
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-log-${{ github.run_id }}
+          path: data/scout.log
+          retention-days: 7
+          if-no-files-found: ignore
