@@ -105,6 +105,12 @@ CREATE TABLE IF NOT EXISTS domain_cache (
     checked_at INTEGER
 );
 
+-- Мелкое состояние между прогонами: когда ушла последняя сводка и т.п.
+CREATE TABLE IF NOT EXISTS kv (
+    k TEXT PRIMARY KEY,
+    v TEXT
+);
+
 -- Журнал прогонов: видно, какой источник молчит, не открывая логи.
 CREATE TABLE IF NOT EXISTS runs (
     ts       INTEGER NOT NULL,
@@ -204,6 +210,15 @@ def log_run(conn, ts, source, found, new_rows, ok, note=""):
     conn.execute(
         "INSERT OR REPLACE INTO runs (ts, source, found, new_rows, ok, note) "
         "VALUES (?,?,?,?,?,?)", (ts, source, found, new_rows, 1 if ok else 0, note))
+
+
+def kv_get(conn, k, default=None):
+    row = conn.execute("SELECT v FROM kv WHERE k = ?", (k,)).fetchone()
+    return row["v"] if row else default
+
+
+def kv_set(conn, k, v):
+    conn.execute("INSERT OR REPLACE INTO kv (k, v) VALUES (?, ?)", (k, str(v)))
 
 
 def already_sent(conn, item_id, tier):

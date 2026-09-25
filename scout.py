@@ -296,11 +296,38 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
     if ok:
         for item_id, tier in ids:
             db.mark_sent(conn, item_id, tier, now)
+        if any(t == scoring.DIGEST for _i, t in ids):
+            db.kv_set(conn, "last_digest", now)
         conn.commit()
     if verbose:
         print("  отправлено: %d/%d %s" % (ok, len(messages),
                                           ("— " + "; ".join(errs[:2])) if errs else ""))
     return ok
+
+
+# Окна сводки по UTC: 07-09 и 19-21 — это 10-12 и 22-00 по Москве.
+DIGEST_WINDOWS_UTC = ((7, 9), (19, 21))
+DIGEST_MIN_GAP_H = 10
+
+
+def digest_due(conn, now):
+    """
+    Пора ли слать сводку: сейчас внутри окна И с прошлой сводки прошло
+    не меньше 10 часов.
+
+    Именно так, а не «прогон попал в минуты 00-15 нужного часа». Прежнее
+    условие молча предполагало, что прогоны идут плотно; GitHub же
+    выполнял их раз в четыре часа, и за пять дней окно не поймал ни один
+    прогон — сводка не ушла ни разу (lesson 2026-09-20, RECURRED 2026-09-25).
+    Окно в два часа плюс память о прошлой отправке переживают любой
+    разнобой в расписании: сводка уйдёт с первым же прогоном внутри окна
+    и не уйдёт второй раз за то же окно.
+    """
+    h = time.gmtime(now).tm_hour
+    if not any(a <= h < b for a, b in DIGEST_WINDOWS_UTC):
+        return False
+    last = int(db.kv_get(conn, "last_digest", 0) or 0)
+    return now - last >= DIGEST_MIN_GAP_H * 3600
 
 
 def top_items(conn, n=10, window_hours=72, now=None, skip_sent=False):
@@ -442,11 +469,14 @@ def status():
     return 0
 
 
-def run(sources, dry=False, digest=False):
+def run(sources, dry=False, digest=False, digest_auto=False):
     load_env()
     conn = db.connect()
     now = int(time.time())
     print("прогон %s" % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(now)))
+    if digest_auto and not digest and digest_due(conn, now):
+        digest = True
+        print("  время сводки")
     collect(conn, sources, now)
     remeasure(conn, now)
     n = refresh_baselines(conn, now)
@@ -473,6 +503,8 @@ def main():
                     help="источники через запятую: x,hn,yc,gh")
     ap.add_argument("--dry", action="store_true", help="не отправлять в Telegram")
     ap.add_argument("--digest", action="store_true", help="отправить сводку")
+    ap.add_argument("--digest-auto", action="store_true",
+                    help="отправить сводку, если пришло её время (окно + 10 ч с прошлой)")
     ap.add_argument("--status", action="store_true", help="состояние базы и источников")
     ap.add_argument("--init-accounts", action="store_true",
                     help="разрешить @ники из accounts.txt в id")
@@ -495,7 +527,7 @@ def main():
     if not srcs:
         print("не указан ни один известный источник")
         return 2
-    return run(srcs, dry=args.dry, digest=args.digest)
+    return run(srcs, dry=args.dry, digest=args.digest, digest_auto=args.digest_auto)
 
 
 if __name__ == "__main__":

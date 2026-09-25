@@ -90,14 +90,75 @@ def breakdown_ru(b):
     return " · ".join(parts)[:600]
 
 
+def snapshot(conn, now, window_hours=168, top_all=200, top_day=150):
+    """
+    Срез для бота одним JSON: лучшие за неделю плюс лучшие за сутки.
+
+    Зачем объединение двух выборок: кнопка «За сутки» показывает свежее, а
+    лучшие за неделю почти целиком — это вчерашние и позавчерашние находки.
+    Бери только их — и свежих в срезе не хватило бы на одну страницу.
+
+    Зачем один JSON, а не строки таблицы: Worker кладёт его в D1 ОДНИМ
+    запросом. Построчная заливка — это сотни запросов за вызов, а у
+    бесплатного Workers счёт запросов к D1 на вызов ограничен.
+    """
+    rows = conn.execute(
+        "SELECT * FROM items WHERE first_seen >= ?",
+        (now - window_hours * 3600,)).fetchall()
+    scored = []
+    for item in rows:
+        total, tier, b = scoring.score_item(conn, item, now)
+        if total <= 0:
+            continue
+        scored.append((total, tier, b, item))
+    scored.sort(key=lambda t: -t[0])
+    day = [s for s in scored if s[3]["first_seen"] >= now - 86400]
+    picked, seen = [], set()
+    for total, tier, b, item in scored[:top_all] + day[:top_day]:
+        if item["item_id"] in seen:
+            continue
+        seen.add(item["item_id"])
+        last = conn.execute(
+            "SELECT * FROM metrics WHERE item_id = ? ORDER BY ts DESC LIMIT 1",
+            (item["item_id"],)).fetchone()
+        m = dict(last) if last else {}
+        picked.append({
+            "id": item["item_id"], "source": item["source"], "url": item["url"],
+            "product_url": item["product_url"], "domain": item["domain"],
+            "domain_age_days": item["domain_age_days"],
+            "title": (item["title"] or "")[:200], "body": (item["body"] or "")[:420],
+            "author": item["author"], "author_followers": item["author_followers"],
+            "first_seen": item["first_seen"], "score": round(total, 1), "tier": tier,
+            "breakdown": breakdown_ru(b), "likes": m.get("likes"),
+            "replies": m.get("replies"), "reposts": m.get("reposts"),
+            "bookmarks": m.get("bookmarks"), "views": m.get("views"),
+        })
+    return picked
+
+
 def main():
     setup_logging("export")
-    ap = argparse.ArgumentParser(description="срез находок в SQL для D1")
+    ap = argparse.ArgumentParser(description="срез находок для бота (D1)")
+    ap.add_argument("--json", help="записать срез одним JSON (путь) — основной режим")
     ap.add_argument("--out", default="out/d1-import.sql")
     ap.add_argument("--window-hours", type=int, default=168,
                     help="какой возраст находок выгружать (по умолчанию неделя)")
     ap.add_argument("--limit", type=int, default=600)
     args = ap.parse_args()
+
+    if args.json:
+        load_env()
+        conn = db.connect()
+        now = int(time.time())
+        data = {"updated": now, "findings": snapshot(conn, now, args.window_hours)}
+        out = Path(args.json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")),
+                       encoding="utf-8")
+        print("срез: %d находок, %d КБ -> %s"
+              % (len(data["findings"]), out.stat().st_size // 1024, out))
+        conn.close()
+        return 0
 
     load_env()
     conn = db.connect()

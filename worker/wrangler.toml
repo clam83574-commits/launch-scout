@@ -23,3 +23,18 @@ LS_BOT_ALLOW = "6918708510"
 #   LS_BOT_TOKEN      - токен от @BotFather
 #   LS_WEBHOOK_SECRET - произвольная строка, ею Telegram подписывает каждый
 #                       запрос; без неё в Worker может постучаться кто угодно
+
+# Часы для всего скаута: каждые 10 минут Worker запускает прогон в GitHub
+# Actions через workflow_dispatch и проверяет, что прошлые доходят.
+# Собственное расписание GitHub тут не годится — оно выполняло 5% прогонов
+# (31 из 688 за 115 часов, замерено 2026-09-25).
+[triggers]
+crons = ["*/10 * * * *"]
+
+# Секреты этого Worker (ставятся `wrangler secret put`, в файле их нет):
+#   LS_BOT_TOKEN       - токен бота
+#   LS_WEBHOOK_SECRET  - подпись вебхука Telegram
+#   LS_ACCESS_CODE     - код доступа для друзей
+#   LS_INGEST_SECRET   - подпись среза, который присылает GitHub Actions
+#   LS_GH_TOKEN        - fine-grained токен GitHub ТОЛЬКО на этот репозиторий,
+#                        право Actions: Read and write — чтобы запускать прогоны

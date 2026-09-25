@@ -11,3 +11,4 @@ __pycache__/
 .webhook-secret
 out/
 .access-code
+.ingest-secret

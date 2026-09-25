@@ -6,13 +6,25 @@
  * а Actions отрабатывают и умирают. Здесь вебхук: Telegram сам стучится
  * в Worker, тот читает D1 и отвечает. Ноутбук не участвует.
  *
- * Данные сюда заливает GitHub Actions после каждого прогона (шаг
- * «Залить находки в D1»): scout.py генерирует SQL, wrangler его исполняет.
- * Worker НИЧЕГО не собирает сам — он только показывает уже собранное.
+ * Три роли:
+ *   1. Бот. Вебхук Telegram, кнопки, доступ по коду.
+ *   2. Приёмник. GitHub Actions после каждого прогона присылает сюда срез
+ *      находок одним JSON (POST /ingest), Worker кладёт его в D1 одной
+ *      записью. Так в GitHub не нужен токен Cloudflare вовсе.
+ *   3. Часы. Cron каждые 10 минут запускает прогон через workflow_dispatch.
+ *      Собственное расписание GitHub для этого не годится: за 115 часов
+ *      при cron «каждые 10 минут» оно выполнило 31 прогон из 688, медиана —
+ *      раз в четыре часа (замерено 2026-09-25). Заодно cron — сторож: если срез
+ *      не обновлялся дольше 45 минут, владелец получает предупреждение.
+ *      Пять дней полной тишины из-за ровно такой поломки больше не
+ *      должны выглядеть как «интересного не было».
+ *
+ * Worker НИЧЕГО не собирает сам: сбор и оценка живут в Python (scout.py).
  *
  * Маршруты:
- *   POST /tg  — вебхук Telegram, подписан заголовком secret_token
- *   GET  /    — проверка живости
+ *   POST /tg      — вебхук Telegram, подписан заголовком secret_token
+ *   POST /ingest  — срез находок из Actions, подписан x-ingest-secret
+ *   GET  /        — проверка живости
  */
 
 const PAGE = 10;
@@ -31,9 +43,71 @@ const KEYBOARD = {
       { text: "🔥 Топ-10", callback_data: "top:0" },
       { text: "🆕 За сутки", callback_data: "fresh:0" },
     ],
-    [{ text: "📊 Статус", callback_data: "status" }],
+    [
+      { text: "🔄 Обновить сейчас", callback_data: "refresh" },
+      { text: "📊 Статус", callback_data: "status" },
+    ],
   ],
 };
+
+const REPO = "clam83574-commits/launch-scout";
+const WORKFLOW = "scout.yml";
+// Сторож: срез старше этого — значит, сбор встал. Два пропущенных тика
+// по 10 минут плюс запас на сам прогон.
+const STALE_SECONDS = 45 * 60;
+// Не чаще раза в шесть часов, иначе ночной сбой разбудил бы владельца
+// тридцатью одинаковыми сообщениями.
+const ALERT_EVERY_SECONDS = 6 * 3600;
+
+async function meta(env, k) {
+  const r = await env.DB.prepare("SELECT v FROM kv WHERE k = ?1").bind(k).first().catch(() => null);
+  return r ? r.v : null;
+}
+
+async function setMeta(env, k, v) {
+  await env.DB.prepare("INSERT OR REPLACE INTO kv (k, v) VALUES (?1, ?2)")
+    .bind(k, String(v))
+    .run();
+}
+
+/** Срез находок из D1: {updated, findings[]} или null. */
+async function loadSnapshot(env) {
+  const row = await env.DB.prepare("SELECT data FROM snapshot WHERE k = 'findings'")
+    .first()
+    .catch(() => null);
+  if (!row) return null;
+  try {
+    return JSON.parse(row.data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Запустить прогон в GitHub Actions. Возвращает текст ошибки или null.
+ *
+ * User-Agent обязателен: без него API GitHub отвечает 403 «Request
+ * forbidden by administrative rules», а fetch в Workers сам его не ставит.
+ */
+async function dispatchRun(env, inputs = {}) {
+  if (!env.LS_GH_TOKEN) return "нет LS_GH_TOKEN";
+  const r = await fetch(
+    `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${env.LS_GH_TOKEN}`,
+        accept: "application/vnd.github+json",
+        "x-github-api-version": "2022-11-28",
+        "user-agent": "launch-scout-bot",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ ref: "main", inputs }),
+    }
+  );
+  if (r.status === 204) return null;
+  return `GitHub ${r.status}: ${(await r.text()).slice(0, 200)}`;
+}
 
 const HELLO =
   "<b>launch-scout</b>\n\n" +
@@ -117,16 +191,24 @@ async function listTop(env, chatId, offset, windowHours, title) {
   const cutoff = Math.floor(Date.now() / 1000) - windowHours * 3600;
   // Свежесть считается по first_seen: у части источников времени публикации
   // нет вовсе, а момент, когда запись увидели, есть всегда.
-  const { results } = await env.DB.prepare(
-    `SELECT * FROM findings
-      WHERE first_seen >= ?1 AND score > 0
-      ORDER BY score DESC
-      LIMIT ${PAGE} OFFSET ?2`
-  )
-    .bind(cutoff, offset)
-    .all();
+  const snap = await loadSnapshot(env);
+  const all = (snap && snap.findings) || [];
+  // Один продукт — одна карточка: иначе десятка уходит на то, что всплыло
+  // сразу в трёх источниках. Срез уже отсортирован по баллу.
+  const seen = new Set();
+  const pool = [];
+  for (const f of all) {
+    if (f.first_seen < cutoff || !(f.score > 0)) continue;
+    if (f.domain) {
+      if (seen.has(f.domain)) continue;
+      seen.add(f.domain);
+    }
+    pool.push(f);
+  }
+  pool.sort((a, b) => b.score - a.score);
+  const results = pool.slice(offset, offset + PAGE);
 
-  if (!results || !results.length) {
+  if (!results.length) {
     await tg(env, "sendMessage", {
       chat_id: chatId,
       text:
@@ -169,25 +251,30 @@ async function listTop(env, chatId, offset, windowHours, title) {
 
 async function status(env, chatId) {
   const now = Math.floor(Date.now() / 1000);
-  const total = await env.DB.prepare("SELECT COUNT(*) n FROM findings").first("n");
-  const dayN = await env.DB.prepare(
-    "SELECT COUNT(*) n FROM findings WHERE first_seen >= ?1"
-  )
-    .bind(now - 86400)
-    .first("n");
-  const { results } = await env.DB.prepare(
-    "SELECT source, COUNT(*) n, MAX(first_seen) last FROM findings GROUP BY source ORDER BY n DESC"
-  ).all();
-  const upd = await env.DB.prepare("SELECT MAX(updated) u FROM meta").first("u").catch(() => null);
+  const snap = await loadSnapshot(env);
+  const all = (snap && snap.findings) || [];
+  const dayN = all.filter((f) => f.first_seen >= now - 86400).length;
+  const bySrc = {};
+  for (const f of all) {
+    const s = (bySrc[f.source] = bySrc[f.source] || { n: 0, last: 0 });
+    s.n += 1;
+    s.last = Math.max(s.last, f.first_seen || 0);
+  }
 
-  const lines = ["<b>Состояние</b>", "", `находок: ${total}, за сутки: ${dayN}`, "", "<b>Источники</b>"];
-  for (const r of results || []) {
-    const ago = Math.round((now - (r.last || now)) / 60);
-    lines.push(`${SRC_RU[r.source] || r.source}: ${r.n}, свежайшая ${ago} мин назад`);
+  const lines = ["<b>Состояние</b>", "", `в срезе: ${all.length}, за сутки: ${dayN}`, "", "<b>Источники</b>"];
+  for (const [src, s] of Object.entries(bySrc).sort((a, b) => b[1].n - a[1].n)) {
+    const ago = Math.round((now - (s.last || now)) / 60);
+    lines.push(`${SRC_RU[src] || src}: ${s.n}, свежайшая ${ago} мин назад`);
   }
-  if (upd) {
-    lines.push("", `последняя заливка из Actions: ${Math.round((now - upd) / 60)} мин назад`);
+  if (snap && snap.updated) {
+    const mins = Math.round((now - snap.updated) / 60);
+    const warn = now - snap.updated > STALE_SECONDS ? " ⚠️ сбор отстаёт" : "";
+    lines.push("", `последний сбор: ${mins} мин назад${warn}`);
+  } else {
+    lines.push("", "срез ещё ни разу не приходил");
   }
+  const lastDispatch = await meta(env, "last_dispatch_error");
+  if (lastDispatch) lines.push(`запуск сбора: <i>${esc(lastDispatch).slice(0, 160)}</i>`);
   await tg(env, "sendMessage", {
     chat_id: chatId,
     text: lines.join("\n"),
@@ -331,6 +418,36 @@ async function handleUpdate(env, update) {
     await listTop(env, chatId, Number(data.split(":")[1]) || 0, 24, "За сутки");
   } else if (data === "status") {
     await status(env, chatId);
+  } else if (data === "refresh" || text.startsWith("/refresh")) {
+    // Не чаще раза в две минуты на всех: прогон длится около минуты, а
+    // серия нажатий иначе выстроила бы очередь одинаковых прогонов.
+    const now = Math.floor(Date.now() / 1000);
+    const last = Number((await meta(env, "last_manual_refresh")) || 0);
+    if (now - last < 120) {
+      await tg(env, "sendMessage", {
+        chat_id: chatId,
+        text: "Сбор уже запущен только что. Через пару минут нажмите «🆕 За сутки».",
+        reply_markup: KEYBOARD,
+      });
+      return;
+    }
+    const err = await dispatchRun(env, { digest: "no" });
+    if (err) {
+      await tg(env, "sendMessage", {
+        chat_id: chatId,
+        text: `Запустить сбор не удалось: ${err}`,
+        reply_markup: KEYBOARD,
+      });
+      return;
+    }
+    await setMeta(env, "last_manual_refresh", now);
+    await tg(env, "sendMessage", {
+      chat_id: chatId,
+      text:
+        "Пошёл в источники. Горячее придёт само, остальное — через пару минут " +
+        "по кнопке «🆕 За сутки».",
+      reply_markup: KEYBOARD,
+    });
   } else if (text.startsWith("/start") || text.startsWith("/help")) {
     await tg(env, "sendMessage", {
       chat_id: chatId,
@@ -353,17 +470,69 @@ async function handleUpdate(env, update) {
   }
 }
 
+/**
+ * Сторож: если срез давно не обновлялся — написать владельцу.
+ *
+ * Сбор умирает молча: пять дней GitHub выполнял 5% прогонов, бот не
+ * прислал ни одного сообщения, и это выглядело как «интересного не было».
+ * Теперь тишина дольше 45 минут сама превращается в сообщение.
+ */
+async function watchdog(env, now) {
+  const snap = await loadSnapshot(env);
+  const updated = snap && snap.updated ? snap.updated : 0;
+  if (updated && now - updated <= STALE_SECONDS) return;
+  const lastAlert = Number((await meta(env, "last_stale_alert")) || 0);
+  if (now - lastAlert < ALERT_EVERY_SECONDS) return;
+  const owner = (env.LS_BOT_ALLOW || "").split(",")[0].trim();
+  if (!owner) return;
+  const mins = updated ? Math.round((now - updated) / 60) : null;
+  const why = (await meta(env, "last_dispatch_error")) || "запуск проходит, а срез не приходит — смотреть лог прогона в Actions";
+  await tg(env, "sendMessage", {
+    chat_id: owner,
+    text:
+      `⚠️ <b>Сбор молчит${mins !== null ? ` ${mins} мин` : ""}.</b>\n\n` +
+      `Находки не обновляются, уведомлений не будет, пока это не починить.\n` +
+      `<i>${esc(why).slice(0, 300)}</i>`,
+    parse_mode: "HTML",
+  });
+  await setMeta(env, "last_stale_alert", now);
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/") {
-      const n = await env.DB.prepare("SELECT COUNT(*) n FROM findings")
-        .first("n")
-        .catch(() => "нет таблицы");
-      return new Response(`launch-scout-bot жив. находок: ${n}`, {
+      const snap = await loadSnapshot(env);
+      const n = snap && snap.findings ? snap.findings.length : 0;
+      const age = snap && snap.updated ? Math.round((Date.now() / 1000 - snap.updated) / 60) : "—";
+      return new Response(`launch-scout-bot жив. в срезе: ${n}, обновлён ${age} мин назад`, {
         headers: { "content-type": "text/plain; charset=utf-8" },
       });
+    }
+
+    if (request.method === "POST" && url.pathname === "/ingest") {
+      // Срез находок из GitHub Actions. Секрет обязателен: иначе кто угодно
+      // мог бы подложить владельцу свои «находки».
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) {
+        return new Response("нет", { status: 403 });
+      }
+      const raw = await request.text();
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        return new Response("не JSON", { status: 400 });
+      }
+      if (!data || !Array.isArray(data.findings)) {
+        return new Response("нет findings", { status: 400 });
+      }
+      await env.DB.prepare(
+        "INSERT OR REPLACE INTO snapshot (k, data, updated) VALUES ('findings', ?1, ?2)"
+      )
+        .bind(raw, Number(data.updated) || Math.floor(Date.now() / 1000))
+        .run();
+      return new Response(`принято: ${data.findings.length}`);
     }
 
     if (request.method === "POST" && url.pathname === "/tg") {
@@ -377,12 +546,22 @@ export default {
       const update = await request.json();
       // Telegram считает доставку успешной по коду ответа и повторяет
       // апдейт, если ждать долго. Отвечаем сразу, работу доделываем следом.
-      const work = handleUpdate(env, update).catch((e) => console.log("ошибка:", e));
-      if (typeof globalThis.ctx?.waitUntil === "function") globalThis.ctx.waitUntil(work);
-      else await work;
+      ctx.waitUntil(handleUpdate(env, update).catch((e) => console.log("ошибка:", e)));
       return new Response("ok");
     }
 
     return new Response("не найдено", { status: 404 });
+  },
+
+  /**
+   * Каждые 10 минут: запустить прогон и проверить, что прошлые доходят.
+   * Ошибку запуска запоминаем — её увидят «📊 Статус» и сторож.
+   */
+  async scheduled(event, env, ctx) {
+    const now = Math.floor(Date.now() / 1000);
+    const err = await dispatchRun(env, { digest: "auto" });
+    await setMeta(env, "last_dispatch_error", err || "");
+    await setMeta(env, "last_dispatch", now);
+    await watchdog(env, now);
   },
 };
