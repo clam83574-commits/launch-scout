@@ -51,10 +51,14 @@ DIGEST_MIN = 42.0     # в сводку дважды в день
 HARD_BLOCK = ("casino", "gambling", "betting odds", "sportsbook", "lottery",
               "porn", "onlyfans", "adult content", "alcohol delivery",
               "wine club", "brewery")
+# «insurance» целиком, а не «insurance premium»: узкая формулировка
+# пропустила «Umbrella insurance» в первой же живой выдаче (2026-09-25).
+# Коммерческое страхование — пограничная ниша по правилам владельца
+# (гарар), решение за ним, поэтому пометка, а не отсев.
 SOFT_FLAG = ("loan", "lending", "mortgage", "interest rate", "payday",
              "credit score", "bnpl", "buy now pay later", "trading bot",
              "crypto trading", "forex", "leverage trading", "dating app",
-             "insurance premium")
+             "insurance", "insurtech")
 
 
 def _median(xs):
@@ -150,9 +154,16 @@ def cross_source_hits(conn, domain, item_id):
     """
     if not domain:
         return 0
+    # Считаются только ДРУГИЕ площадки. Без условия на источник второй
+    # Show HN того же автора с его личного домена засчитывался как
+    # «независимое подтверждение» (поймано на живой выдаче 2026-09-25:
+    # bastardica.mitpit.com получил +7 от соседнего проекта на mitpit.com).
+    own = conn.execute("SELECT source FROM items WHERE item_id = ?",
+                       (item_id,)).fetchone()
     row = conn.execute(
         "SELECT COUNT(DISTINCT source) n FROM items "
-        "WHERE domain = ? AND item_id != ?", (domain, item_id)).fetchone()
+        "WHERE domain = ? AND item_id != ? AND source != ?",
+        (domain, item_id, own["source"] if own else "")).fetchone()
     return int(row["n"] or 0)
 
 
@@ -394,9 +405,14 @@ def score_item(conn, item, now=None):
         total += add
 
     # --- 8. Штрафы ------------------------------------------------------
-    if last and last["replies"] and last["likes"]:
+    # Порог спора — свой у каждой площадки. 0.4 подбирался под X; на HN
+    # комментариев на очко всегда больше, и Launch HN с обычным
+    # обсуждением 0.6 терял 8 баллов (живая выдача 2026-09-25). У GitHub
+    # в поле replies лежат открытые issues — это не спор, штраф не нужен.
+    dispute = {"x": 0.4, "hn": 1.5}.get(src)
+    if dispute and last and last["replies"] and last["likes"]:
         r = last["replies"] / max(last["likes"], 1)
-        if r > 0.4:
+        if r > dispute:
             breakdown["спор в комментариях (%.2f)" % r] = -8.0
             total -= 8.0
     n_crowd = crowded(conn, item["domain"], item["item_id"])

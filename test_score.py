@@ -300,6 +300,34 @@ def per_source_ceilings(conn):
     check("YC: новичок, подтверждённый Launch HN — мгновенно", tier == score.HOT, True,
           "%.1f %s" % (s, "; ".join(list(b)[:3])))
 
+    print("\n--- ошибки, пойманные первой живой выдачей 2026-09-25 ---")
+
+    # Два проекта одного автора на поддоменах его личного домена — это не
+    # независимое подтверждение: оба пришли с одной площадки.
+    make_item(conn, source="hn", ext_id="hn-sub-a", domain="mitpit-test.com",
+              author="solo", tags="show", title="Show HN: project A",
+              series=[(5 * 60, {"likes": 5})])
+    sub_b = make_item(conn, source="hn", ext_id="hn-sub-b", domain="mitpit-test.com",
+                      author="solo", tags="show", title="Show HN: project B",
+                      series=[(5 * 60, {"likes": 5})])
+    _, _, b = score.score_item(conn, sub_b, NOW)
+    check("та же площадка — не подтверждение",
+          any("подтверждено" in k for k in b), False, "; ".join(list(b)[:3]) or "пусто")
+
+    # Страхование — пограничная ниша, пометка обязательна при любом
+    # словосочетании, а не только «insurance premium».
+    ins = make_item(conn, source="hn", ext_id="hn-ins", tags="launch",
+                    title="Launch HN: Coverage Cat (YC S22) – Umbrella insurance via agent",
+                    posted_at=NOW - HOUR, first_seen=NOW - HOUR,
+                    series=[(5 * 60, {"likes": 10, "replies": 6})])
+    _, _, b = score.score_item(conn, ins, NOW)
+    check("страхование помечено как пограничное",
+          any("под вопросом" in k for k in b), True, "; ".join(k for k in b if "вопрос" in k))
+
+    # Обычное обсуждение на HN (0.6 комментария на очко) — не спор.
+    check("обсуждение на HN не штрафуется как спор",
+          any("спор" in k for k in b), False, "; ".join(k for k in b if "спор" in k) or "штрафа нет")
+
 
 if __name__ == "__main__":
     sys.exit(main())
