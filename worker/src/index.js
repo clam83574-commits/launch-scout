@@ -105,8 +105,51 @@ async function dispatchRun(env, inputs = {}) {
       body: JSON.stringify({ ref: "main", inputs }),
     }
   );
+  // GitHub сам сообщает срок токена в каждом ответе — запоминаем, чтобы
+  // предупредить владельца заранее, а не узнать постфактум от сторожа.
+  const exp = r.headers.get("github-authentication-token-expiration");
+  if (exp) await setMeta(env, "gh_token_expires", exp);
   if (r.status === 204) return null;
   return `GitHub ${r.status}: ${(await r.text()).slice(0, 200)}`;
+}
+
+/** Дата истечения токена часов в unix-секундах или null. */
+async function tokenExpiry(env) {
+  const exp = await meta(env, "gh_token_expires");
+  if (!exp) return null;
+  // Формат GitHub: «2026-10-25 14:50:15 UTC».
+  const t = Date.parse(exp.replace(" UTC", "Z").replace(" ", "T"));
+  return Number.isFinite(t) ? Math.floor(t / 1000) : null;
+}
+
+/**
+ * За три дня до истечения токена — напомнить владельцу, раз в сутки.
+ *
+ * Токен часов выдан на 30 дней (2026-09-25 → 2026-10-25). Без напоминания
+ * в день истечения прогоны встали бы, и об этом рассказал бы только
+ * сторож — через 45 минут тишины, то есть уже после поломки.
+ */
+async function tokenReminder(env, now) {
+  const t = await tokenExpiry(env);
+  if (!t) return;
+  const daysLeft = (t - now) / 86400;
+  if (daysLeft > 3) return;
+  const last = Number((await meta(env, "last_token_warn")) || 0);
+  if (now - last < 86400) return;
+  const owner = (env.LS_BOT_ALLOW || "").split(",")[0].trim();
+  if (!owner) return;
+  const when = new Date(t * 1000).toISOString().slice(0, 10);
+  await tg(env, "sendMessage", {
+    chat_id: owner,
+    text:
+      `⏳ <b>Токен часов истекает ${daysLeft > 0 ? `через ${Math.ceil(daysLeft)} дн.` : "сегодня"} (${when}).</b>\n\n` +
+      "После этого прогоны перестанут запускаться каждые 10 минут.\n" +
+      "Перевыпустить: github.com/settings/personal-access-tokens → " +
+      "launch-scout-clock → Regenerate token. Новый — в .env, строка LS_GH_TOKEN.",
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+  });
+  await setMeta(env, "last_token_warn", now);
 }
 
 const HELLO =
@@ -275,6 +318,11 @@ async function status(env, chatId) {
   }
   const lastDispatch = await meta(env, "last_dispatch_error");
   if (lastDispatch) lines.push(`запуск сбора: <i>${esc(lastDispatch).slice(0, 160)}</i>`);
+  const exp = await tokenExpiry(env);
+  if (exp) {
+    const days = Math.floor((exp - now) / 86400);
+    lines.push(`часы: токен GitHub действует ещё ${days} дн. (до ${new Date(exp * 1000).toISOString().slice(0, 10)})`);
+  }
   await tg(env, "sendMessage", {
     chat_id: chatId,
     text: lines.join("\n"),
@@ -563,5 +611,6 @@ export default {
     await setMeta(env, "last_dispatch_error", err || "");
     await setMeta(env, "last_dispatch", now);
     await watchdog(env, now);
+    await tokenReminder(env, now);
   },
 };
