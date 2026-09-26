@@ -197,11 +197,26 @@ def upsert_item(conn, it):
 
 
 def add_metrics(conn, item_id, ts, m):
-    """Дописать замер. INSERT OR REPLACE — на случай двух прогонов в одну секунду."""
+    """
+    Дописать замер. Если замер с той же меткой времени уже есть — ДОПОЛНИТЬ
+    его непустыми полями, а не заменить.
+
+    Прежний INSERT OR REPLACE терял данные: сбор из X (с закладками) и
+    повторный замер через syndication (закладок там нет) шли в одном
+    прогоне с одной меткой времени, и второй затирал первый. Закладки —
+    главная метрика X — оставались у 1 записи из 41 (замерено 2026-09-26).
+    """
     conn.execute(
-        "INSERT OR REPLACE INTO metrics "
+        "INSERT INTO metrics "
         "(item_id, ts, likes, replies, reposts, quotes, bookmarks, views) "
-        "VALUES (?,?,?,?,?,?,?,?)",
+        "VALUES (?,?,?,?,?,?,?,?) "
+        "ON CONFLICT (item_id, ts) DO UPDATE SET "
+        "  likes = COALESCE(excluded.likes, likes), "
+        "  replies = COALESCE(excluded.replies, replies), "
+        "  reposts = COALESCE(excluded.reposts, reposts), "
+        "  quotes = COALESCE(excluded.quotes, quotes), "
+        "  bookmarks = COALESCE(excluded.bookmarks, bookmarks), "
+        "  views = COALESCE(excluded.views, views)",
         (item_id, ts, m.get("likes"), m.get("replies"), m.get("reposts"),
          m.get("quotes"), m.get("bookmarks"), m.get("views")))
 

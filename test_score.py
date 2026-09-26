@@ -179,6 +179,8 @@ def main():
           "%.1f против %.1f без возраста домена" % (s2, s_fast))
 
     per_source_ceilings(conn)
+    x_noise_filter()
+    bookmarks_survive(conn)
 
     print()
     if FAILED:
@@ -186,6 +188,55 @@ def main():
         return 1
     print("все проверки пройдены")
     return 0
+
+
+def bookmarks_survive(conn):
+    """
+    Закладки — главная метрика X — пропадали двумя путями (2026-09-26):
+    повторный замер через syndication (закладок там нет) шёл с той же
+    меткой времени и затирал полный замер, а слагаемое смотрело только
+    в самый последний замер. У 40 записей из 41 закладок не осталось.
+    """
+    print("\n--- закладки не теряются ---")
+    it = make_item(conn, source="x", ext_id="bm-merge", author="bmuser", followers=5000)
+    db.add_metrics(conn, it["item_id"], NOW, {"likes": 200, "bookmarks": 60})
+    db.add_metrics(conn, it["item_id"], NOW, {"likes": 205, "replies": 9})
+    row = conn.execute("SELECT likes, bookmarks, replies FROM metrics "
+                       "WHERE item_id = ? AND ts = ?", (it["item_id"], NOW)).fetchone()
+    check("замер с той же меткой дополняет, а не затирает",
+          row["bookmarks"] == 60 and row["replies"] == 9 and row["likes"] == 205, True,
+          "likes=%s bookmarks=%s replies=%s" % (row["likes"], row["bookmarks"], row["replies"]))
+
+    later = make_item(
+        conn, source="x", ext_id="bm-later", author="bmuser2", followers=5000,
+        series=[(2 * HOUR, {"likes": 100, "bookmarks": 30}),
+                (1 * HOUR, {"likes": 200})])
+    _, _, b = score.score_item(conn, later, NOW)
+    check("доля закладок считается и после замера без закладок",
+          any("закладки" in k for k in b), True, "; ".join(k for k in b if "заклад" in k) or "нет")
+
+
+def x_noise_filter():
+    """
+    Отсев мусора из X: первая живая выдача (2026-09-26) принесла запуск
+    мемкоина «$BAGM» и художественный заказ. Главная ловушка — не спутать
+    тикер токена с ценой: «$20/month» у настоящего SaaS обязан пройти.
+    """
+    from sources import x as X
+    print("\n--- отсев мусора в X ---")
+    cases = [
+        ("BagMortem just launched $BAGM, the whole concept is hilarious", False,
+         "тикер токена"),
+        ("Just launched my invoicing tool, $20/month, try it https://acme.io", True,
+         "цена с цифрой — не тикер"),
+        ("We just shipped v2 of our API https://acme.dev", True, "обычный запуск"),
+        ("Commissions open! Just launched my new art shop", False, "художественный заказ"),
+        ("Fair launch now live, CA: 0x1234, 1000x soon", False, "токен без тикера"),
+        ("Introducing Acme — now live for small clinics", True, "запуск без ссылки"),
+    ]
+    for text, want, why in cases:
+        got = X.looks_like_launch(text)
+        check("X: %s" % why, got, want, "%s -> %s" % (text[:44], got))
 
 
 def seed_distribution(conn, source, rates, age_h):

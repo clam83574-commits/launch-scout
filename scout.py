@@ -43,7 +43,18 @@ for _s in (sys.stdout, sys.stderr):
 ALL_SOURCES = ("x", "hn", "yc", "gh")
 ACCOUNTS_FILE = ROOT / "accounts.txt"
 QUERIES_FILE = ROOT / "queries.txt"
-IDS_FILE = ROOT / "data" / "x_account_ids.json"
+# В корне, а не в data/: файл лежит в репозитории, иначе облачный прогон
+# его не увидит (data/ — это кэш Actions, туда ничего не кладут руками).
+# Числовые id аккаунтов публичны, секрета в них нет.
+IDS_FILE = ROOT / "x_account_ids.json"
+
+# Бюджет запросов к X с одного аккаунта. При прогоне раз в 10 минут все
+# поиски и все 33 ленты разом давали бы ~6000 запросов в сутки — аккаунт
+# ограничили бы в первый же день. Поиски идут каждый прогон (из них и
+# приходят свежие запуски), ленты — по кругу срезами. Итого около 20
+# запросов в 10 минут: темп активного живого пользователя.
+X_ACCOUNTS_PER_RUN = 11
+X_COOLDOWN_SECONDS = 30 * 60
 
 
 def _read_list(path):
@@ -112,11 +123,24 @@ def collect(conn, sources, now, verbose=True):
         if not session:
             db.log_run(conn, now, "x", 0, 0, False, err)
             report["x"] = (0, 0, err)
+        elif int(db.kv_get(conn, "x_cooldown_until", 0) or 0) > now:
+            left = (int(db.kv_get(conn, "x_cooldown_until", 0)) - now) // 60
+            note = "пауза после 429 ещё %d мин — аккаунт бережём" % left
+            db.log_run(conn, now, "x", 0, 0, True, note)
+            report["x"] = (0, 0, None)
+            if verbose:
+                print("  x   " + note)
         else:
             seeds["x"] = not db.source_seeded(conn, "x")
             queries = _read_list(QUERIES_FILE)
             ids = _load_account_ids()
-            pairs, err = x_src.fetch(session, queries, accounts_ids=ids)
+            # Ленты — по кругу: каждый прогон следующий срез списка.
+            off = int(db.kv_get(conn, "x_acc_offset", 0) or 0) % max(len(ids), 1)
+            part = (ids[off:] + ids[:off])[:X_ACCOUNTS_PER_RUN]
+            db.kv_set(conn, "x_acc_offset", off + len(part))
+            pairs, err = x_src.fetch(session, queries, accounts_ids=part)
+            if err and err.startswith("429"):
+                db.kv_set(conn, "x_cooldown_until", now + X_COOLDOWN_SECONDS)
             total, new, _ = _store(conn, pairs, now, bootstrap=seeds["x"])
             db.log_run(conn, now, "x", total, new, not err, err or "")
             report["x"] = (total, new, err)
@@ -150,13 +174,22 @@ def remeasure(conn, now, max_age_hours=36, verbose=True):
     # готовый замер. Поштучный опрос /repos ничего не добавлял, зато
     # выжигал весь неавторизованный лимит (60 запросов в час на IP) —
     # замерено 2026-09-20, 403 на четвёртом десятке.
-    caps = {"hn": 200, "x": 120}
+    # У X окно короче и квота меньше: скорость твита важна в первые часы,
+    # а каждый замер — отдельный запрос с адреса раннера. 120 замеров раз в
+    # 10 минут — это 17 тысяч запросов в сутки ради хвоста, который уже
+    # ничего не решает.
+    caps = {"hn": (200, cutoff), "x": (40, now - 12 * 3600)}
     by_src = {}
-    for src, cap in caps.items():
+    # Уже измеренное в ЭТОМ прогоне (сбор только что принёс свежие цифры)
+    # повторно не замеряем: это лишние запросы, а раньше ещё и затирание
+    # полного замера урезанным.
+    for src, (cap, since) in caps.items():
         by_src[src] = conn.execute(
-            "SELECT item_id, source, ext_id, title FROM items "
+            "SELECT item_id, source, ext_id, title FROM items i "
             "WHERE first_seen >= ? AND source = ? "
-            "ORDER BY first_seen DESC LIMIT ?", (cutoff, src, cap)).fetchall()
+            "  AND NOT EXISTS (SELECT 1 FROM metrics m "
+            "                  WHERE m.item_id = i.item_id AND m.ts = ?) "
+            "ORDER BY first_seen DESC LIMIT ?", (since, src, now, cap)).fetchall()
 
     done, problems = 0, []
 

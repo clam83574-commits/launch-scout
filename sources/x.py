@@ -89,6 +89,13 @@ BASE_FEATURES = {
     "responsive_web_enhance_cards_enabled": False,
 }
 
+# Стартовые методы. Поиск — POST: с 2026-09-26 на GET он отвечает 404
+# (проверено: GET 404, POST 200 с тем же queryId и теми же куками).
+# Остальное пока принимает GET. Если X переставит методы снова, парсер
+# сам попробует другой и запомнит — эта таблица только экономит первый
+# промах после чистого старта.
+DEFAULT_METHODS = {"SearchTimeline": "POST"}
+
 # Маркеры запуска. Пост без них — это мнение или тред-подборка, а не выход
 # продукта. Список намеренно узкий: широкий («AI», «startup») превращает
 # выдачу в ленту болтовни.
@@ -98,12 +105,22 @@ LAUNCH_MARKERS = (
     "out now", "public beta", "早期", "go live", "v1.0", "1.0 is out",
     "today we're launching", "excited to launch", "excited to announce",
 )
-# Явный мусор: розыгрыши и подборки чужих продуктов.
+# Явный мусор: розыгрыши, подборки чужих продуктов, запуски криптотокенов,
+# художественные заказы. Криптотокены — отдельно важны: первая же живая
+# выдача (2026-09-26) принесла «just launched $BAGM» — мемкоин, а не
+# стартап, и по правилам владельца (майсир, спекуляция) мимо в любом
+# случае. Тикер ловится регуляркой ниже, слова — здесь.
 NOISE_MARKERS = (
     "giveaway", "retweet to win", "rt to win", "follow + rt", "airdrop",
     "tools you should know", "tools you need", "thread 🧵 of", "top 10 ai",
     "best ai tools", "mega thread",
+    "memecoin", "meme coin", "pump.fun", "presale", "pre-sale", "stealth launch",
+    "fair launch", "contract address", "ca:", "dexscreener", "1000x", "100x",
+    "commission", "commissions open",
 )
+# Тикер криптотокена: «$BAGM», «$PEPE2». Требуем 2-8 заглавных после $,
+# чтобы не резать цены вроде «$20/month» — у них за $ идёт цифра.
+CASHTAG = re.compile(r"(?<![\w$])\$[A-Z][A-Z0-9]{1,7}\b")
 
 
 class XSession:
@@ -129,6 +146,11 @@ class XSession:
         self.s.cookies.set("ct0", ct0, domain=".x.com")
         self.features = dict(BASE_FEATURES)
         self.queries = _load_queries()
+        # HTTP-метод каждой операции. Меняется так же без предупреждения, как
+        # queryId: 2026-09-26 поиск перестал отвечать на GET (404) и отвечает
+        # только на POST. Выученное значение хранится рядом с queryId.
+        self.methods = dict(DEFAULT_METHODS)
+        self.methods.update(self.queries.get("__methods__") or {})
         self._last_call = 0.0
 
     # --- вежливость ----------------------------------------------------
@@ -148,11 +170,23 @@ class XSession:
         пары {queryId:"...", operationName:"..."}. Забираем все, какие нашли,
         и складываем в data/x_queries.json.
         """
+        # Страницу и бандлы запрашиваем КАК БРАУЗЕР: только куки, без
+        # заголовков API. С `Authorization: Bearer` и `x-csrf-token` X
+        # принимает загрузку страницы за вызов API и отвечает 401 с пустым
+        # телом — при полностью живых куках (поймано 2026-09-26 первой же
+        # проверкой с настоящим аккаунтом). Браузер эти заголовки шлёт
+        # только в запросах к API, не при открытии страницы.
+        page_headers = {"User-Agent": UA, "Accept": "text/html,application/xhtml+xml",
+                        "Accept-Language": "en-US,en;q=0.9"}
         self._wait()
         try:
-            r = self.s.get("https://x.com/home", timeout=30)
+            r = requests.get("https://x.com/home", cookies=self.s.cookies,
+                             headers=page_headers, timeout=30)
         except requests.RequestException as e:
             return {}, "главная не открылась: %s" % str(e)[:120]
+        if r.status_code != 200 or '"screen_name"' not in r.text:
+            return {}, ("главная ответила %d без признаков входа — куки не приняты "
+                        "или аккаунт разлогинен" % r.status_code)
         html = r.text
         bundles = sorted(set(re.findall(
             r"https://abs\.twimg\.com/responsive-web/client-web[a-z-]*/"
@@ -164,7 +198,7 @@ class XSession:
         found = {}
         for url in bundles[:12]:
             try:
-                js = self.s.get(url, timeout=30).text
+                js = requests.get(url, headers=page_headers, timeout=30).text
             except requests.RequestException:
                 continue
             for qid, op in re.findall(
@@ -194,12 +228,18 @@ class XSession:
             if not qid:
                 return None, "нет queryId для %s (%s)" % (op, err or "не найден")
 
-        for attempt in range(tries + 2):
+        method = self.methods.get(op, "GET")
+        flipped = rediscovered = False
+        for attempt in range(tries + 4):
             self._wait()
-            params = {"variables": json.dumps(variables, separators=(",", ":")),
-                      "features": json.dumps(self.features, separators=(",", ":"))}
             try:
-                r = self.s.get(GQL % (qid, op), params=params, timeout=30)
+                if method == "POST":
+                    r = self.s.post(GQL % (qid, op), timeout=30, json={
+                        "variables": variables, "features": self.features, "queryId": qid})
+                else:
+                    params = {"variables": json.dumps(variables, separators=(",", ":")),
+                              "features": json.dumps(self.features, separators=(",", ":"))}
+                    r = self.s.get(GQL % (qid, op), params=params, timeout=30)
             except requests.RequestException as e:
                 return None, "сеть: %s" % str(e)[:140]
 
@@ -211,6 +251,7 @@ class XSession:
                 errs = data.get("errors") or []
                 if errs and not data.get("data"):
                     return None, "X вернул ошибку: %s" % str(errs[0].get("message"))[:160]
+                self._remember_method(op, method)
                 return data, None
 
             body = r.text[:500]
@@ -231,15 +272,36 @@ class XSession:
                               "или аккаунт ограничен. Обновите .env" % r.status_code)
             if r.status_code == 429:
                 return None, "429 — упёрлись в лимит, ждём следующего прогона"
-            if r.status_code == 404 and attempt == 0:
-                # Скорее всего сменился queryId — обновляем и пробуем ещё раз.
-                found, _ = self.discover_query_ids()
-                if found.get(op) and found[op] != qid:
-                    qid = found[op]
+            if r.status_code == 404:
+                # 404 у X значит одно из двух, и чинится в этом порядке.
+                # 1) Сменился HTTP-метод операции (поиск 2026-09-26: GET
+                #    стал 404, POST — 200). Пробуем другой метод.
+                if not flipped:
+                    flipped = True
+                    method = "POST" if method == "GET" else "GET"
                     continue
-                return None, "404 на %s — операция переименована или снята" % op
+                # 2) Сменился queryId. Достаём свежий из бандла и снова
+                #    пробуем оба метода.
+                if not rediscovered:
+                    rediscovered = True
+                    found, _ = self.discover_query_ids()
+                    if found.get(op) and found[op] != qid:
+                        qid = found[op]
+                        flipped = False
+                        method = self.methods.get(op, "GET")
+                        continue
+                return None, ("404 на %s — не помогли ни другой метод, ни свежий "
+                              "queryId: операция переименована или снята" % op)
             return None, "HTTP %d: %s" % (r.status_code, body[:160])
         return None, "не удалось после повторов"
+
+    def _remember_method(self, op, method):
+        """Запомнить сработавший метод, если он отличается от сохранённого."""
+        if self.methods.get(op) != method:
+            self.methods[op] = method
+            self.queries["__methods__"] = {k: v for k, v in self.methods.items()
+                                           if DEFAULT_METHODS.get(k) != v or k in DEFAULT_METHODS}
+            _save_queries(self.queries)
 
     # --- высокоуровневое ------------------------------------------------
     def search(self, query, limit=40, product="Latest"):
@@ -290,6 +352,14 @@ def _save_queries(q):
                            encoding="utf-8")
 
 
+# Вложенные твиты: цитата внутри поста и оригинал внутри ретвита. Они
+# лежат в ответе как полноценные объекты Tweet, и обход «по признаку»
+# принимал их за самостоятельные посты — в выдачу попадали чужие люди,
+# которых процитировал кто-то из отслеживаемых (замечено 2026-09-26:
+# @Babygravy9 без единого совпадения с запросами и списком).
+NESTED_TWEET_KEYS = ("quoted_status_result", "retweeted_status_result")
+
+
 def _walk_entries(node, out):
     """
     Рекурсивно собрать объекты твитов из ответа любой формы.
@@ -298,13 +368,16 @@ def _walk_entries(node, out):
     чаще, чем хотелось бы, и жёсткий путь по ключам ломается на каждом
     редизайне ленты. Поэтому ищем по признаку: словарь с __typename
     'Tweet' и полем legacy. Это переживает перестановки обёрток.
+    Внутрь цитат и ретвитов не спускаемся — берём только верхний уровень.
     """
     if isinstance(node, dict):
         if node.get("__typename") == "Tweet" and "legacy" in node:
             out.append(node)
         elif node.get("__typename") == "TweetWithVisibilityResults" and "tweet" in node:
             out.append(node["tweet"])
-        for v in node.values():
+        for k, v in node.items():
+            if k in NESTED_TWEET_KEYS:
+                continue
             _walk_entries(v, out)
     elif isinstance(node, list):
         for v in node:
@@ -323,9 +396,16 @@ def _extract_tweets(data):
             continue
         seen.add(tid)
         user = (((t.get("core") or {}).get("user_results") or {}).get("result") or {})
-        ulg = user.get("legacy") or user.get("core") or {}
-        screen = (ulg.get("screen_name") or (user.get("core") or {}).get("screen_name"))
-        followers = ulg.get("followers_count")
+        # 2026-09-26: у пользователя больше нет `legacy`. Ник переехал в
+        # `core.screen_name`, подписчики — в `relationship_counts.followers`.
+        # Без подписчиков молча отключалась нормировка «отклик к размеру
+        # аудитории» (18 баллов бюджета X) — у всех 115 записей первого
+        # сбора их не было. Старые места оставлены запасными.
+        ulg = user.get("legacy") or {}
+        screen = (user.get("core") or {}).get("screen_name") or ulg.get("screen_name")
+        followers = (user.get("relationship_counts") or {}).get("followers")
+        if followers is None:
+            followers = ulg.get("followers_count")
         text = lg.get("full_text") or ""
         # Ссылку берём развёрнутую: в тексте она всегда в виде t.co/...
         expanded = None
@@ -370,11 +450,17 @@ def _parse_twitter_time(s):
         return None
 
 
+def is_noise(text):
+    """Розыгрыш, подборка, криптотокен или заказ — не запуск продукта."""
+    low = (text or "").lower()
+    return any(n in low for n in NOISE_MARKERS) or bool(CASHTAG.search(text or ""))
+
+
 def looks_like_launch(text):
     """Пост о выходе продукта, а не мнение и не подборка чужого."""
-    low = (text or "").lower()
-    if any(n in low for n in NOISE_MARKERS):
+    if is_noise(text):
         return False
+    low = (text or "").lower()
     return any(m in low for m in LAUNCH_MARKERS)
 
 
@@ -450,10 +536,16 @@ def fetch(session, queries, accounts_ids=None, per_query=40, window_hours=24):
     cutoff = now - window_hours * 3600
     out, errors, seen = [], [], set()
 
+    # Ответ «слишком часто» (429) — сигнал остановиться сразу, а не
+    # добивать оставшиеся запросы: каждый следующий только приближает
+    # аккаунт к ограничению. Вызывающий код по «429» в тексте ошибки
+    # ставит паузу на следующие прогоны.
     for q in queries:
         tweets, err = session.search(q, limit=per_query)
         if err:
             errors.append("поиск «%s»: %s" % (q[:40], err))
+            if "429" in err:
+                return out, "429: " + "; ".join(errors[:3])
             continue
         for tw in tweets:
             if tw["id"] in seen or tw.get("is_retweet"):
@@ -470,6 +562,8 @@ def fetch(session, queries, accounts_ids=None, per_query=40, window_hours=24):
         tweets, err = session.user_tweets(uid, limit=20)
         if err:
             errors.append("лента %s: %s" % (uid, err))
+            if "429" in err:
+                return out, "429: " + "; ".join(errors[:3])
             continue
         for tw in tweets:
             if tw["id"] in seen or tw.get("is_retweet"):
@@ -477,8 +571,15 @@ def fetch(session, queries, accounts_ids=None, per_query=40, window_hours=24):
             ts = _parse_twitter_time(tw.get("created_at"))
             if ts and ts < cutoff:
                 continue
-            # Для отобранных вручную аккаунтов маркеры запуска не требуем:
-            # список и есть фильтр, а формулировки у них свои.
+            # Для отобранных вручную аккаунтов строгих маркеров запуска не
+            # требуем — формулировки у них свои. Но нужен ХОТЯ БЫ один
+            # признак продукта: маркер или ссылка наружу. Иначе в выдачу
+            # шли просто мнения («Legalize personalized education» от
+            # партнёра YC, 2026-09-26). Мусор режем и здесь.
+            if is_noise(tw.get("text")):
+                continue
+            if not looks_like_launch(tw.get("text")) and not domain_of(tw.get("product_url")):
+                continue
             seen.add(tw["id"])
             out.append(to_item(tw, now))
 

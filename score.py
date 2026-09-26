@@ -379,8 +379,13 @@ def score_item(conn, item, now=None):
             total += add
 
     # --- 5. Качество внимания: закладки (0-18) --------------------------
-    if last and last["bookmarks"] and last["likes"]:
-        ratio = last["bookmarks"] / max(last["likes"], 1)
+    # Берём последний замер, где закладки ЕСТЬ, и лайки из того же замера.
+    # Повторные замеры X идут через syndication, а там закладок нет вовсе —
+    # по «самому последнему» замеру слагаемое выключалось бы для любого
+    # твита уже через десять минут после находки.
+    bm_row = next((r for r in reversed(rows) if r["bookmarks"] is not None), None)
+    if bm_row and bm_row["bookmarks"] and bm_row["likes"]:
+        ratio = bm_row["bookmarks"] / max(bm_row["likes"], 1)
         if ratio >= 0.08:
             add = min(18.0, 18.0 * (ratio / 0.25))
             breakdown["в закладки %.0f%% от лайков" % (ratio * 100)] = round(add, 1)
