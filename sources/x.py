@@ -185,8 +185,18 @@ class XSession:
         except requests.RequestException as e:
             return {}, "главная не открылась: %s" % str(e)[:120]
         if r.status_code != 200 or '"screen_name"' not in r.text:
-            return {}, ("главная ответила %d без признаков входа — куки не приняты "
-                        "или аккаунт разлогинен" % r.status_code)
+            # С адресов дата-центров (раннер GitHub) главная X отвечает 403
+            # при живых куках — замерено 2026-09-26: с ноутбука 200 и вход,
+            # из облака 403. API при этом может работать, ему нужны только
+            # queryId. Берём их из открытого справочника.
+            page_err = ("главная ответила %d без признаков входа (из облака это "
+                        "норма — X закрывает страницу для дата-центров)" % r.status_code)
+            found, cerr = _community_query_ids()
+            if found:
+                self.queries.update(found)
+                _save_queries(self.queries)
+                return found, None
+            return {}, page_err + "; справочник тоже недоступен: %s" % cerr
         html = r.text
         bundles = sorted(set(re.findall(
             r"https://abs\.twimg\.com/responsive-web/client-web[a-z-]*/"
@@ -335,6 +345,27 @@ class XSession:
             return data["data"]["user"]["result"]["rest_id"], None
         except (KeyError, TypeError):
             return None, "нет rest_id в ответе для @%s" % screen_name
+
+
+# Открытый справочник внутренних адресов X: проект обновляет queryId
+# автоматически, сверено 2026-09-26 — все три нужные операции совпали с
+# добытыми из бандла на ноутбуке. Это запасной путь, основной — бандл.
+COMMUNITY_QIDS = ("https://raw.githubusercontent.com/fa0311/"
+                  "TwitterInternalAPIDocument/master/docs/json/API.json")
+
+
+def _community_query_ids():
+    """queryId всех операций из открытого справочника. (словарь, ошибка)."""
+    try:
+        r = requests.get(COMMUNITY_QIDS, timeout=30, headers={"User-Agent": UA})
+        if r.status_code != 200:
+            return {}, "HTTP %d" % r.status_code
+        g = (r.json() or {}).get("graphql") or {}
+    except (requests.RequestException, ValueError) as e:
+        return {}, str(e)[:120]
+    found = {op: e["queryId"] for op, e in g.items()
+             if isinstance(e, dict) and isinstance(e.get("queryId"), str)}
+    return found, (None if found else "в справочнике нет операций")
 
 
 def _load_queries():
