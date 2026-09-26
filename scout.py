@@ -18,6 +18,7 @@ launch-scout — прогон: собрать источники, доизмер
 моложе суток измеряется на КАЖДОМ прогоне, даже если он уже в базе.
 """
 import argparse
+import json
 import sys
 import time
 from pathlib import Path
@@ -292,43 +293,67 @@ def evaluate(conn, now, window_hours=72):
     return out
 
 
+def _topics_of(conn, item_id):
+    """Темы находки для фильтра по личным категориям подписчика."""
+    try:
+        row = conn.execute("SELECT topics FROM item_topics WHERE item_id = ?", (item_id,)).fetchone()
+        return [x for x in json.loads(row["topics"]) if x != "other"] if row else []
+    except Exception:
+        return []
+
+
 def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
-    """Разослать горячее сразу; сводку — когда позвали с --digest."""
+    """
+    Разослать горячее сразу; сводку — когда пришло её время.
+
+    Рассылает Worker (notify.deliver): он знает подписчиков и их личные
+    категории, поэтому к каждой находке прикладываются её темы. Без Worker
+    всё уходит владельцу напрямую, как раньше.
+    """
     hot = [e for e in evaluated if e[3] == scoring.HOT
            and not db.already_sent(conn, e[0]["item_id"], scoring.HOT)]
-    messages, ids = [], []
+    hot_payload, ids = [], []
     for item, metrics, total, tier, breakdown in hot:
-        messages.append(notify.format_item(item, metrics, total, tier, breakdown,
-                                           note=ai.get_note(conn, item["item_id"], _lang())))
+        hot_payload.append({
+            "id": item["item_id"],
+            "text": notify.format_item(item, metrics, total, tier, breakdown,
+                                       note=ai.get_note(conn, item["item_id"], _lang())),
+            "topics": _topics_of(conn, item["item_id"]),
+        })
         ids.append((item["item_id"], scoring.HOT))
 
+    digest_payload = None
     if digest:
         pool = [e for e in evaluated if e[3] == scoring.DIGEST
                 and not db.already_sent(conn, e[0]["item_id"], scoring.DIGEST)][:12]
         if pool:
-            head = "📋 <b>Сводка: %d кандидатов</b>" % len(pool)
-            body = []
+            lines = []
             for item, metrics, total, tier, _b in pool:
-                body.append("<code>%s</code> %s — <a href=\"%s\">%s</a>"
+                lines.append({
+                    "id": item["item_id"],
+                    "line": "<code>%s</code> %s — <a href=\"%s\">%s</a>"
                             % (total, notify._esc((item["title"] or "")[:70]),
-                               item["url"], notify.SRC_RU.get(item["source"], item["source"])))
+                               item["url"], notify.SRC_RU.get(item["source"], item["source"])),
+                    "topics": _topics_of(conn, item["item_id"]),
+                })
                 ids.append((item["item_id"], scoring.DIGEST))
-            messages.append(head + "\n\n" + "\n".join(body))
+            digest_payload = {"head": "📋 <b>Сводка</b>", "items": lines}
 
-    if not messages:
+    if not hot_payload and not digest_payload:
         if verbose:
             print("  отправлять нечего")
         return 0
 
     if dry:
         if verbose:
-            print("  --dry: не отправлено, %d сообщений готово" % len(messages))
-            for m in messages[:3]:
+            print("  --dry: не отправлено; горячих %d, в сводке %d"
+                  % (len(hot_payload), len((digest_payload or {}).get("items", []))))
+            for h in hot_payload[:2]:
                 print("  " + "-" * 60)
-                print(m[:700])
+                print(h["text"][:700])
         return 0
 
-    ok, errs = notify.send_batch(messages)
+    ok, err = notify.deliver(hot=hot_payload, digest=digest_payload)
     if ok:
         for item_id, tier in ids:
             db.mark_sent(conn, item_id, tier, now)
@@ -336,8 +361,7 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
             db.kv_set(conn, "last_digest", now)
         conn.commit()
     if verbose:
-        print("  отправлено: %d/%d %s" % (ok, len(messages),
-                                          ("— " + "; ".join(errs[:2])) if errs else ""))
+        print("  отправлено сообщений: %d %s" % (ok, ("— " + err) if err else ""))
     return ok
 
 

@@ -130,6 +130,40 @@ def send(text, token=None, chat_id=None, preview=True):
         return False, str(e)[:160]
 
 
+def deliver(hot=None, digest=None, broadcast=None):
+    """
+    Разослать подписчикам через Worker; без него — напрямую владельцу.
+
+    Worker знает подписчиков и их личные категории и сам раздаёт каждому
+    своё, с кнопками «Карточка идеи» и «В работу». Если Worker недоступен
+    или ответил ошибкой, горячее уходит владельцу напрямую, как раньше:
+    потерять находку из-за сбоя рассылки хуже, чем получить её без кнопок.
+    Возвращает (сколько сообщений ушло, ошибка).
+    """
+    hot, broadcast = hot or [], broadcast or []
+    url = os.environ.get("WORKER_URL", "").strip()
+    secret = os.environ.get("LS_INGEST_SECRET", "").strip()
+    worker_err = None
+    if url and secret:
+        try:
+            r = requests.post(url.rstrip("/") + "/notify", timeout=90,
+                              headers={"x-ingest-secret": secret},
+                              json={"hot": hot, "digest": digest, "broadcast": broadcast})
+            if r.status_code == 200:
+                return int(r.json().get("sent", 0)), None
+            worker_err = "Worker ответил %d" % r.status_code
+        except (requests.RequestException, ValueError) as e:
+            worker_err = "Worker недоступен: %s" % str(e)[:100]
+    msgs = [h["text"] for h in hot]
+    if digest and digest.get("items"):
+        msgs.append("%s — %d\n\n%s" % (digest.get("head", "📋 <b>Сводка</b>"), len(digest["items"]),
+                                       "\n".join(d["line"] for d in digest["items"])))
+    msgs += broadcast
+    ok, errs = send_batch(msgs)
+    err = "; ".join(filter(None, [worker_err] + errs[:1])) or None
+    return ok, err
+
+
 def send_batch(messages, pause=1.2, **kw):
     """
     Несколько сообщений подряд. Пауза обязательна: Telegram режет

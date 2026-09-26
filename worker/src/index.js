@@ -529,7 +529,17 @@ async function handleUpdate(env, update) {
     return;
   }
 
-  if (data === "cats") {
+  if (data.startsWith("idea:")) {
+    await ideaForChat(env, chatId, data.slice(5));
+  } else if (data.startsWith("fav:")) {
+    const f = await findFinding(env, data.slice(4));
+    if (f) await saveFav(env, chatId, f);
+    await tg(env, "sendMessage", {
+      chat_id: chatId,
+      text: f ? "⭐ Взято в работу — во вкладке «В работе» приложения." : "Эта находка уже выпала из свежего среза.",
+      reply_markup: f ? { inline_keyboard: [[{ text: "📱 Открыть приложение", web_app: { url: APP_URL } }]] } : undefined,
+    });
+  } else if (data === "cats") {
     await categories(env, chatId);
   } else if (data.startsWith("cat:")) {
     const parts = data.split(":");
@@ -624,6 +634,217 @@ async function watchdog(env, now) {
     parse_mode: "HTML",
   });
   await setMeta(env, "last_stale_alert", now);
+}
+
+// ---------------------------------------------------------------------------
+// Карточка идеи: «почему сейчас», кто платит, аналоги в Казахстане и СНГ,
+// MVP на две недели, главный риск. Рынок — Казахстан первым (решение
+// владельца 2026-09-26), затем англоязычный.
+//
+// Аналоги ищет сама модель встроенным веб-поиском Groq (browser_search):
+// память модели для этого не годится — она придумала бы правдоподобные
+// названия. В карточку попадают только найденные с адресом.
+//
+// Один запрос с поиском — около 24 тыс. токенов (замерено 2026-09-26),
+// поэтому карточка собирается только по нажатию, одна на находку и общая
+// для всех, и с суточными пределами — иначе бесплатная квота Groq ушла
+// бы за десяток нажатий.
+// ---------------------------------------------------------------------------
+const IDEA_MAX_PER_DAY = 40;
+const IDEA_MAX_PER_USER = 10;
+
+const IDEA_SYSTEM = `You prepare an "idea card" for a founder in Kazakhstan who builds or localizes products that just launched abroad. Market priority: Kazakhstan first, then Russia and the CIS, then the English-speaking world.
+Use web search to check whether analogs already exist in Kazakhstan, then in Russia/CIS. Search in Russian and Kazakh as well as English.
+Reply with JSON only, no markdown:
+{"why_now": "...", "who_pays": "...", "analogs": [{"name": "...", "url": "...", "market": "KZ|RU|CIS|global", "note": "..."}], "analog_verdict": "...", "mvp": ["...", "..."], "main_risk": "...", "localization": "..."}
+Rules: every text field in Russian, plain and short. why_now: 1-2 sentences grounded ONLY in the traction numbers given and the product itself — never invent numbers. who_pays: who exactly pays and roughly how. analogs: only services you actually found, each with a real URL; at most 4; an empty list if none. analog_verdict: one line — is the Kazakhstan/CIS niche free, partly taken or crowded. mvp: 3-5 bullets a small team can ship in two weeks. main_risk: one line. localization: one line on what to adapt for Kazakhstan (payments such as Kaspi, Russian/Kazakh language, local rules).`;
+
+async function ideaCard(env, f, uid) {
+  const cached = await env.DB.prepare("SELECT data FROM idea_cards WHERE item_id = ?1")
+    .bind(Number(f.id)).first().catch(() => null);
+  if (cached && cached.data) return { card: JSON.parse(cached.data), cached: true };
+  const day = new Date().toISOString().slice(0, 10);
+  const total = Number((await meta(env, "idea_calls_" + day)) || 0);
+  const mine = Number((await meta(env, `idea_user_${uid}_${day}`)) || 0);
+  if (total >= IDEA_MAX_PER_DAY) return { error: "На сегодня лимит карточек исчерпан — завтра снова можно." };
+  if (mine >= IDEA_MAX_PER_USER) return { error: `У вас на сегодня уже ${mine} карточек — это предел, завтра снова можно.` };
+  if (!env.LS_GROQ_KEY) return { error: "ИИ не подключён." };
+
+  const ai = f.ai || {};
+  const user = [
+    `Product: ${f.title}`,
+    f.product_url ? `URL: ${f.product_url}` : "",
+    ai.summary ? `What it is: ${ai.summary}` : `Post: ${(f.body || "").slice(0, 800)}`,
+    `Source: ${f.source}; traction numbers: likes/points ${f.likes ?? "?"}, replies ${f.replies ?? "?"}, bookmarks ${f.bookmarks ?? "?"}; score ${f.score} because: ${f.breakdown || "n/a"}`,
+  ].filter(Boolean).join("\n");
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 28000);
+  let r;
+  try {
+    r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: { authorization: `Bearer ${env.LS_GROQ_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-120b",
+        messages: [{ role: "system", content: IDEA_SYSTEM }, { role: "user", content: user }],
+        tools: [{ type: "browser_search" }],
+        tool_choice: "auto",
+        reasoning_effort: "low",
+        max_completion_tokens: 2000,
+        temperature: 0.2,
+      }),
+    });
+  } catch (e) {
+    return { error: "Поиск аналогов не уложился по времени — нажмите ещё раз." };
+  } finally {
+    clearTimeout(timer);
+  }
+  await setMeta(env, "idea_calls_" + day, total + 1);
+  await setMeta(env, `idea_user_${uid}_${day}`, mine + 1);
+  if (r.status === 429) return { error: "Бесплатная квота ИИ на сейчас исчерпана — попробуйте через несколько минут." };
+  if (!r.ok) return { error: `ИИ ответил ${r.status} — попробуйте позже.` };
+  let card;
+  try {
+    const content = ((await r.json()).choices[0].message.content || "").trim()
+      .replace(/^```(?:json)?/, "").replace(/```$/, "").trim();
+    card = JSON.parse(content.slice(content.indexOf("{"), content.lastIndexOf("}") + 1));
+  } catch {
+    return { error: "ИИ вернул неразборчивый ответ — нажмите ещё раз." };
+  }
+  if (!card || typeof card.why_now !== "string") return { error: "Карточка не собралась — нажмите ещё раз." };
+  card.analogs = (Array.isArray(card.analogs) ? card.analogs : [])
+    .filter((a) => a && a.name && /^https?:\/\//.test(a.url || "")).slice(0, 4);
+  await env.DB.prepare("INSERT OR REPLACE INTO idea_cards (item_id, data, ts) VALUES (?1, ?2, ?3)")
+    .bind(Number(f.id), JSON.stringify(card), Math.floor(Date.now() / 1000)).run();
+  return { card, cached: false };
+}
+
+function ideaCardHtml(f, card) {
+  const lines = [`🧩 <b>Карточка идеи</b> — ${esc(f.title)}`, ""];
+  lines.push(`⏱ <b>Почему сейчас.</b> ${esc(card.why_now)}`);
+  if (card.who_pays) lines.push(`💳 <b>Кто платит.</b> ${esc(card.who_pays)}`);
+  lines.push("", `🇰🇿 <b>Аналоги в Казахстане и СНГ.</b> ${esc(card.analog_verdict || "")}`);
+  for (const a of card.analogs || []) {
+    lines.push(`• <a href="${esc(a.url)}">${esc(a.name)}</a>${a.market ? ` (${esc(a.market)})` : ""}${a.note ? " — " + esc(a.note) : ""}`);
+  }
+  if ((card.mvp || []).length) {
+    lines.push("", "🛠 <b>MVP за две недели</b>");
+    for (const m of card.mvp.slice(0, 5)) lines.push("• " + esc(m));
+  }
+  if (card.main_risk) lines.push("", `⚠️ <b>Главный риск.</b> ${esc(card.main_risk)}`);
+  if (card.localization) lines.push(`🌍 <b>Под Казахстан.</b> ${esc(card.localization)}`);
+  if (f.product_url) lines.push("", `<a href="${esc(f.product_url)}">${esc(f.domain || "продукт")}</a> · <a href="${esc(f.url || "")}">исходный пост</a>`);
+  return lines.join("\n").slice(0, 4000);
+}
+
+async function ensureTables(env) {
+  await env.DB.batch([
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS idea_cards (item_id INTEGER PRIMARY KEY, data TEXT, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS prefs (user_id TEXT PRIMARY KEY, topics TEXT, ts INTEGER)"),
+  ]);
+}
+
+async function findFinding(env, id) {
+  const snap = await loadSnapshot(env);
+  return ((snap && snap.findings) || []).find((x) => Number(x.id) === Number(id)) || null;
+}
+
+async function ideaForChat(env, chatId, id) {
+  await ensureTables(env);
+  const f = await findFinding(env, id);
+  if (!f) {
+    await tg(env, "sendMessage", { chat_id: chatId, text: "Эта находка уже выпала из свежего среза — карточку для неё не собрать." });
+    return;
+  }
+  await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
+  const res = await ideaCard(env, f, chatId);
+  await tg(env, "sendMessage", {
+    chat_id: chatId,
+    text: res.error ? res.error : ideaCardHtml(f, res.card),
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+  });
+}
+
+// --- избранное из чата ------------------------------------------------------
+async function saveFav(env, uid, f) {
+  await env.DB.prepare(
+    "CREATE TABLE IF NOT EXISTS favorites (user_id TEXT, item_id INTEGER, card TEXT, ts INTEGER, " +
+      "PRIMARY KEY (user_id, item_id))"
+  ).run();
+  const card = { id: f.id, title: f.title, url: f.url, product_url: f.product_url, domain: f.domain,
+    source: f.source, author: f.author, score: f.score, tier: f.tier, topics: f.topics, ai: f.ai,
+    body: (f.body || "").slice(0, 400), first_seen: f.first_seen };
+  await env.DB.prepare(
+    "INSERT OR REPLACE INTO favorites (user_id, item_id, card, ts) VALUES (?1, ?2, ?3, ?4)"
+  ).bind(String(uid), Number(f.id), JSON.stringify(card), Math.floor(Date.now() / 1000)).run();
+}
+
+// --- личные категории и рассылка ---------------------------------------------
+async function prefsOf(env, uid) {
+  const row = await env.DB.prepare("SELECT topics FROM prefs WHERE user_id = ?1")
+    .bind(String(uid)).first().catch(() => null);
+  if (!row || !row.topics) return null;
+  try {
+    const t = JSON.parse(row.topics);
+    return Array.isArray(t) && t.length ? t : null;
+  } catch {
+    return null;
+  }
+}
+
+async function subscribers(env) {
+  const owners = (env.LS_BOT_ALLOW || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const { results } = await env.DB.prepare("SELECT chat_id FROM access").all().catch(() => ({ results: [] }));
+  return [...new Set([...owners, ...(results || []).map((r) => String(r.chat_id))])];
+}
+
+const wants = (topics, filter) => !filter || (topics || []).some((t) => filter.includes(t));
+
+/**
+ * Рассылка находок подписчикам по их категориям.
+ *
+ * Раньше прогон слал уведомления сам и только владельцу: друг с кодом
+ * доступа видел кнопки, но ни одного уведомления не получал. Теперь прогон
+ * отдаёт горячее сюда, а Worker, который знает подписчиков и их
+ * категории, раздаёт каждому своё. Для подписки это обязательное условие.
+ */
+async function notifyAll(env, body) {
+  const subs = await subscribers(env);
+  let sent = 0;
+  for (const uid of subs) {
+    const filter = await prefsOf(env, uid);
+    for (const h of body.hot || []) {
+      if (!wants(h.topics, filter)) continue;
+      const r = await tg(env, "sendMessage", {
+        chat_id: uid,
+        text: h.text,
+        parse_mode: "HTML",
+        reply_markup: { inline_keyboard: [[
+          { text: "🧩 Карточка идеи", callback_data: `idea:${h.id}` },
+          { text: "⭐ В работу", callback_data: `fav:${h.id}` },
+        ]] },
+      });
+      if (r && r.ok) sent++;
+    }
+    const lines = ((body.digest && body.digest.items) || []).filter((d) => wants(d.topics, filter));
+    if (lines.length) {
+      const r = await tg(env, "sendMessage", {
+        chat_id: uid,
+        text: `${body.digest.head || "📋 <b>Сводка</b>"} — ${lines.length}\n\n` + lines.map((d) => d.line).join("\n"),
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      });
+      if (r && r.ok) sent++;
+    }
+    for (const text of body.broadcast || []) {
+      const r = await tg(env, "sendMessage", { chat_id: uid, text, parse_mode: "HTML", disable_web_page_preview: true });
+      if (r && r.ok) sent++;
+    }
+  }
+  return { subscribers: subs.length, sent };
 }
 
 /**
@@ -722,7 +943,36 @@ export default {
         return json(snap || { findings: [] });
       }
       if (url.pathname === "/api/fav") return favorites(env, request, user, url);
+      if (url.pathname === "/api/idea" && request.method === "GET") {
+        await ensureTables(env);
+        const f = await findFinding(env, url.searchParams.get("id"));
+        if (!f) return json({ error: "Находка уже выпала из свежего среза." }, 404);
+        const res = await ideaCard(env, f, user.id);
+        return json(res.error ? { error: res.error } : { card: res.card });
+      }
+      if (url.pathname === "/api/prefs") {
+        await ensureTables(env);
+        if (request.method === "POST") {
+          const body = await request.json().catch(() => null);
+          const topics = Array.isArray(body && body.topics) ? body.topics.map(String).slice(0, 60) : [];
+          await env.DB.prepare("INSERT OR REPLACE INTO prefs (user_id, topics, ts) VALUES (?1, ?2, ?3)")
+            .bind(String(user.id), JSON.stringify(topics), Math.floor(Date.now() / 1000)).run();
+          return json({ ok: true, topics });
+        }
+        return json({ topics: (await prefsOf(env, user.id)) || [] });
+      }
       return json({ error: "не найдено" }, 404);
+    }
+
+    if (request.method === "POST" && url.pathname === "/notify") {
+      // Рассылка от прогона в Actions — тем же секретом, что и срез.
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) {
+        return new Response("нет", { status: 403 });
+      }
+      await ensureTables(env);
+      const body = await request.json().catch(() => null);
+      if (!body) return json({ error: "не JSON" }, 400);
+      return json(await notifyAll(env, body));
     }
 
     if (request.method === "GET" && url.pathname === "/") {

@@ -235,11 +235,12 @@ def maybe_send_weekly(conn, now, dry=False, lang="ru"):
     if dry:
         print(text)
         return False
-    ok, err = notify.send(text, preview=False)
+    # Всем подписчикам через Worker; без него — владельцу напрямую.
+    ok, err = notify.deliver(broadcast=[text])
     if ok:
         db.kv_set(conn, "last_trends", now)
         conn.commit()
-    print("  тренды недели: %s" % ("отправлены" if ok else "не ушли — %s" % err))
+    print("  тренды недели: %s" % ("отправлены (%d)" % ok if ok else "не ушли — %s" % err))
     return ok
 
 
