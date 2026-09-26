@@ -63,6 +63,10 @@ jobs:
       # час на адрес) без заведения личного токена.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       LS_INGEST_SECRET: ${{ secrets.LS_INGEST_SECRET }}
+      # ИИ: Groq, бесплатный тариф — выжимки, вердикт «продукт ли это»,
+      # темы для трендов. Без ключа шаг молча пропускается.
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      LS_LANG: ru
       WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
 
     steps:

@@ -12,3 +12,4 @@ __pycache__/
 out/
 .access-code
 .ingest-secret
+worker/src/demo.json

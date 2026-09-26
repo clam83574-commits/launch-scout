@@ -21,7 +21,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
+import ai                  # noqa: E402
 import db                  # noqa: E402
+import os                  # noqa: E402
 import score as scoring    # noqa: E402
 from common import load_env, setup_logging  # noqa: E402
 
@@ -132,8 +134,72 @@ def snapshot(conn, now, window_hours=168, top_all=200, top_day=150):
             "breakdown": breakdown_ru(b), "likes": m.get("likes"),
             "replies": m.get("replies"), "reposts": m.get("reposts"),
             "bookmarks": m.get("bookmarks"), "views": m.get("views"),
+            "ai": _ai_brief(conn, item["item_id"]),
+            "topics": _topics(conn, item["item_id"]),
         })
     return picked
+
+
+def _topics(conn, item_id):
+    """Темы находки (для категорий в боте и приложении) или []."""
+    try:
+        row = conn.execute("SELECT topics FROM item_topics WHERE item_id = ?",
+                           (item_id,)).fetchone()
+    except Exception:
+        return []
+    if not row or not row["topics"]:
+        return []
+    try:
+        return [x for x in json.loads(row["topics"]) if x != "other"]
+    except ValueError:
+        return []
+
+
+def daily_series(conn, now, days=14, top=3):
+    """
+    Запуски по дням с разбивкой на самые массовые темы — для графика.
+
+    Серий три плюс «прочее», не больше: так требует палитра — первые три
+    цвета различимы при любой форме цветового зрения, дальше уже нет.
+    Посевные записи не считаются: у них дата — момент запуска системы.
+    """
+    start = now - days * 86400
+    try:
+        rows = conn.execute(
+            "SELECT i.first_seen, t.topics FROM items i "
+            "JOIN item_topics t ON t.item_id = i.item_id "
+            "WHERE i.first_seen >= ? AND i.bootstrap = 0", (start,)).fetchall()
+    except Exception:
+        return None
+    day_keys = [time.strftime("%Y-%m-%d", time.gmtime(now - (days - 1 - d) * 86400))
+                for d in range(days)]
+    per_day, totals = {k: {} for k in day_keys}, {}
+    for r in rows:
+        k = time.strftime("%Y-%m-%d", time.gmtime(r["first_seen"]))
+        if k not in per_day:
+            continue
+        try:
+            tps = [x for x in json.loads(r["topics"] or "[]") if x != "other"] or ["other"]
+        except ValueError:
+            tps = ["other"]
+        main = tps[0]
+        per_day[k][main] = per_day[k].get(main, 0) + 1
+        if main != "other":
+            totals[main] = totals.get(main, 0) + 1
+    leaders = [tp for tp, _ in sorted(totals.items(), key=lambda kv: -kv[1])[:top]]
+    series = {tp: [per_day[k].get(tp, 0) for k in day_keys] for tp in leaders}
+    series["other"] = [sum(v for tp, v in per_day[k].items() if tp not in leaders)
+                       for k in day_keys]
+    return {"days": day_keys, "leaders": leaders, "series": series}
+
+
+def _ai_brief(conn, item_id):
+    """Выжимка для карточки бота — только то, что карточка показывает."""
+    note = ai.get_note(conn, item_id, os.environ.get("LS_LANG", "ru").strip() or "ru")
+    if not note:
+        return None
+    return {k: note.get(k) for k in ("summary", "clone_effort", "clone_note",
+                                     "monetization", "kind")}
 
 
 def main():
@@ -151,6 +217,15 @@ def main():
         conn = db.connect()
         now = int(time.time())
         data = {"updated": now, "findings": snapshot(conn, now, args.window_hours)}
+        try:
+            import trends
+            st = trends.compute(conn, now)
+            data["trends"] = {"stats": st,
+                              "text": trends.render(st, trends.story(conn, st, now)),
+                              "topic_ru": trends.TOPIC_RU}
+            data["daily"] = daily_series(conn, now)
+        except Exception as e:  # тренды — надстройка, срез без них всё равно нужен
+            print("тренды не посчитаны: %s" % e)
         out = Path(args.json)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")),

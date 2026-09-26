@@ -25,8 +25,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
+import ai                      # noqa: E402
 import db                      # noqa: E402
 import notify                  # noqa: E402
+import os                      # noqa: E402
 import score as scoring        # noqa: E402
 from common import domain_age_days, load_env, setup_logging  # noqa: E402
 from sources import github as gh_src          # noqa: E402
@@ -296,7 +298,8 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
            and not db.already_sent(conn, e[0]["item_id"], scoring.HOT)]
     messages, ids = [], []
     for item, metrics, total, tier, breakdown in hot:
-        messages.append(notify.format_item(item, metrics, total, tier, breakdown))
+        messages.append(notify.format_item(item, metrics, total, tier, breakdown,
+                                           note=ai.get_note(conn, item["item_id"], _lang())))
         ids.append((item["item_id"], scoring.HOT))
 
     if digest:
@@ -410,7 +413,7 @@ def send_top(conn, n=10, now=None, dry=False, mark=False):
     rows = top_items(conn, n=n, now=now)
     if not rows:
         return 0, ["в базе пока нечего показывать"]
-    messages = [notify.format_item(it, m, total, tier, b)
+    messages = [notify.format_item(it, m, total, tier, b, note=ai.get_note(conn, it["item_id"], _lang()))
                 for total, it, m, tier, b in rows]
     if dry:
         for msg in messages[:2]:
@@ -519,12 +522,58 @@ def run(sources, dry=False, digest=False, digest_auto=False):
     if d:
         print("  возраст домена уточнён: %d" % d)
     evaluated = evaluate(conn, now)
+    evaluated = apply_ai(conn, evaluated, now)
     hot = sum(1 for e in evaluated if e[3] == scoring.HOT)
     dig = sum(1 for e in evaluated if e[3] == scoring.DIGEST)
     print("  оценено %d: горячих %d, в сводку %d" % (len(evaluated), hot, dig))
     dispatch(conn, evaluated, now, dry=dry, digest=digest)
+    try:
+        import trends
+        trends.maybe_send_weekly(conn, now, dry=dry, lang=_lang())
+    except Exception as e:
+        print("  тренды недели: ошибка %s" % e)
     conn.close()
     return 0
+
+
+AI_PER_RUN = 20
+
+
+def _lang():
+    """Язык выжимок: LS_LANG из окружения, по умолчанию русский."""
+    return os.environ.get("LS_LANG", "ru").strip() or "ru"
+
+
+def apply_ai(conn, evaluated, now):
+    """
+    ИИ-разбор кандидатов в уведомление и его вердикт.
+
+    Порядок важен: сначала цифры решают, кто вообще кандидат (так модель
+    читает десятки записей в сутки, а не тысячи), потом модель снимает
+    то, что по цифрам похоже на запуск, а по смыслу им не является.
+    Без ключа шаг ничего не делает — система работает как раньше.
+    """
+    lang = os.environ.get("LS_LANG", "ru").strip() or "ru"
+    ok, why = ai.available()
+    if not ok:
+        return evaluated
+    cands = [e[0] for e in evaluated if e[3] == scoring.HOT]
+    cands += [e[0] for e in evaluated if e[3] == scoring.DIGEST]
+    ai.annotate(conn, cands, now, lang=lang)
+    ai.tag_items(conn, now)
+    out = []
+    for item, metrics, total, tier, breakdown in evaluated:
+        note = ai.get_note(conn, item["item_id"], lang)
+        demote, flag = ai.verdict(note, item["source"])
+        if flag:
+            breakdown = dict(breakdown)
+            breakdown[flag] = 0.0
+        if demote and tier != scoring.ARCHIVE:
+            tier = scoring.ARCHIVE
+            scoring.save_score(conn, item["item_id"], now, total, tier, breakdown)
+        out.append((item, metrics, total, tier, breakdown))
+    conn.commit()
+    return out
 
 
 def main():

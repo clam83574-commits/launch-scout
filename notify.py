@@ -41,8 +41,17 @@ def _num(n):
     return str(n)
 
 
-def format_item(item, metrics, total, tier, breakdown):
-    """Одно уведомление в HTML для Telegram."""
+EFFORT_RU = {"days": "дни", "weeks": "недели", "months": "месяцы", "unclear": "неясно"}
+
+
+def format_item(item, metrics, total, tier, breakdown, note=None):
+    """
+    Одно уведомление в HTML для Telegram.
+
+    С ИИ-разбором выжимка идёт первой — это то, ради чего сообщение
+    открывают, — а исходный пост ужимается до строки контекста. Без
+    разбора всё как раньше: пост целиком.
+    """
     head = "🔥" if tier == "hot" else "•"
     src = SRC_RU.get(item["source"], item["source"])
     lines = ["%s <b>%s</b>  <code>%s</code>" % (head, _esc(item["title"] or "без названия"), total)]
@@ -55,10 +64,22 @@ def format_item(item, metrics, total, tier, breakdown):
             sub += " (%s подписчиков)" % _num(item["author_followers"])
     lines.append("<i>%s</i>" % sub)
 
+    if note and note.get("summary"):
+        lines.append("")
+        lines.append("🧠 " + _esc(note["summary"]))
+        effort = EFFORT_RU.get(note.get("clone_effort"), note.get("clone_effort") or "")
+        if effort:
+            extra = " — " + _esc(note["clone_note"]) if note.get("clone_note") else ""
+            lines.append("🛠 Повторить: %s%s" % (effort, extra))
+        money = (note.get("monetization") or "").strip()
+        if money and money.lower() not in ("not visible", "не видно", "не указано"):
+            lines.append("💰 " + _esc(money))
+
     body = (item["body"] or "").strip()
     if body and body != (item["title"] or "").strip():
         lines.append("")
-        lines.append(_esc(body[:420]))
+        lines.append(_esc(body[:160] + ("…" if len(body) > 160 else ""))
+                     if note else _esc(body[:420]))
 
     # Цифры: только то, что реально измерено, без прочерков-заглушек.
     nums = []

@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>launch-scout</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  /* Цвета интерфейса берутся из темы Telegram (он сам выставляет эти
+     переменные), запасные значения — для просмотра в обычном браузере. */
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --bg2: var(--tg-theme-secondary-bg-color, #f1f1f4);
+    --text: var(--tg-theme-text-color, #111111);
+    --hint: var(--tg-theme-hint-color, #6b6b70);
+    --link: var(--tg-theme-link-color, #2a78d6);
+    --btn: var(--tg-theme-button-color, #2a78d6);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --line: color-mix(in srgb, var(--hint) 22%, transparent);
+    /* Палитра графиков: первые три слота проверенной палитры, прогнаны
+       validate_palette.js на фонах Telegram #ffffff / #212121 / #17212b —
+       все проверки пройдены. Бирюзовый на белом 2.82:1, поэтому у графика
+       всегда подписанная легенда и вид «таблицей». */
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s-other: #9a9994;
+    --hot: #d03b3b;
+  }
+  /* Тёмная тема: цвета серий — тёмные шаги той же палитры (проверены на
+     #212121 и #17212b), запасной фон — тёмно-синий Telegram. */
+  :root[data-theme="dark"] {
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --bg2: var(--tg-theme-secondary-bg-color, #232e3c);
+    --text: var(--tg-theme-text-color, #f5f5f5);
+    --hint: var(--tg-theme-hint-color, #8b98a5);
+    --link: var(--tg-theme-link-color, #6ab3f3);
+    --btn: var(--tg-theme-button-color, #5288c1);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s-other: #6f6e69;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.4 -apple-system, "Segoe UI", Roboto, system-ui, sans-serif; }
+  body { padding: 0 0 calc(64px + env(safe-area-inset-bottom)); }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--line); }
+  .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: 0 0 auto; border: 1px solid var(--line); background: var(--bg2); color: var(--text);
+    border-radius: 16px; padding: 5px 11px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--btn); color: var(--btn-text); border-color: var(--btn); }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; color: var(--text); padding: 5px 10px; font-size: 13px; }
+  .seg button[aria-pressed="true"] { background: var(--bg2); font-weight: 600; }
+  main { padding: 8px 14px; }
+  .card { background: var(--bg2); border-radius: 12px; padding: 10px 12px; margin: 8px 0; cursor: pointer; }
+  .card h3 { margin: 0 0 3px; font-size: 15px; line-height: 1.3; }
+  .meta { color: var(--hint); font-size: 12.5px; }
+  .sum { margin: 5px 0 0; font-size: 14px; }
+  .score { float: right; font-variant-numeric: tabular-nums; color: var(--hint); font-size: 12.5px; margin-left: 8px; }
+  .hot { color: var(--hot); font-weight: 600; }
+  .empty { color: var(--hint); text-align: center; padding: 40px 16px; }
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; background: var(--bg);
+    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+  nav button { flex: 1; border: 0; background: transparent; color: var(--hint); padding: 10px 0 11px; font-size: 13px; }
+  nav button[aria-current="page"] { color: var(--btn); font-weight: 600; }
+  section[hidden] { display: none; }
+  .hero { display: flex; gap: 10px; margin: 6px 0 4px; }
+  .hero div { flex: 1; background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
+  .hero b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+  .hero span { color: var(--hint); font-size: 12.5px; }
+  h2 { font-size: 15px; margin: 18px 0 6px; }
+  .note { color: var(--hint); font-size: 12.5px; margin: 2px 0 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; margin: 6px 0; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .chart { position: relative; }
+  .tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px;
+    border-radius: 8px; padding: 6px 8px; white-space: nowrap; transform: translate(-50%, -100%); display: none; }
+  .linkbtn { border: 0; background: none; color: var(--link); padding: 4px 0; font-size: 13px; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 3px 4px; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  .bars .bar { display: grid; grid-template-columns: 38% 1fr auto; gap: 8px; align-items: center;
+    padding: 5px 0; cursor: pointer; font-size: 13.5px; }
+  .bars .track { height: 10px; background: color-mix(in srgb, var(--hint) 12%, transparent); border-radius: 0 4px 4px 0; }
+  .bars .fill { height: 100%; background: var(--s1); border-radius: 0 4px 4px 0; }
+  .bars .val { color: var(--hint); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  ul.plain { list-style: none; padding: 0; margin: 0; }
+  ul.plain li { padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .story { white-space: pre-wrap; background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
+  dialog { border: 0; border-radius: 16px 16px 0 0; padding: 0; width: 100%; max-width: 640px; margin: auto auto 0;
+    background: var(--bg); color: var(--text); max-height: 88vh; }
+  dialog::backdrop { background: rgb(0 0 0 / .45); }
+  .dlg { padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); overflow-y: auto; max-height: 88vh; }
+  .dlg h3 { margin: 0 34px 4px 0; font-size: 17px; }
+  .x { position: absolute; top: 10px; right: 12px; border: 0; background: var(--bg2); color: var(--text);
+    width: 30px; height: 30px; border-radius: 15px; font-size: 16px; }
+  .kv { margin: 10px 0; }
+  .kv div { margin: 4px 0; }
+  .primary { width: 100%; border: 0; border-radius: 12px; background: var(--btn); color: var(--btn-text);
+    padding: 12px; font-size: 15px; font-weight: 600; margin-top: 12px; }
+  .links a { color: var(--link); margin-right: 14px; }
+  .why { color: var(--hint); font-size: 12.5px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header id="hdr">
+  <div class="chips" id="cats" role="toolbar" aria-label="Категории"></div>
+  <div class="row">
+    <div class="seg" id="sort">
+      <button data-v="score" aria-pressed="true">Горячие</button>
+      <button data-v="new" aria-pressed="false">Новые</button>
+    </div>
+    <div class="seg" id="win">
+      <button data-v="24" aria-pressed="false">Сутки</button>
+      <button data-v="168" aria-pressed="true">Неделя</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="feed"></section>
+
+  <section id="trends" hidden>
+    <div class="hero" id="hero"></div>
+    <h2>Запуски по дням</h2>
+    <div class="legend" id="legend"></div>
+    <div class="chart" id="daily"><div class="tip" id="tip"></div></div>
+    <button class="linkbtn" id="tableToggle">Показать таблицей</button>
+    <div id="dailyTable" hidden></div>
+    <h2>Больше всего запусков за неделю</h2>
+    <div class="note">Нажмите на тему — откроется лента по ней.</div>
+    <div class="bars" id="share"></div>
+    <div id="risingBlock"></div>
+    <div id="newBlock"></div>
+    <div id="storyBlock"></div>
+  </section>
+
+  <section id="saved" hidden></section>
+</main>
+
+<nav>
+  <button data-tab="feed" aria-current="page">Лента</button>
+  <button data-tab="trends">Тренды</button>
+  <button data-tab="saved">В работе</button>
+</nav>
+
+<dialog id="dlg"><button class="x" id="dlgClose" aria-label="Закрыть">✕</button><div class="dlg" id="dlgBody"></div></dialog>
+
+<script>
+(() => {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const demo = !(tg && tg.initData) && /[?&]demo\b/.test(location.search);
+  if (tg) { tg.ready(); tg.expand(); }
+  // Внутри Telegram тему сообщает клиент; вне его библиотека всегда
+  // отвечает «light», поэтому в браузере берём системную настройку.
+  const applyTheme = () => {
+    document.documentElement.dataset.theme = tg && tg.initData ? tg.colorScheme
+      : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  };
+  applyTheme();
+  if (tg && tg.onEvent) tg.onEvent("themeChanged", () => { applyTheme(); if (state.tab === "trends") renderTrends(); });
+
+  const SRC = { x: "X", hn: "Hacker News", yc: "Y Combinator", gh: "GitHub" };
+  const EFF = { days: "дни", weeks: "недели", months: "месяцы", unclear: "неясно" };
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const num = (n) => n == null ? "" : n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : String(n);
+  const now = () => Date.now() / 1000;
+
+  const state = { data: null, cat: null, sort: "score", win: 168, tab: "feed", fav: new Map() };
+
+  async function api(path, opts = {}) {
+    if (demo) return demoApi(path, opts);
+    const r = await fetch(path, { ...opts, headers: { "x-init-data": tg ? tg.initData : "", "content-type": "application/json", ...(opts.headers || {}) } });
+    if (r.status === 401) throw new Error("auth");
+    return r.json();
+  }
+  // Демо-режим — только для проверки вёрстки в браузере: данные из
+  // локального файла, избранное в памяти. На боевом адресе файла нет.
+  async function demoApi(path, opts) {
+    if (path === "/api/data") return (await fetch("./demo.json")).json();
+    if (path.startsWith("/api/fav")) {
+      if (opts.method === "POST") { const b = JSON.parse(opts.body); state.fav.set(b.id, { ...b, saved: now() }); }
+      if (opts.method === "DELETE") state.fav.delete(Number(new URL(path, location.href).searchParams.get("id")));
+      return { items: [...state.fav.values()] };
+    }
+  }
+
+  const ru = (t) => (state.data && state.data.trends && state.data.trends.topic_ru && state.data.trends.topic_ru[t]) || t;
+
+  function pool() {
+    const cutoff = now() - state.win * 3600, seen = new Set(), out = [];
+    for (const f of state.data.findings || []) {
+      if (f.first_seen < cutoff) continue;
+      if (state.cat && !(f.topics || []).includes(state.cat)) continue;
+      if (f.domain) { if (seen.has(f.domain)) continue; seen.add(f.domain); }
+      out.push(f);
+    }
+    out.sort(state.sort === "new" ? (a, b) => b.first_seen - a.first_seen : (a, b) => b.score - a.score);
+    return out;
+  }
+
+  function renderCats() {
+    const cutoff = now() - state.win * 3600, count = {};
+    for (const f of state.data.findings || []) {
+      if (f.first_seen < cutoff) continue;
+      for (const t of f.topics || []) count[t] = (count[t] || 0) + 1;
+    }
+    const tops = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 14);
+    const chips = [`<button class="chip" data-cat="" aria-pressed="${!state.cat}">Все</button>`]
+      .concat(tops.map(([t, n]) => `<button class="chip" data-cat="${esc(t)}" aria-pressed="${state.cat === t}">${esc(ru(t))} ${n}</button>`));
+    $("#cats").innerHTML = chips.join("");
+  }
+
+  function cardHtml(f) {
+    const hot = f.tier === "hot" ? '<span class="hot">🔥 </span>' : "";
+    const who = [SRC[f.source] || f.source, f.author ? "@" + f.author : ""].filter(Boolean).join(" · ");
+    const text = f.ai && f.ai.summary ? f.ai.summary : (f.body || "").slice(0, 160);
+    return `<div class="card" data-id="${f.id}"><span class="score">${f.score}</span><h3>${hot}${esc(f.title)}</h3>
+      <div class="meta">${esc(who)}</div>${text ? `<p class="sum">${esc(text)}</p>` : ""}</div>`;
+  }
+
+  function renderFeed() {
+    renderCats();
+    const items = pool();
+    // В трендах тема считается по ВСЕМ размеченным находкам, а в ленте —
+    // только лучшие из среза. Без этой строки «ИИ-агенты: 11» в графике и
+    // три карточки в ленте выглядели бы как поломка.
+    let note = "";
+    const vol = state.cat && state.data.trends && state.data.trends.stats &&
+      (state.data.trends.stats.volume || []).find((v) => v.topic === state.cat);
+    if (vol && state.win === 168 && vol.cur > items.length)
+      note = `<div class="note">Показаны лучшие ${items.length} из ${vol.cur} за неделю.</div>`;
+    $("#feed").innerHTML = note + (items.length ? items.slice(0, 120).map(cardHtml).join("")
+      : `<div class="empty">За это окно${state.cat ? " в этой категории" : ""} находок нет. Попробуйте «Неделя» или «Все».</div>`);
+  }
+
+  function openItem(f) {
+    const ai = f.ai || {};
+    const nums = [["♥", f.likes], ["💬", f.replies], ["🔁", f.reposts], ["🔖", f.bookmarks], ["👁", f.views]]
+      .filter(([, v]) => v).map(([i, v]) => `${i} ${num(v)}`).join(" · ");
+    const saved = state.fav.has(f.id);
+    $("#dlgBody").innerHTML = `
+      <h3>${f.tier === "hot" ? "🔥 " : ""}${esc(f.title)}</h3>
+      <div class="meta">${esc(SRC[f.source] || f.source)}${f.author ? " · @" + esc(f.author) : ""}${f.author_followers ? " (" + num(f.author_followers) + " подписчиков)" : ""} · балл ${f.score}</div>
+      <div class="kv">
+        ${ai.summary ? `<div>🧠 ${esc(ai.summary)}</div>` : ""}
+        ${ai.clone_effort ? `<div>🛠 Повторить: ${esc(EFF[ai.clone_effort] || ai.clone_effort)}${ai.clone_note ? " — " + esc(ai.clone_note) : ""}</div>` : ""}
+        ${ai.monetization && !/^(not visible|не видно)$/i.test(ai.monetization) ? `<div>💰 ${esc(ai.monetization)}</div>` : ""}
+        ${(f.topics || []).length ? `<div class="meta">${f.topics.map((t) => esc(ru(t))).join(" · ")}</div>` : ""}
+      </div>
+      ${f.body && !ai.summary ? `<p>${esc(f.body.slice(0, 600))}</p>` : ""}
+      ${nums ? `<div>${nums}</div>` : ""}
+      <div class="links" style="margin-top:10px">
+        ${f.url ? `<a href="${esc(f.url)}" data-ext>пост</a>` : ""}
+        ${f.product_url && f.product_url !== f.url ? `<a href="${esc(f.product_url)}" data-ext>${esc(f.domain || "продукт")}</a>` : ""}
+      </div>
+      ${f.breakdown ? `<div class="why">${esc(f.breakdown)}</div>` : ""}
+      <button class="primary" id="favBtn">${saved ? "✓ В работе" : "⭐ Взять в работу"}</button>`;
+    $("#favBtn").onclick = () => toggleFav(f);
+    showDialog();
+  }
+
+  function showDialog() {
+    const d = $("#dlg");
+    if (!d.open) d.showModal();
+    if (tg && tg.BackButton) tg.BackButton.show();
+    history.pushState({ dlg: 1 }, "");
+  }
+  function closeDialog(fromHistory) {
+    const d = $("#dlg");
+    if (!d.open) return;
+    d.close();
+    if (tg && tg.BackButton) tg.BackButton.hide();
+    if (!fromHistory && history.state && history.state.dlg) history.back();
+  }
+  $("#dlgClose").onclick = () => closeDialog();
+  $("#dlg").addEventListener("click", (e) => { if (e.target.id === "dlg") closeDialog(); });
+  $("#dlg").addEventListener("cancel", (e) => { e.preventDefault(); closeDialog(); });
+  addEventListener("popstate", () => closeDialog(true));
+  if (tg && tg.BackButton) tg.BackButton.onClick(() => closeDialog());
+
+  async function loadFav() {
+    const r = await api("/api/fav");
+    state.fav = new Map((r.items || []).map((x) => [x.id, x]));
+  }
+  async function toggleFav(f) {
+    if (state.fav.has(f.id)) {
+      await api("/api/fav?id=" + f.id, { method: "DELETE" });
+      state.fav.delete(f.id);
+    } else {
+      const card = { id: f.id, title: f.title, url: f.url, product_url: f.product_url, domain: f.domain,
+        source: f.source, author: f.author, score: f.score, tier: f.tier, topics: f.topics, ai: f.ai, body: (f.body || "").slice(0, 400), first_seen: f.first_seen };
+      await api("/api/fav", { method: "POST", body: JSON.stringify(card) });
+      state.fav.set(f.id, { ...card, saved: now() });
+    }
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+    $("#favBtn").textContent = state.fav.has(f.id) ? "✓ В работе" : "⭐ Взять в работу";
+    if (state.tab === "saved") renderSaved();
+  }
+
+  function renderSaved() {
+    const items = [...state.fav.values()].sort((a, b) => (b.saved || 0) - (a.saved || 0));
+    $("#saved").innerHTML = items.length ? items.map(cardHtml).join("")
+      : `<div class="empty">Здесь будут идеи, которые вы взяли в работу. Откройте находку в ленте и нажмите «Взять в работу».</div>`;
+  }
+
+  // --- графики -------------------------------------------------------------
+  function renderTrends() {
+    const d = state.data, st = (d.trends && d.trends.stats) || null, daily = d.daily;
+    const hot7 = (d.findings || []).filter((f) => f.tier === "hot" && f.first_seen >= now() - 7 * 86400).length;
+    $("#hero").innerHTML = `<div><b>${st ? st.total_cur : 0}</b><span>запусков за 7 дней</span></div>
+      <div><b>${hot7}</b><span>из них горячих</span></div>`;
+    drawDaily(daily);
+    drawShare(st);
+    const rising = st && st.rising && st.rising.length
+      ? `<h2>Растут${st.growth_ready ? "" : " (предварительно)"}</h2>${st.growth_ready ? "" : `<div class="note">История ${Math.round(st.history_days)} дн. — надёжно после 14.</div>`}
+         <ul class="plain">${st.rising.map((r) => `<li data-cat="${esc(r.topic)}"><b>${esc(ru(r.topic))}</b> — ${r.cur} (было ${r.prev}), ×${r.growth}</li>`).join("")}</ul>` : "";
+    $("#risingBlock").innerHTML = rising;
+    $("#newBlock").innerHTML = st && st.new_topics && st.new_topics.length
+      ? `<h2>Новое, чего нет в привычных темах</h2><ul class="plain">${st.new_topics.map((n) => `<li>${esc(n.name)} — ${n.cur}</li>`).join("")}</ul>` : "";
+    const story = d.trends && d.trends.text && /Выводы<\/b>\n([\s\S]*)$/.exec(d.trends.text);
+    $("#storyBlock").innerHTML = story ? `<h2>🧠 Выводы</h2><div class="story">${story[1]}</div>` : "";
+  }
+
+  function drawDaily(daily) {
+    const box = $("#daily"), tip = $("#tip");
+    [...box.querySelectorAll("svg")].forEach((s) => s.remove());
+    if (!daily || !daily.days || !daily.days.length) { $("#legend").innerHTML = ""; return; }
+    const keys = [...daily.leaders, "other"];
+    const color = (k, i) => k === "other" ? "var(--s-other)" : `var(--s${i + 1})`;
+    const totals = keys.map((k) => daily.series[k].reduce((a, b) => a + b, 0));
+    $("#legend").innerHTML = keys.map((k, i) => `<span><i style="background:${color(k, i)}"></i>${esc(k === "other" ? "прочее" : ru(k))} ${totals[i]}</span>`).join("");
+    const W = Math.max(280, box.clientWidth || 320), H = 150, pad = { l: 24, r: 4, t: 8, b: 20 };
+    const n = daily.days.length, stack = daily.days.map((_, j) => keys.reduce((a, k) => a + daily.series[k][j], 0));
+    const max = Math.max(1, ...stack), step = (W - pad.l - pad.r) / n, bw = Math.max(6, step - 4);
+    const y = (v) => pad.t + (H - pad.t - pad.b) * (1 - v / max);
+    let svg = `<svg width="${W}" height="${H}" role="img" aria-label="Запуски по дням">`;
+    for (const g of [0, 0.5, 1]) {
+      const v = Math.round(max * g), yy = y(v);
+      svg += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${pad.l - 4}" y="${yy + 4}" font-size="10" text-anchor="end" fill="var(--hint)">${v}</text>`;
+    }
+    daily.days.forEach((day, j) => {
+      const x = pad.l + j * step + (step - bw) / 2;
+      let base = 0;
+      keys.forEach((k, i) => {
+        const v = daily.series[k][j];
+        if (!v) return;
+        const y0 = y(base), y1 = y(base + v), top = base + v === stack[j];
+        // 2px зазор цвета фона между сегментами; скругление только у верха столбца.
+        svg += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(0, y0 - y1 - 2)}" rx="${top ? 3 : 0}" fill="${color(k, i)}"/>`;
+        base += v;
+      });
+      // Подписи отсчитываются от ПОСЛЕДНЕГО дня с равным шагом: иначе
+      // последняя подпись садилась вплотную к очередной периодической и
+      // они сливались в «25.0926.09» (замечено на первой отрисовке).
+      if ((n - 1 - j) % Math.ceil(n / 6) === 0)
+        svg += `<text x="${x + bw / 2}" y="${H - 5}" font-size="10" text-anchor="middle" fill="var(--hint)">${day.slice(8)}.${day.slice(5, 7)}</text>`;
+      // Зона касания шире столбца — по всей высоте и ширине шага.
+      svg += `<rect class="hit" data-j="${j}" x="${pad.l + j * step}" y="0" width="${step}" height="${H - pad.b}" fill="transparent"/>`;
+    });
+    svg += "</svg>";
+    box.insertAdjacentHTML("beforeend", svg);
+    const show = (e) => {
+      const t = e.target.closest(".hit"); if (!t) { tip.style.display = "none"; return; }
+      const j = +t.dataset.j, day = daily.days[j];
+      tip.innerHTML = `<b>${day.slice(8)}.${day.slice(5, 7)}</b> · ${stack[j]}<br>` + keys.map((k) => `${esc(k === "other" ? "прочее" : ru(k))}: ${daily.series[k][j]}`).join("<br>");
+      tip.style.left = (+t.getAttribute("x") + step / 2) + "px"; tip.style.top = "8px"; tip.style.display = "block";
+    };
+    box.querySelector("svg").addEventListener("pointermove", show);
+    box.querySelector("svg").addEventListener("pointerdown", show);
+    box.querySelector("svg").addEventListener("pointerleave", () => (tip.style.display = "none"));
+    $("#dailyTable").innerHTML = `<table><tr><th>День</th>${keys.map((k) => `<th>${esc(k === "other" ? "прочее" : ru(k))}</th>`).join("")}<th>Всего</th></tr>` +
+      daily.days.map((day, j) => `<tr><td>${day.slice(8)}.${day.slice(5, 7)}</td>${keys.map((k) => `<td>${daily.series[k][j]}</td>`).join("")}<td>${stack[j]}</td></tr>`).join("") + "</table>";
+  }
+
+  function drawShare(st) {
+    if (!st || !st.volume || !st.volume.length) { $("#share").innerHTML = `<div class="note">Темы ещё проставляются.</div>`; return; }
+    const max = Math.max(...st.volume.map((v) => v.cur));
+    $("#share").innerHTML = st.volume.map((v) => `<div class="bar" data-cat="${esc(v.topic)}">
+      <span>${esc(ru(v.topic))}</span><div class="track"><div class="fill" style="width:${(100 * v.cur / max).toFixed(1)}%"></div></div>
+      <span class="val">${v.cur} · ${Math.round(v.share)}%</span></div>`).join("");
+  }
+
+  // --- навигация -----------------------------------------------------------
+  function setTab(tab) {
+    state.tab = tab;
+    document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-current", b.dataset.tab === tab ? "page" : "false"));
+    for (const id of ["feed", "trends", "saved"]) $("#" + id).hidden = id !== tab;
+    $("#hdr").hidden = tab !== "feed";
+    if (tab === "feed") renderFeed();
+    if (tab === "trends") renderTrends();
+    if (tab === "saved") renderSaved();
+    scrollTo(0, 0);
+  }
+  document.querySelector("nav").onclick = (e) => { const b = e.target.closest("button"); if (b) setTab(b.dataset.tab); };
+  $("#cats").onclick = (e) => { const c = e.target.closest(".chip"); if (!c) return; state.cat = c.dataset.cat || null; renderFeed(); };
+  for (const [id, key, cast] of [["#sort", "sort", String], ["#win", "win", Number]]) {
+    $(id).onclick = (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      state[key] = cast(b.dataset.v);
+      $(id).querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      renderFeed();
+    };
+  }
+  document.addEventListener("click", (e) => {
+    const card = e.target.closest(".card");
+    if (card) {
+      const id = +card.dataset.id;
+      const f = (state.data.findings || []).find((x) => x.id === id) || state.fav.get(id);
+      if (f) openItem(f);
+      return;
+    }
+    const cat = e.target.closest("[data-cat]");
+    if (cat && !cat.classList.contains("chip") && state.tab === "trends") {
+      state.cat = cat.dataset.cat; state.win = 168;
+      $("#win").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x.dataset.v === "168"));
+      setTab("feed");
+      return;
+    }
+    const a = e.target.closest("a[data-ext]");
+    if (a) { e.preventDefault(); tg && tg.openLink ? tg.openLink(a.href) : open(a.href, "_blank"); }
+  });
+  $("#tableToggle").onclick = () => {
+    const t = $("#dailyTable"); t.hidden = !t.hidden;
+    $("#tableToggle").textContent = t.hidden ? "Показать таблицей" : "Скрыть таблицу";
+  };
+
+  (async () => {
+    try {
+      state.data = await api("/api/data");
+      await loadFav();
+      setTab("feed");
+    } catch (e) {
+      $("#feed").innerHTML = `<div class="empty">${e.message === "auth"
+        ? "Нет доступа. Откройте приложение из бота — и, если попросит, пришлите боту код доступа."
+        : "Не удалось загрузить данные. Закройте и откройте приложение ещё раз."}</div>`;
+    }
+  })();
+})();
+</script>
+</body>
+</html>
