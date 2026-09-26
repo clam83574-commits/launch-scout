@@ -56,6 +56,7 @@ KINDS = ["b2b_saas", "b2c_app", "dev_tool", "ai_agent", "marketplace",
          "hardware", "content_media", "fintech", "other"]
 EFFORTS = ["days", "weeks", "months", "unclear"]
 NICHE = ["ok", "borderline", "excluded"]
+POTENTIAL = ["none", "low", "medium", "high"]
 
 # Словарь тем для трендов. Закрытый список, а не свободные теги: иначе
 # одно и то же дробится на «ai agents», «agents», «agentic workflows», и
@@ -86,9 +87,10 @@ NOTE_SCHEMA = {
         "clone_effort": {"type": "string", "enum": EFFORTS},
         "clone_note": {"type": "string"},
         "niche": {"type": "string", "enum": NICHE},
+        "business_potential": {"type": "string", "enum": POTENTIAL},
     },
     "required": ["summary", "is_product_launch", "kind", "monetization",
-                 "clone_effort", "clone_note", "niche"],
+                 "clone_effort", "clone_note", "niche", "business_potential"],
     "additionalProperties": False,
 }
 
@@ -102,6 +104,7 @@ Rules:
 - monetization: how it makes money if visible, in the requested language; otherwise "не видно" / "not visible".
 - clone_effort: rough time for a small team to build a comparable first version: days, weeks, months, or unclear.
 - clone_note: one line in the requested language naming the hardest part to replicate.
+- business_potential: could this become a business someone pays for? "none" for jokes, art, fan projects and pure entertainment; "low" for hobby tools and demos with no clear buyer; "medium" when a clear user group would plausibly pay; "high" when it solves a costly problem for businesses or has visible traction or revenue.
 - niche: "excluded" for lending or credit with interest, gambling or betting, alcohol, adult content, speculative crypto tokens or memecoins. "borderline" for conventional insurance, crypto infrastructure, dating. Otherwise "ok".
 - Keep product and company names as in the original."""
 
@@ -317,7 +320,7 @@ def annotate(conn, candidates, now, lang="ru", verbose=True):
         done += 1
     conn.commit()
     if verbose:
-        print("  ИИ-разборов: %d (запросов к %s за сутки: %d)%s"
+        print("  ИИ-разборов новых: %d (остальные кандидаты уже разобраны; запросов к %s за сутки: %d)%s"
               % (done, model, _calls_today(conn, now, model), (" — " + last_err) if last_err else ""))
     return done, last_err
 
@@ -344,6 +347,19 @@ def verdict(note, source=None):
     if note.get("niche") == "borderline":
         return False, "ИИ: ниша под вопросом"
     return False, None
+
+
+def not_business(note):
+    """
+    Продукт, но не бизнес-идея: игрушка, арт, демо без покупателя.
+
+    Первая же выдача с ИИ (2026-09-26) показала, что «продукт ли это» не
+    отсекает главное: шрифты, Pokémon и рыбки — честно продукты, и модель
+    так и ответила. Владельцу же нужны идеи, за которые платят. Такие
+    находки не выбрасываются, а опускаются из мгновенных в сводку.
+    Старые разборы без этого поля не трогаем.
+    """
+    return bool(note) and note.get("business_potential") in ("none", "low")
 
 
 # --- темы для трендов --------------------------------------------------------

@@ -571,6 +571,11 @@ def apply_ai(conn, evaluated, now):
         if demote and tier != scoring.ARCHIVE:
             tier = scoring.ARCHIVE
             scoring.save_score(conn, item["item_id"], now, total, tier, breakdown)
+        elif tier == scoring.HOT and ai.not_business(note):
+            breakdown = dict(breakdown)
+            breakdown["ИИ: скорее игрушка, чем бизнес"] = 0.0
+            tier = scoring.DIGEST
+            scoring.save_score(conn, item["item_id"], now, total, tier, breakdown)
         out.append((item, metrics, total, tier, breakdown))
     conn.commit()
     return out
