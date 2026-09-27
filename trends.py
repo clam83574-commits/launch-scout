@@ -181,39 +181,90 @@ def story(conn, st, now, lang="ru", max_age_h=12):
     return cached
 
 
-def _ru(tp):
-    return TOPIC_RU.get(tp, tp)
+TOPIC_KK = {
+    "ai agents": "ЖИ-агенттер", "coding assistants": "бағдарламашыларға ЖИ",
+    "voice ai": "дауыстық ЖИ", "video generation": "бейне генерациясы",
+    "image generation": "сурет генерациясы", "chatbots & support": "чат-боттар мен қолдау",
+    "open-source models": "ашық модельдер", "local & on-device ai": "жергілікті ЖИ",
+    "devtools": "әзірлеуші құралдары", "testing & qa": "тестілеу", "observability": "мониторинг",
+    "security": "қауіпсіздік", "databases": "дерекқорлар", "infrastructure & cloud": "инфрақұрылым және бұлт",
+    "data & analytics": "деректер және аналитика", "browser automation": "браузерді автоматтандыру",
+    "no-code": "no-code", "design tools": "дизайн", "creator tools": "авторларға",
+    "productivity": "өнімділік", "notes & knowledge": "жазбалар мен білім",
+    "email & calendar": "пошта және күнтізбе", "sales & crm": "сату және CRM",
+    "marketing & seo": "маркетинг және SEO", "e-commerce": "e-commerce", "payments": "төлемдер",
+    "accounting & invoicing": "есеп және шоттар", "hr & recruiting": "HR және жалдау",
+    "legal": "заңгерлерге", "health & fitness": "денсаулық және фитнес",
+    "mental health": "психикалық денсаулық", "education": "білім беру",
+    "language learning": "тіл үйрену", "real estate": "жылжымайтын мүлік", "travel": "саяхат",
+    "food & delivery": "тағам және жеткізу", "social & community": "қауымдастықтар",
+    "dating": "танысу", "gaming": "ойындар", "robotics": "робототехника", "hardware": "құрылғылар",
+    "climate & energy": "климат және энергия", "crypto infrastructure": "крипто-инфрақұрылым",
+    "privacy": "құпиялылық", "other": "басқа",
+}
+TOPIC_EN = {k: k for k in TOPIC_RU}
+TOPIC_NAMES = {"ru": TOPIC_RU, "kk": TOPIC_KK, "en": TOPIC_EN}
+
+# Подписи отчёта. Казахские — машинный перевод, показать носителю.
+T = {
+    "ru": {"head": "📈 <b>Тренды за %d дней</b> — %d находок",
+           "early": "<i>История пока %.0f дн.: рост к прошлой неделе предварительный, надёжным станет через %d дн.</i>",
+           "rising": "Растут", "was": "было", "volume": "Больше всего запусков",
+           "new": "Новое, чего нет в привычных темах", "story": "🧠 <b>Выводы</b>",
+           "empty": "Данных пока мало: темы проставляются новым находкам с каждым прогоном."},
+    "kk": {"head": "📈 <b>%d күндегі трендтер</b> — %d табылым",
+           "early": "<i>Тарих әзірге %.0f күн: өткен аптамен салыстыру алдын ала, %d күннен кейін сенімді болады.</i>",
+           "rising": "Өсіп келеді", "was": "бұрын", "volume": "Ең көп іске қосылғандар",
+           "new": "Әдеттегі тақырыптарда жоқ жаңалар", "story": "🧠 <b>Қорытынды</b>",
+           "empty": "Деректер әзірге аз: тақырыптар әр іске қосуда жаңа табылымдарға қойылады."},
+    "en": {"head": "📈 <b>Trends for %d days</b> — %d launches",
+           "early": "<i>Only %.0f days of history: growth vs last week is preliminary, reliable in %d days.</i>",
+           "rising": "Rising", "was": "was", "volume": "Most launches",
+           "new": "New, outside the usual topics", "story": "🧠 <b>Takeaways</b>",
+           "empty": "Not much data yet: topics are assigned to new findings on every run."},
+}
 
 
-def render(st, story_text=None):
-    """Отчёт для Telegram (HTML)."""
+def _ru(tp, lang="ru"):
+    return TOPIC_NAMES.get(lang, TOPIC_RU).get(tp, tp)
+
+
+def render(st, story_text=None, lang="ru"):
+    """Отчёт для Telegram (HTML) на языке читателя."""
     e = notify._esc
-    lines = ["📈 <b>Тренды за %d дней</b> — %d находок" % (st["days"], st["total_cur"])]
+    tx = T.get(lang, T["ru"])
+    lines = [tx["head"] % (st["days"], st["total_cur"])]
     if not st["growth_ready"]:
-        lines.append("<i>История пока %.0f дн.: рост к прошлой неделе предварительный, "
-                     "надёжным станет через %d дн.</i>"
-                     % (st["history_days"], max(1, int(round(2 * st["days"] - st["history_days"])))))
+        lines.append(tx["early"] % (st["history_days"],
+                                    max(1, int(round(2 * st["days"] - st["history_days"])))))
     if st["rising"]:
-        lines += ["", "<b>Растут</b>"]
+        lines += ["", "<b>%s</b>" % tx["rising"]]
         for r in st["rising"]:
-            lines.append("• %s — %d (было %d), ×%.1f" % (e(_ru(r["topic"])), r["cur"], r["prev"], r["growth"]))
+            lines.append("• %s — %d (%s %d), ×%.1f" % (e(_ru(r["topic"], lang)), r["cur"], tx["was"],
+                                                       r["prev"], r["growth"]))
             for ex in r["examples"][:1]:
                 lines.append('   <a href="%s">%s</a>' % (e(ex["url"] or ""), e(ex["title"])))
     if st["volume"]:
-        lines += ["", "<b>Больше всего запусков</b>"]
-        lines.append(" · ".join("%s %d%%" % (e(_ru(v["topic"])), round(v["share"]))
+        lines += ["", "<b>%s</b>" % tx["volume"]]
+        lines.append(" · ".join("%s %d%%" % (e(_ru(v["topic"], lang)), round(v["share"]))
                                 for v in st["volume"][:6]))
     if st["new_topics"]:
-        lines += ["", "<b>Новое, чего нет в привычных темах</b>"]
+        lines += ["", "<b>%s</b>" % tx["new"]]
         for n in st["new_topics"]:
             ex = n["examples"][0] if n["examples"] else None
             tail = ' — <a href="%s">%s</a>' % (e(ex["url"] or ""), e(ex["title"][:60])) if ex else ""
             lines.append("• %s (%d)%s" % (e(n["name"]), n["cur"], tail))
     if story_text:
-        lines += ["", "🧠 <b>Выводы</b>", e(story_text)]
+        lines += ["", tx["story"], e(story_text)]
     if not (st["rising"] or st["volume"]):
-        lines += ["", "Данных пока мало: темы проставляются новым находкам с каждым прогоном."]
+        lines += ["", tx["empty"]]
     return "\n".join(lines)
+
+
+def render_all(conn, st, now):
+    """Отчёт на всех трёх языках: {lang: html}."""
+    import ai
+    return {lang: render(st, story(conn, st, now, lang), lang) for lang in ai.LANGS}
 
 
 # Еженедельный отчёт: понедельник, окно 07-09 UTC (10-12 по Москве), не
@@ -231,12 +282,13 @@ def maybe_send_weekly(conn, now, dry=False, lang="ru"):
     if not weekly_due(conn, now):
         return False
     st = compute(conn, now)
-    text = render(st, story(conn, st, now, lang))
+    texts = render_all(conn, st, now)
     if dry:
-        print(text)
+        print(texts["ru"])
         return False
-    # Всем подписчикам через Worker; без него — владельцу напрямую.
-    ok, err = notify.deliver(broadcast=[text])
+    # Всем подписчикам через Worker, каждому на его языке; без Worker —
+    # владельцу напрямую (по-русски).
+    ok, err = notify.deliver(broadcast=[{"kind": "trends", "texts": texts, "text": texts["ru"]}])
     if ok:
         db.kv_set(conn, "last_trends", now)
         conn.commit()

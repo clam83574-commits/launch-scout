@@ -36,15 +36,22 @@ from common import UA  # noqa: E402
 
 API = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "openai/gpt-oss-120b"
-DEFAULT_TAG_MODEL = "openai/gpt-oss-20b"
 # Бесплатный Groq (замерено 2026-09-26 по заголовкам ответа): на КАЖДУЮ
-# модель 1000 запросов в сутки и 8000 токенов в минуту. Узкое место —
-# минута: разбор ~1.3 тыс. токенов, то есть ~6 разборов в минуту. Отсюда
-# потолки за прогон ниже. Суточный предел ниже квоты — запас на ручные
-# запуски и повторы.
+# модель 1000 запросов в сутки и 8000 токенов в минуту, плюс 200 тыс.
+# токенов в сутки (TPD — его в заголовках нет, только в тексте 429 и на
+# console.groq.com/docs/rate-limits, найдено 2026-09-27). Минута держит
+# потолки за прогон ниже, сутки — общий объём: 120b делят разборы,
+# выводы трендов и карточки идей Worker'а. Суточный предел запросов ниже
+# квоты — запас на ручные запуски и повторы.
 DEFAULT_DAILY_MAX = 900
-NOTES_PER_RUN = 6
-TAGS_PER_RUN = 50
+NOTES_PER_RUN = 4          # разбор теперь сразу на трёх языках — втрое длиннее ответ
+TAGS_PER_RUN = 40
+
+# Языки пользователей: Казахстан первым (решение владельца 2026-09-26),
+# затем англоязычный рынок. Всё, что видит пользователь, готовится сразу
+# на трёх: переводить по запросу — втрое больше обращений к квоте.
+LANGS = ("ru", "kk", "en")
+AUDIENCES = ["b2b", "b2c", "b2g"]
 
 LANG_NAMES = {
     "ru": "Russian", "en": "English", "kk": "Kazakh", "uz": "Uzbek",
@@ -77,41 +84,53 @@ TOPICS = [
     "privacy", "other",
 ]
 
-NOTE_SCHEMA = {
+_TXT = {
     "type": "object",
-    "properties": {
-        "summary": {"type": "string"},
-        "is_product_launch": {"type": "boolean"},
-        "kind": {"type": "string", "enum": KINDS},
-        "monetization": {"type": "string"},
-        "clone_effort": {"type": "string", "enum": EFFORTS},
-        "clone_note": {"type": "string"},
-        "niche": {"type": "string", "enum": NICHE},
-        "business_potential": {"type": "string", "enum": POTENTIAL},
-    },
-    "required": ["summary", "is_product_launch", "kind", "monetization",
-                 "clone_effort", "clone_note", "niche", "business_potential"],
+    "properties": {"summary": {"type": "string"}, "monetization": {"type": "string"},
+                   "clone_note": {"type": "string"}},
+    "required": ["summary", "monetization", "clone_note"],
     "additionalProperties": False,
 }
 
-SYSTEM = """You review early signals of new products for a founder who looks for startup ideas to build quickly or to localize for another market.
+NOTE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "is_product_launch": {"type": "boolean"},
+        "kind": {"type": "string", "enum": KINDS},
+        "clone_effort": {"type": "string", "enum": EFFORTS},
+        "niche": {"type": "string", "enum": NICHE},
+        "business_potential": {"type": "string", "enum": POTENTIAL},
+        "audience": {"type": "array", "items": {"type": "string", "enum": AUDIENCES}},
+        "i18n": {"type": "object", "properties": {"ru": _TXT, "kk": _TXT, "en": _TXT},
+                 "required": ["ru", "kk", "en"], "additionalProperties": False},
+    },
+    "required": ["is_product_launch", "kind", "clone_effort", "niche",
+                 "business_potential", "audience", "i18n"],
+    "additionalProperties": False,
+}
+
+SYSTEM = """You review early signals of new products for a founder who looks for startup ideas to build quickly or to localize for another market (Kazakhstan first, then the English-speaking world).
 
 For each item you get the source post and, when available, the product page title and description. Reply with JSON only, matching the schema.
 
 Rules:
-- summary: 2-3 plain sentences in the requested language. Say what the product does and who it is for. No hype, no marketing tone. If the post is too vague to tell, say so.
+- i18n: the same three texts in Russian (ru), Kazakh in Cyrillic (kk) and English (en).
+  - summary: 2-3 plain sentences: what the product does and who it is for. No hype, no marketing tone. If the post is too vague to tell, say so.
+  - monetization: how it makes money if visible; otherwise exactly "не видно" (ru), "көрінбейді" (kk), "not visible" (en).
+  - clone_note: one line naming the hardest part to replicate.
 - is_product_launch: true only if a product, company or tool is being launched or shipped. Opinions, news reports, fundraising announcements without a product, memes, art commissions, game content updates and personal milestones are false.
-- monetization: how it makes money if visible, in the requested language; otherwise "не видно" / "not visible".
 - clone_effort: rough time for a small team to build a comparable first version: days, weeks, months, or unclear.
-- clone_note: one line in the requested language naming the hardest part to replicate.
 - business_potential: could this become a business someone pays for? "none" for jokes, art, fan projects and pure entertainment; "low" for hobby tools and demos with no clear buyer; "medium" when a clear user group would plausibly pay; "high" when it solves a costly problem for businesses or has visible traction or revenue.
+- audience: who pays: businesses (b2b), consumers (b2c), government (b2g); one or two values.
 - niche: "excluded" for lending or credit with interest, gambling or betting, alcohol, adult content, speculative crypto tokens or memecoins. "borderline" for conventional insurance, crypto infrastructure, dating. Otherwise "ok".
 - Keep product and company names as in the original."""
 
-TAG_SYSTEM = """You assign topics to new product launches for trend analytics.
-For every item pick 1-2 topics ONLY from this list: %s.
-If the item fits none well, use "other" AND put a short English name for its real topic (1-3 words, lowercase) in new_topic; otherwise new_topic is "".
-Reply with JSON only: {"items": [{"id": <id>, "topics": [...], "new_topic": "..."}]} — one entry per input item, same ids.""" % ", ".join(TOPICS)
+TAG_SYSTEM = """You label new product launches for a trend feed read in Russian, Kazakh and English.
+For every item return:
+- topics: 1-2 topics ONLY from this list: %s. If none fits well, use "other" and put a short English name of the real topic (1-3 words, lowercase) in new_topic; otherwise new_topic is "".
+- audience: who pays: businesses "b2b", consumers "b2c", government "b2g"; one or two values.
+- gist: ONE plain sentence (max 15 words) saying what the product does and for whom, in Russian (ru), Kazakh in Cyrillic (kk) and English (en). Keep product names as in the original. No hype.
+Reply with JSON only: {"items": [{"id": <id>, "topics": [...], "new_topic": "...", "audience": [...], "gist": {"ru": "...", "kk": "...", "en": "..."}}]}, one entry per input item, same ids.""" % ", ".join(TOPICS)
 
 
 def _key():
@@ -126,7 +145,40 @@ def available():
 
 
 class RateLimited(Exception):
-    """Groq ответил 429: бесплатная квота на сейчас кончилась."""
+    """
+    Groq ответил 429: бесплатная квота на сейчас кончилась.
+
+    В тексте — какой именно предел (TPM — токены в минуту, TPD — в сутки)
+    и сколько ждать: «TPM» проходит за минуту, «TPD» — только к следующим
+    суткам, и повторять запросы до тех пор бессмысленно.
+    """
+
+    def __init__(self, retry_after, kind=""):
+        super().__init__("%s retry-after %s" % (kind or "?", retry_after))
+        self.kind = kind
+        self.retry_after = retry_after
+
+
+# Сколько токенов потрачено в этом процессе, по моделям: у бесплатного
+# Groq 200 тыс. токенов в сутки на модель (console.groq.com/docs/rate-limits,
+# проверено 2026-09-27), и расход надо видеть в логе каждого прогона.
+USAGE = {}
+
+
+def _limit_kind(text):
+    """
+    «TPD 199103/200000, ждать 11m7s» из текста 429 — без номера организации.
+
+    Кодов больше, чем кажется: у qwen3.8-27b есть ещё OTPM — 1000 ВЫХОДНЫХ
+    токенов в минуту (найдено 2026-09-27), то есть одна пачка разметки за
+    прогон. Поэтому код берём любой, а не из заранее известного списка.
+    """
+    m = re.search(r"\(([A-Z]{3,5})\): Limit (\d+), Used (\d+)", text or "")
+    wait = re.search(r"try again in ([0-9hms.]+)", text or "")
+    if not m:
+        return ""
+    return "%s %s/%s%s" % (m.group(1), m.group(3), m.group(2),
+                           (", ждать " + wait.group(1)) if wait else "")
 
 
 def _chat(model, system, user, schema=None, max_tokens=1200, timeout=60):
@@ -163,7 +215,7 @@ def _chat(model, system, user, schema=None, max_tokens=1200, timeout=60):
         except requests.RequestException as e:
             return None, "сеть: %s" % str(e)[:120]
         if r.status_code == 429:
-            raise RateLimited(r.headers.get("retry-after", "?"))
+            raise RateLimited(r.headers.get("retry-after", "?"), _limit_kind(r.text))
         if r.status_code == 400 and schema and attempt == 0 and (
                 "json_schema" in r.text or "response_format" in r.text):
             # Модель без строгих схем: просим просто JSON, схему — словами.
@@ -176,9 +228,12 @@ def _chat(model, system, user, schema=None, max_tokens=1200, timeout=60):
         if r.status_code != 200:
             return None, "Groq %d: %s" % (r.status_code, r.text[:160])
         try:
-            content = r.json()["choices"][0]["message"]["content"] or ""
+            payload = r.json()
+            content = payload["choices"][0]["message"]["content"] or ""
         except (ValueError, KeyError, IndexError):
             return None, "непонятный ответ Groq"
+        used = (payload.get("usage") or {}).get("total_tokens") or 0
+        USAGE[model] = USAGE.get(model, 0) + int(used)
         content = re.sub(r"^```(?:json)?|```$", "", content.strip()).strip()
         try:
             return json.loads(content), None
@@ -196,20 +251,47 @@ def _ensure_tables(conn):
         " ts INTEGER, PRIMARY KEY (item_id, lang))")
     conn.execute(
         "CREATE TABLE IF NOT EXISTS item_topics ("
-        " item_id INTEGER PRIMARY KEY, topics TEXT, new_topic TEXT, ts INTEGER)")
+        " item_id INTEGER PRIMARY KEY, topics TEXT, new_topic TEXT, ts INTEGER,"
+        " audience TEXT, gist TEXT)")
+    # Базы, созданные до мультиязычности, дополняем колонками на месте.
+    have = {r[1] for r in conn.execute("PRAGMA table_info(item_topics)")}
+    for col in ("audience", "gist"):
+        if col not in have:
+            conn.execute("ALTER TABLE item_topics ADD COLUMN %s TEXT" % col)
 
 
-def get_note(conn, item_id, lang):
-    """Готовый разбор или None."""
+def get_note(conn, item_id, lang=None):
+    """
+    Сохранённый разбор (сырой, со всеми языками) или None.
+
+    Новые разборы лежат под lang="multi" и содержат i18n на трёх языках;
+    старые, до 2026-09-27, лежат под "ru" и плоские. Берём новый, иначе старый.
+    """
     _ensure_tables(conn)
-    row = conn.execute("SELECT data FROM ai_notes WHERE item_id = ? AND lang = ?",
-                       (item_id, lang)).fetchone()
-    if not row or not row["data"]:
+    for key in ("multi", lang or "ru"):
+        row = conn.execute("SELECT data FROM ai_notes WHERE item_id = ? AND lang = ?",
+                           (item_id, key)).fetchone()
+        if row and row["data"]:
+            try:
+                return json.loads(row["data"])
+            except ValueError:
+                return None
+    return None
+
+
+def note_for(note, lang):
+    """Разбор, развёрнутый на один язык: плоский словарь для показа."""
+    if not note:
         return None
-    try:
-        return json.loads(row["data"])
-    except ValueError:
-        return None
+    texts = ("summary", "monetization", "clone_note")
+    tx = note.get("i18n")
+    if tx is None:      # разбор до 2026-09-27: плоский и только русский
+        tx = {"ru": {k: note.get(k) for k in texts}}
+    flat = {k: v for k, v in note.items() if k != "i18n" and k not in texts}
+    # Только язык читателя: чужой язык хуже выжимки на своём — её покажет
+    # format_item, а если нет и её, то исходный пост.
+    flat.update(tx.get(lang) or {})
+    return flat
 
 
 def _counter_key(model, now):
@@ -257,10 +339,10 @@ def _page_hint(url, timeout=8):
     return "\n".join(parts)
 
 
-def _item_prompt(item, lang):
+def _item_prompt(item, lang=None):
     src = {"x": "X (Twitter) post", "hn": "Hacker News post", "yc": "Y Combinator directory entry",
            "gh": "GitHub repository"}.get(item["source"], item["source"])
-    lines = ["Requested language: %s" % LANG_NAMES.get(lang, lang), "Source: %s" % src]
+    lines = ["Source: %s" % src]
     if item["author"]:
         lines.append("Author: @%s" % item["author"])
     lines.append("Title: %s" % (item["title"] or ""))
@@ -278,7 +360,10 @@ def _item_prompt(item, lang):
 
 
 def _valid_note(n):
-    return (isinstance(n, dict) and isinstance(n.get("summary"), str) and n["summary"].strip()
+    if not isinstance(n, dict):
+        return False
+    ru = (n.get("i18n") or {}).get("ru") or {}
+    return (isinstance(ru.get("summary"), str) and bool(ru["summary"].strip())
             and isinstance(n.get("is_product_launch"), bool))
 
 
@@ -300,12 +385,13 @@ def annotate(conn, candidates, now, lang="ru", verbose=True):
         if _calls_today(conn, now, model) >= cap:
             last_err = "дневной предел ИИ-запросов исчерпан (%d)" % cap
             break
-        if get_note(conn, item["item_id"], lang) is not None:
+        existing = get_note(conn, item["item_id"])
+        if existing is not None and "i18n" in existing:
             continue
         try:
             note, err = _chat(model, SYSTEM, _item_prompt(item, lang), schema=NOTE_SCHEMA)
         except RateLimited as e:
-            last_err = "429 от Groq — бесплатная квота на сейчас кончилась (retry-after %s)" % e
+            last_err = "429 от Groq — бесплатная квота на сейчас кончилась (%s)" % e
             _count_call(conn, now, model)
             break
         _count_call(conn, now, model)
@@ -316,12 +402,14 @@ def annotate(conn, candidates, now, lang="ru", verbose=True):
             continue
         conn.execute("INSERT OR REPLACE INTO ai_notes (item_id, lang, data, model, ts) "
                      "VALUES (?,?,?,?,?)",
-                     (item["item_id"], lang, json.dumps(note, ensure_ascii=False), model, now))
+                     (item["item_id"], "multi", json.dumps(note, ensure_ascii=False), model, now))
         done += 1
     conn.commit()
     if verbose:
-        print("  ИИ-разборов новых: %d (остальные кандидаты уже разобраны; запросов к %s за сутки: %d)%s"
-              % (done, model, _calls_today(conn, now, model), (" — " + last_err) if last_err else ""))
+        print("  ИИ-разборов новых: %d (остальные кандидаты уже разобраны; запросов к %s за сутки: %d,"
+              " токенов в прогоне: %d)%s"
+              % (done, model, _calls_today(conn, now, model), USAGE.get(model, 0),
+                 (" — " + last_err) if last_err else ""))
     return done, last_err
 
 
@@ -364,44 +452,80 @@ def not_business(note):
 
 # --- темы для трендов --------------------------------------------------------
 
-TAG_BATCH = 25
+TAG_BATCH = 20
+# Разметка идёт по очереди на двух бесплатных моделях: у каждой свои
+# 200 тыс. токенов в сутки и 8 тыс. в минуту, а пачка из 20 находок — около
+# 4–6 тыс. токенов. На одной модели вторая пачка прогона упиралась в
+# минутный предел, а суточного не хватало на весь поток (2026-09-27).
+# qwen3.8-27b проверена на той же пачке: 20 из 20 с выжимками на трёх языках,
+# 4,2 тыс. токенов; у неё ещё предел 1000 выходных токенов в минуту, так что
+# за прогон она берёт одну пачку. Итого запас — около 1600 находок в сутки
+# при притоке ~400–500.
+DEFAULT_TAG_MODELS = "openai/gpt-oss-20b,qwen/qwen3.8-27b"
 
 
-def tag_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
+def _tag_models():
+    raw = (os.environ.get("LS_TAG_MODELS") or os.environ.get("LS_TAG_MODEL")
+           or DEFAULT_TAG_MODELS)
+    return [m.strip() for m in raw.split(",") if m.strip()]
+
+
+def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
     """
-    Проставить темы свежим находкам, у которых их ещё нет, — пачками по 25.
+    Пакетная разметка свежих находок: темы, аудитория (B2B/B2C/B2G) и
+    выжимка в одну фразу на трёх языках, по 20 находок на запрос.
+
+    Так каждая находка в ленте получает текст на языке пользователя, а не
+    только те немногие, что дошли до полного разбора. Пачка, а не поштучно:
+    весь поток (сотни записей в сутки) в бесплатную квоту иначе не влез бы.
+    Первыми идут находки с баллом выше нуля — их видят в ленте; нулевые
+    размечаются на остаток квоты (они нужны только трендам).
     Возвращает (размечено, ошибка).
     """
     ok, why = available()
     if not ok:
         return 0, why
     _ensure_tables(conn)
-    model = os.environ.get("LS_TAG_MODEL", DEFAULT_TAG_MODEL).strip() or DEFAULT_TAG_MODEL
+    models = _tag_models()
     cap = int(os.environ.get("LS_AI_DAILY_MAX", DEFAULT_DAILY_MAX))
     rows = conn.execute(
         "SELECT i.item_id, i.source, i.title, i.body FROM items i "
         "LEFT JOIN item_topics t ON t.item_id = i.item_id "
-        "WHERE t.item_id IS NULL AND i.first_seen >= ? "
-        "ORDER BY i.first_seen DESC LIMIT ?",
+        "LEFT JOIN (SELECT item_id, MAX(score) AS s FROM scores GROUP BY item_id) sc "
+        "  ON sc.item_id = i.item_id "
+        "WHERE (t.item_id IS NULL OR t.gist IS NULL) AND i.first_seen >= ? "
+        "ORDER BY (COALESCE(sc.s, 0) > 0) DESC, i.first_seen DESC LIMIT ?",
         (now - days * 86400, max_items)).fetchall()
     done, last_err = 0, None
     allowed = set(TOPICS)
+    spent, turn = set(), 0          # модели, упёршиеся в предел в этом прогоне
     for i in range(0, len(rows), TAG_BATCH):
-        if _calls_today(conn, now, model) >= cap:
-            last_err = "дневной предел ИИ-запросов исчерпан (%d)" % cap
-            break
         chunk = rows[i:i + TAG_BATCH]
         payload = [{"id": r["item_id"], "source": r["source"],
                     "text": ((r["title"] or "") + " — " + (r["body"] or ""))[:240]}
                    for r in chunk]
-        try:
-            data, err = _chat(model, TAG_SYSTEM, json.dumps(payload, ensure_ascii=False),
-                              schema=None, max_tokens=3000)
-        except RateLimited as e:
-            last_err = "429 от Groq на разметке тем (retry-after %s)" % e
+        data, err = None, None
+        for _ in range(len(models)):
+            model = models[turn % len(models)]
+            turn += 1
+            if model in spent:
+                continue
+            if _calls_today(conn, now, model) >= cap:
+                spent.add(model)
+                last_err = "дневной предел запросов к %s исчерпан (%d)" % (model, cap)
+                continue
+            try:
+                data, err = _chat(model, TAG_SYSTEM, json.dumps(payload, ensure_ascii=False),
+                                  schema=None, max_tokens=4000)
+            except RateLimited as e:
+                _count_call(conn, now, model)
+                spent.add(model)
+                last_err = "429 от Groq на разметке, %s (%s)" % (model, e)
+                continue
             _count_call(conn, now, model)
             break
-        _count_call(conn, now, model)
+        if len(spent) >= len(models) and data is None:
+            break
         if err or not isinstance(data, dict):
             last_err = err or "разметка не JSON"
             continue
@@ -413,17 +537,26 @@ def tag_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
                 continue
             if iid not in ids:
                 continue
-            topics = [t for t in (e.get("topics") or []) if t in allowed][:2] or ["other"]
+            topics = [x for x in (e.get("topics") or []) if x in allowed][:2] or ["other"]
             new_topic = (e.get("new_topic") or "").strip().lower()[:40]
-            conn.execute("INSERT OR REPLACE INTO item_topics (item_id, topics, new_topic, ts) "
-                         "VALUES (?,?,?,?)",
-                         (iid, json.dumps(topics), new_topic if "other" in topics else "", now))
+            aud = [a for a in (e.get("audience") or []) if a in AUDIENCES][:2]
+            g = e.get("gist") if isinstance(e.get("gist"), dict) else {}
+            gist = {k: str(g.get(k) or "").strip()[:200] for k in LANGS if g.get(k)}
+            conn.execute("INSERT OR REPLACE INTO item_topics "
+                         "(item_id, topics, new_topic, ts, audience, gist) VALUES (?,?,?,?,?,?)",
+                         (iid, json.dumps(topics), new_topic if "other" in topics else "", now,
+                          json.dumps(aud), json.dumps(gist, ensure_ascii=False) if gist else None))
             done += 1
         conn.commit()
     if verbose and (rows or last_err):
-        print("  темы размечены: %d из %d%s" % (done, len(rows),
-                                               (" — " + last_err) if last_err else ""))
+        spent_tokens = ", ".join("%s %d" % (m.split("/")[-1], USAGE[m]) for m in models if USAGE.get(m))
+        print("  размечено (темы, аудитория, выжимка на 3 языках): %d из %d%s%s"
+              % (done, len(rows), (" · токенов: " + spent_tokens) if spent_tokens else "",
+                 (" — " + last_err) if last_err else ""))
     return done, last_err
+
+
+tag_items = enrich_items   # прежнее имя — для совместимости
 
 
 def write_trend_story(stats_text, lang="ru"):

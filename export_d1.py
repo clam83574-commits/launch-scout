@@ -136,6 +136,8 @@ def snapshot(conn, now, window_hours=168, top_all=200, top_day=150):
             "bookmarks": m.get("bookmarks"), "views": m.get("views"),
             "ai": _ai_brief(conn, item["item_id"]),
             "topics": _topics(conn, item["item_id"]),
+            "audience": _meta(conn, item["item_id"], "audience", []),
+            "gist": _meta(conn, item["item_id"], "gist", {}),
         })
     return picked
 
@@ -194,12 +196,29 @@ def daily_series(conn, now, days=14, top=3):
 
 
 def _ai_brief(conn, item_id):
-    """Выжимка для карточки бота — только то, что карточка показывает."""
-    note = ai.get_note(conn, item_id, os.environ.get("LS_LANG", "ru").strip() or "ru")
+    """
+    Разбор для карточки: общие поля + тексты на каждом языке.
+    Старые разборы (только русский, плоские) раскладываются под "ru".
+    """
+    note = ai.get_note(conn, item_id)
     if not note:
         return None
-    return {k: note.get(k) for k in ("summary", "clone_effort", "clone_note",
-                                     "monetization", "kind")}
+    brief = {k: note.get(k) for k in ("clone_effort", "kind", "business_potential", "audience")}
+    if "i18n" in note:
+        brief["i18n"] = note["i18n"]
+    else:
+        brief["i18n"] = {"ru": {k: note.get(k) for k in ("summary", "clone_note", "monetization")}}
+    return brief
+
+
+def _meta(conn, item_id, col, default):
+    """Колонка из item_topics (audience / gist) как JSON или default."""
+    try:
+        row = conn.execute("SELECT %s FROM item_topics WHERE item_id = ?" % col,
+                           (item_id,)).fetchone()
+        return json.loads(row[0]) if row and row[0] else default
+    except Exception:
+        return default
 
 
 def main():
@@ -221,7 +240,8 @@ def main():
             import trends
             st = trends.compute(conn, now)
             data["trends"] = {"stats": st,
-                              "text": trends.render(st, trends.story(conn, st, now)),
+                              "text": trends.render_all(conn, st, now),
+                              "topic_names": trends.TOPIC_NAMES,
                               "topic_ru": trends.TOPIC_RU}
             data["daily"] = daily_series(conn, now)
         except Exception as e:  # тренды — надстройка, срез без них всё равно нужен

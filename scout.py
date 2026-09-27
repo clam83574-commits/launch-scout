@@ -293,13 +293,55 @@ def evaluate(conn, now, window_hours=72):
     return out
 
 
-def _topics_of(conn, item_id):
-    """Темы находки для фильтра по личным категориям подписчика."""
+def _meta_of(conn, item_id):
+    """
+    Темы, аудитория и выжимка находки: (topics, audience, gist_by_lang).
+    Нужны Worker'у для фильтра по личным категориям и типу аудитории.
+    """
     try:
-        row = conn.execute("SELECT topics FROM item_topics WHERE item_id = ?", (item_id,)).fetchone()
-        return [x for x in json.loads(row["topics"]) if x != "other"] if row else []
+        row = conn.execute("SELECT topics, audience, gist FROM item_topics WHERE item_id = ?",
+                           (item_id,)).fetchone()
     except Exception:
-        return []
+        row = None
+    if not row:
+        return [], [], {}
+    def _j(v, default):
+        try:
+            return json.loads(v) if v else default
+        except ValueError:
+            return default
+    topics = [x for x in _j(row["topics"], []) if x != "other"]
+    return topics, _j(row["audience"], []), _j(row["gist"], {})
+
+
+def _topics_of(conn, item_id):
+    return _meta_of(conn, item_id)[0]
+
+
+DIGEST_SIZE = 12
+DIGEST_PER_SOURCE = 4
+
+
+def _diverse(cands, size=DIGEST_SIZE, per_source=DIGEST_PER_SOURCE):
+    """
+    Лучшие по баллу, но не больше per_source строк от одного источника.
+
+    Без этого сводку забивал каталог YC: у новичка батча ровно 54 балла, и
+    десяток таких выдавливал любой пост X с 42–53 — в живом срезе 2026-09-27
+    X было 79 находок из 328, а в сводку не попадало ни одной. Если другим
+    источникам нечего дать, места добираются лучшими из оставшихся.
+    """
+    picked, rest, count = [], [], {}
+    for e in cands:
+        src = e[0]["source"]
+        if count.get(src, 0) < per_source:
+            picked.append(e)
+            count[src] = count.get(src, 0) + 1
+        else:
+            rest.append(e)
+    picked = picked[:size]
+    picked += rest[:size - len(picked)]
+    return sorted(picked, key=lambda e: -e[2])
 
 
 def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
@@ -314,30 +356,41 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
            and not db.already_sent(conn, e[0]["item_id"], scoring.HOT)]
     hot_payload, ids = [], []
     for item, metrics, total, tier, breakdown in hot:
-        hot_payload.append({
-            "id": item["item_id"],
-            "text": notify.format_item(item, metrics, total, tier, breakdown,
-                                       note=ai.get_note(conn, item["item_id"], _lang())),
-            "topics": _topics_of(conn, item["item_id"]),
-        })
+        topics, audience, gist = _meta_of(conn, item["item_id"])
+        raw = ai.get_note(conn, item["item_id"])
+        texts = {lang: notify.format_item(item, metrics, total, tier, breakdown,
+                                          note=ai.note_for(raw, lang), gist=gist.get(lang),
+                                          lang=lang)
+                 for lang in ai.LANGS}
+        # Адреса отдельно от текста: Worker ставит их кнопками под
+        # уведомлением — ссылки в конце текста на телефоне не замечали.
+        hot_payload.append({"id": item["item_id"], "texts": texts, "text": texts["ru"],
+                            "topics": topics, "audience": audience,
+                            "url": item["url"], "product_url": item["product_url"]})
         ids.append((item["item_id"], scoring.HOT))
 
     digest_payload = None
     if digest:
-        pool = [e for e in evaluated if e[3] == scoring.DIGEST
-                and not db.already_sent(conn, e[0]["item_id"], scoring.DIGEST)][:12]
+        pool = _diverse([e for e in evaluated if e[3] == scoring.DIGEST
+                         and not db.already_sent(conn, e[0]["item_id"], scoring.DIGEST)])
         if pool:
             lines = []
             for item, metrics, total, tier, _b in pool:
-                lines.append({
-                    "id": item["item_id"],
-                    "line": "<code>%s</code> %s — <a href=\"%s\">%s</a>"
-                            % (total, notify._esc((item["title"] or "")[:70]),
-                               item["url"], notify.SRC_RU.get(item["source"], item["source"])),
-                    "topics": _topics_of(conn, item["item_id"]),
-                })
+                topics, audience, gist = _meta_of(conn, item["item_id"])
+                src = notify.SRC_RU.get(item["source"], item["source"])
+                by_lang = {}
+                for lang in ai.LANGS:
+                    text = gist.get(lang) or (item["title"] or "")
+                    by_lang[lang] = "<code>%s</code> <b>%s</b> — %s — <a href=\"%s\">%s</a>" % (
+                        total, notify._esc((item["title"] or "")[:60]),
+                        notify._esc(text[:140]), notify._esc(item["url"] or ""), src)
+                lines.append({"id": item["item_id"], "lines": by_lang, "line": by_lang["ru"],
+                              "topics": topics, "audience": audience})
                 ids.append((item["item_id"], scoring.DIGEST))
-            digest_payload = {"head": "📋 <b>Сводка</b>", "items": lines}
+            digest_payload = {"head": "📋 <b>Сводка</b>",
+                              "heads": {"ru": "📋 <b>Сводка</b>", "kk": "📋 <b>Шолу</b>",
+                                        "en": "📋 <b>Digest</b>"},
+                              "items": lines}
 
     if not hot_payload and not digest_payload:
         if verbose:
@@ -350,9 +403,19 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
                   % (len(hot_payload), len((digest_payload or {}).get("items", []))))
             for h in hot_payload[:2]:
                 print("  " + "-" * 60)
-                print(h["text"][:700])
+                print(h["texts"]["ru"][:700])
         return 0
 
+    # Что именно уходит — в лог прогона: на вопрос «почему не было постов
+    # из X» иначе нечем ответить, кроме догадок (2026-09-27).
+    if verbose:
+        for item, _m, total, _t, _b in hot:
+            print("  горячее: [%s] %.1f %s" % (item["source"], total, (item["title"] or "")[:80]))
+        if digest_payload:
+            by_src = {}
+            for e in pool:
+                by_src[e[0]["source"]] = by_src.get(e[0]["source"], 0) + 1
+            print("  в сводке: " + ", ".join("%s %d" % kv for kv in sorted(by_src.items())))
     ok, err = notify.deliver(hot=hot_payload, digest=digest_payload)
     if ok:
         for item_id, tier in ids:
@@ -437,7 +500,9 @@ def send_top(conn, n=10, now=None, dry=False, mark=False):
     rows = top_items(conn, n=n, now=now)
     if not rows:
         return 0, ["в базе пока нечего показывать"]
-    messages = [notify.format_item(it, m, total, tier, b, note=ai.get_note(conn, it["item_id"], _lang()))
+    messages = [notify.format_item(it, m, total, tier, b, lang=_lang(),
+                                   note=ai.note_for(ai.get_note(conn, it["item_id"]), _lang()),
+                                   gist=_meta_of(conn, it["item_id"])[2].get(_lang()))
                 for total, it, m, tier, b in rows]
     if dry:
         for msg in messages[:2]:

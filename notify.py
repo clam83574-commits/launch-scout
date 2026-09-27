@@ -41,45 +41,62 @@ def _num(n):
     return str(n)
 
 
-EFFORT_RU = {"days": "дни", "weeks": "недели", "months": "месяцы", "unclear": "неясно"}
+# Подписи уведомлений на трёх языках. Казахские — машинный перевод,
+# до продажи в РК показать носителю языка.
+L = {
+    "ru": {"subs": "подписчиков", "clone": "Повторить", "post": "пост", "product": "продукт",
+           "effort": {"days": "дни", "weeks": "недели", "months": "месяцы", "unclear": "неясно"},
+           "none": ("не видно", "not visible")},
+    "kk": {"subs": "жазылушы", "clone": "Қайталау", "post": "пост", "product": "өнім",
+           "effort": {"days": "күндер", "weeks": "апталар", "months": "айлар", "unclear": "белгісіз"},
+           "none": ("көрінбейді", "not visible", "не видно")},
+    "en": {"subs": "followers", "clone": "To replicate", "post": "post", "product": "product",
+           "effort": {"days": "days", "weeks": "weeks", "months": "months", "unclear": "unclear"},
+           "none": ("not visible", "не видно")},
+}
+EFFORT_RU = L["ru"]["effort"]
 
 
-def format_item(item, metrics, total, tier, breakdown, note=None):
+def format_item(item, metrics, total, tier, breakdown, note=None, gist=None, lang="ru"):
     """
-    Одно уведомление в HTML для Telegram.
+    Одно уведомление в HTML для Telegram, на языке читателя.
 
-    С ИИ-разбором выжимка идёт первой — это то, ради чего сообщение
-    открывают, — а исходный пост ужимается до строки контекста. Без
-    разбора всё как раньше: пост целиком.
+    Текст находки идёт на языке пользователя: полный ИИ-разбор, если он
+    есть, иначе выжимка в одну фразу из пакетной разметки. Исходный пост
+    на английском показывается, только когда ни того, ни другого нет, —
+    ссылка на оригинал остаётся всегда.
     """
+    tx = L.get(lang, L["ru"])
     head = "🔥" if tier == "hot" else "•"
     src = SRC_RU.get(item["source"], item["source"])
-    lines = ["%s <b>%s</b>  <code>%s</code>" % (head, _esc(item["title"] or "без названия"), total)]
+    lines = ["%s <b>%s</b>  <code>%s</code>" % (head, _esc(item["title"] or "—"), total)]
 
     who = item["author"]
     sub = src
     if who:
         sub += " · @%s" % _esc(who)
         if item["author_followers"]:
-            sub += " (%s подписчиков)" % _num(item["author_followers"])
+            sub += " (%s %s)" % (_num(item["author_followers"]), tx["subs"])
     lines.append("<i>%s</i>" % sub)
 
     if note and note.get("summary"):
         lines.append("")
         lines.append("🧠 " + _esc(note["summary"]))
-        effort = EFFORT_RU.get(note.get("clone_effort"), note.get("clone_effort") or "")
+        effort = tx["effort"].get(note.get("clone_effort"), "")
         if effort:
             extra = " — " + _esc(note["clone_note"]) if note.get("clone_note") else ""
-            lines.append("🛠 Повторить: %s%s" % (effort, extra))
+            lines.append("🛠 %s: %s%s" % (tx["clone"], effort, extra))
         money = (note.get("monetization") or "").strip()
-        if money and money.lower() not in ("not visible", "не видно", "не указано"):
+        if money and money.lower() not in tx["none"]:
             lines.append("💰 " + _esc(money))
-
-    body = (item["body"] or "").strip()
-    if body and body != (item["title"] or "").strip():
+    elif gist:
         lines.append("")
-        lines.append(_esc(body[:160] + ("…" if len(body) > 160 else ""))
-                     if note else _esc(body[:420]))
+        lines.append("🧠 " + _esc(gist))
+    else:
+        body = (item["body"] or "").strip()
+        if body and body != (item["title"] or "").strip():
+            lines.append("")
+            lines.append(_esc(body[:420]))
 
     # Цифры: только то, что реально измерено, без прочерков-заглушек.
     nums = []
@@ -92,21 +109,11 @@ def format_item(item, metrics, total, tier, breakdown, note=None):
         lines.append("")
         lines.append(" · ".join(nums))
 
-    if breakdown:
-        parts = []
-        for k, v in sorted(breakdown.items(), key=lambda kv: -abs(kv[1] if isinstance(kv[1], (int, float)) else 0)):
-            sign = "+" if isinstance(v, (int, float)) and v >= 0 else ""
-            parts.append("%s %s%s" % (_esc(k), sign, v))
-        lines.append("")
-        lines.append("<i>%s</i>" % _esc(" · ".join(parts))[:600])
-
     lines.append("")
-    lines.append('<a href="%s">пост</a>' % _esc(item["url"] or ""))
+    lines.append('<a href="%s">%s</a>' % (_esc(item["url"] or ""), tx["post"]))
     if item["product_url"] and item["product_url"] != item["url"]:
         lines[-1] += ' · <a href="%s">%s</a>' % (
-            _esc(item["product_url"]), _esc(item["domain"] or "продукт"))
-    if item["domain_age_days"] is not None:
-        lines[-1] += " · домену %d дн." % item["domain_age_days"]
+            _esc(item["product_url"]), _esc(item["domain"] or tx["product"]))
     return "\n".join(lines)
 
 
@@ -154,11 +161,11 @@ def deliver(hot=None, digest=None, broadcast=None):
             worker_err = "Worker ответил %d" % r.status_code
         except (requests.RequestException, ValueError) as e:
             worker_err = "Worker недоступен: %s" % str(e)[:100]
-    msgs = [h["text"] for h in hot]
+    msgs = [h.get("text") or (h.get("texts") or {}).get("ru", "") for h in hot]
     if digest and digest.get("items"):
         msgs.append("%s — %d\n\n%s" % (digest.get("head", "📋 <b>Сводка</b>"), len(digest["items"]),
                                        "\n".join(d["line"] for d in digest["items"])))
-    msgs += broadcast
+    msgs += [b if isinstance(b, str) else (b.get("text") or "") for b in broadcast]
     ok, errs = send_batch(msgs)
     err = "; ".join(filter(None, [worker_err] + errs[:1])) or None
     return ok, err
