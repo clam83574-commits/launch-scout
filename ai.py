@@ -133,8 +133,35 @@ For every item return:
 Reply with JSON only: {"items": [{"id": <id>, "topics": [...], "new_topic": "...", "audience": [...], "gist": {"ru": "...", "kk": "...", "en": "..."}}]}, one entry per input item, same ids.""" % ", ".join(TOPICS)
 
 
+def _keys():
+    """
+    Все ключи Groq: GROQ_API_KEY, GROQ_API_KEY_2 … _5 и список через запятую
+    в GROQ_API_KEYS. Ротация помогает, только если ключи из РАЗНЫХ
+    организаций Groq: лимиты считаются на организацию, а не на ключ.
+    """
+    raw = [os.environ.get("GROQ_API_KEYS") or ""] + [
+        os.environ.get("GROQ_API_KEY" + sfx) or "" for sfx in ("", "_2", "_3", "_4", "_5")]
+    out = []
+    for chunk in raw:
+        for k in chunk.split(","):
+            k = k.strip()
+            if k and k not in out:
+                out.append(k)
+    return out
+
+
 def _key():
-    return (os.environ.get("GROQ_API_KEY") or "").strip()
+    keys = _keys()
+    return keys[0] if keys else ""
+
+
+def _cap():
+    """Суточный предел запросов на модель: на каждый ключ — своя квота."""
+    return int(os.environ.get("LS_AI_DAILY_MAX") or DEFAULT_DAILY_MAX * max(len(_keys()), 1))
+
+
+# Ключи, упёршиеся в предел в этом прогоне, по моделям: {(модель, ключ)}.
+_SPENT = set()
 
 
 def available():
@@ -207,15 +234,26 @@ def _chat(model, system, user, schema=None, max_tokens=1200, timeout=60):
                                                    "strict": True}}
     else:
         body["response_format"] = {"type": "json_object"}
-    headers = {"Authorization": "Bearer " + _key(), "Content-Type": "application/json",
+    keys = [k for k in _keys() if (model, k) not in _SPENT]
+    if not keys:
+        raise RateLimited("?", "все ключи на пределе в этом прогоне")
+    key = keys[0]
+    headers = {"Authorization": "Bearer " + key, "Content-Type": "application/json",
                "User-Agent": UA}
-    for attempt in range(2):
+    for attempt in range(2 + len(keys)):
         try:
             r = requests.post(API, headers=headers, json=body, timeout=timeout)
         except requests.RequestException as e:
             return None, "сеть: %s" % str(e)[:120]
         if r.status_code == 429:
-            raise RateLimited(r.headers.get("retry-after", "?"), _limit_kind(r.text))
+            # Ротация: этот ключ на пределе для этой модели — следующий.
+            _SPENT.add((model, key))
+            rest = [k for k in _keys() if (model, k) not in _SPENT]
+            if not rest:
+                raise RateLimited(r.headers.get("retry-after", "?"), _limit_kind(r.text))
+            key = rest[0]
+            headers["Authorization"] = "Bearer " + key
+            continue
         if r.status_code == 400 and schema and attempt == 0 and (
                 "json_schema" in r.text or "response_format" in r.text):
             # Модель без строгих схем: просим просто JSON, схему — словами.
@@ -379,7 +417,7 @@ def annotate(conn, candidates, now, lang="ru", verbose=True):
         return 0, why
     _ensure_tables(conn)
     model = os.environ.get("LS_AI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
-    cap = int(os.environ.get("LS_AI_DAILY_MAX", DEFAULT_DAILY_MAX))
+    cap = _cap()
     done, last_err = 0, None
     for item in candidates[:NOTES_PER_RUN]:
         if _calls_today(conn, now, model) >= cap:
@@ -487,7 +525,7 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
         return 0, why
     _ensure_tables(conn)
     models = _tag_models()
-    cap = int(os.environ.get("LS_AI_DAILY_MAX", DEFAULT_DAILY_MAX))
+    cap = _cap()
     rows = conn.execute(
         "SELECT i.item_id, i.source, i.title, i.body FROM items i "
         "LEFT JOIN item_topics t ON t.item_id = i.item_id "
@@ -557,6 +595,105 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
 
 
 tag_items = enrich_items   # прежнее имя — для совместимости
+
+
+# --- раунды: разбор заголовков о сделках --------------------------------------
+
+DEAL_SYSTEM = """You extract venture funding rounds from news headlines and posts for a market radar read by startup founders.
+For every input item return:
+- id: the same id.
+- is_round: true ONLY if one specific company raised an equity/venture round (pre-seed to late stage). false for: VC firms raising their own funds, IPOs, acquisitions, grants, pure debt or loans, reports, roundups and lists of several deals, rumors ("in talks").
+- company: the startup's own name exactly as written, without descriptors ("AI startup Foo" -> "Foo", "AÏZA parent Amaani" -> "Amaani").
+- usd: the round amount in US dollars as a plain number (convert other currencies approximately; 1 crore INR = 120000 USD). null if not stated. Never the valuation.
+- stage: one of "pre-seed", "seed", "a", "b", "c+", "growth", "unknown".
+- sector: one id from this list: %s.
+- niche: the specific market niche a founder could enter — WHO the customer is plus WHAT job is done, without geography: "en" in 2-5 lowercase English words (good: "identity for ai agents", "warehouse picking robots", "ai agents for hotels", "sme lending", "insurance claims automation"; bad, too broad: "ai agent platform", "digital health platform", "consumer app", "fintech", "saas") and "ru" — the same in Russian. Never use the words platform, app, solution or tech as the core of the niche. If one of the KNOWN NICHES given in the input means the same thing, reuse its English name exactly; do not force an item into a known niche that is only loosely related.
+- what: what the company does, max 12 words, plain, in Russian (ru) and English (en).
+- country: ISO 3166 two-letter code of the company's home country, or "".
+Reply with JSON only: {"items": [{"id": ..., "is_round": ..., "company": "...", "usd": ..., "stage": "...", "sector": "...", "niche": {"en": "...", "ru": "..."}, "what": {"ru": "...", "en": "..."}, "country": "..."}]}. For is_round=false items you may leave the other fields empty."""
+
+DEAL_BATCH = 20
+DEAL_BATCHES_PER_RUN = 2
+DEFAULT_DEAL_MODELS = "openai/gpt-oss-120b,openai/gpt-oss-20b"
+
+
+def extract_deals(conn, now, items, sectors, known_niches):
+    """
+    Разобрать заголовки о раундах пачками. items — [{"id", "text"}],
+    sectors — [(id, английское описание)]. Возвращает (ответы, id пачек,
+    на которые модель ответила, ошибка): строку из отвеченной пачки, которую
+    модель пропустила, повторно не разбираем.
+
+    Модели — по приоритету, а не по кругу: на пробе 2026-09-28 gpt-oss-20b
+    оставлял нишу пустой примерно в половине сделок и путал описания,
+    120b — нет. Вторая модель берётся, только когда первая упёрлась в
+    предел. Больше DEAL_BATCHES_PER_RUN пачек за прогон не берём — прогон
+    раз в 10 минут, очередь разбирается постепенно, квота не выгорает залпом.
+    """
+    ok, why = available()
+    if not ok:
+        return [], set(), why
+    models = [m.strip() for m in (os.environ.get("LS_DEAL_MODELS") or DEFAULT_DEAL_MODELS).split(",")
+              if m.strip()]
+    cap = _cap()
+    system = DEAL_SYSTEM % ", ".join('"%s" (%s)' % s for s in sectors)
+    out, answered, last_err, spent = [], set(), None, set()
+    for i in range(0, min(len(items), DEAL_BATCH * DEAL_BATCHES_PER_RUN), DEAL_BATCH):
+        chunk = items[i:i + DEAL_BATCH]
+        user = json.dumps({"known_niches": known_niches[:60], "items": chunk}, ensure_ascii=False)
+        data = None
+        for model in models:
+            if model in spent or _calls_today(conn, now, model) >= cap:
+                spent.add(model)
+                continue
+            try:
+                data, err = _chat(model, system, user, schema=None, max_tokens=5000)
+            except RateLimited as e:
+                _count_call(conn, now, model)
+                spent.add(model)
+                last_err = "429 на разборе раундов, %s (%s)" % (model, e)
+                continue
+            _count_call(conn, now, model)
+            if err:
+                last_err = err
+                data = None
+            break
+        if isinstance(data, dict) and isinstance(data.get("items"), list):
+            out += [e for e in data["items"] if isinstance(e, dict)]
+            answered |= {c["id"] for c in chunk}
+        if len(spent) >= len(models):
+            break
+    return out, answered, last_err
+
+
+def write_market_story(stats_text, lang="ru"):
+    """
+    Вывод «куда движется рынок» по готовой таблице цифр. (текст, ошибка).
+
+    Модели запрещено придумывать цифры и компании: всё, что она может
+    назвать, уже есть во входе. Её работа — связать опоры (деньги, отбор YC,
+    запуски) в два-три предложения и назвать, где окно для небольшой команды.
+    """
+    ok, why = available()
+    if not ok:
+        return None, why
+    model = os.environ.get("LS_AI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
+    system = ("You write a market brief for founders deciding what to build next. "
+              "Your only evidence is the investor data given: venture rounds by sector and niche, their stage, "
+              "YC batch shares and analyst headlines. Never invent figures, companies or links, and never cite "
+              "social-media hype. Reply as JSON {\"text\": \"...\"}: 3-5 short bullet lines in %s, each starting "
+              "with •: (1) where money is moving, citing round counts and sums; (2) which niches are opening — "
+              "several EARLY rounds (pre-seed/seed/A) in one niche — naming the companies; (3) what is crowded or "
+              "cooling (late rounds, falling share); (4) one concrete product a small team could build next to an "
+              "opening niche, e.g. a tool those funded companies' customers will need. Plain, no hype."
+              % LANG_NAMES.get(lang, lang))
+    try:
+        data, err = _chat(model, system, stats_text, schema=None, max_tokens=1500)
+    except RateLimited:
+        return None, "429 от Groq"
+    if err or not isinstance(data, dict) or not data.get("text"):
+        return None, err or "пустой ответ"
+    return data["text"].strip(), None
 
 
 def write_trend_story(stats_text, lang="ru"):

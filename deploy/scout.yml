@@ -66,6 +66,13 @@ jobs:
       # ИИ: Groq, бесплатный тариф — выжимки, вердикт «продукт ли это»,
       # темы для трендов. Без ключа шаг молча пропускается.
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      # Запасные ключи Groq для ротации (ai.py): на 429 запрос идёт со
+      # следующим. Помогает, только если ключи из разных организаций Groq.
+      GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+      GROQ_API_KEY_3: ${{ secrets.GROQ_API_KEY_3 }}
+      # SEC EDGAR требует User-Agent с контактом («Имя email@домен»). Без
+      # секрета — ссылка на репозиторий; если SEC ответит 403, завести его.
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
       LS_LANG: ru
       WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
 

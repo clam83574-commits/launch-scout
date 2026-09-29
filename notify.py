@@ -45,19 +45,23 @@ def _num(n):
 # до продажи в РК показать носителю языка.
 L = {
     "ru": {"subs": "подписчиков", "clone": "Повторить", "post": "пост", "product": "продукт",
+           "early": "⏳ Отклика пока нет (%d) — это сигнал о запуске, а не о взлёте.",
            "effort": {"days": "дни", "weeks": "недели", "months": "месяцы", "unclear": "неясно"},
            "none": ("не видно", "not visible")},
     "kk": {"subs": "жазылушы", "clone": "Қайталау", "post": "пост", "product": "өнім",
+           "early": "⏳ Әзірге үн қату жоқ (%d) — бұл өсу емес, іске қосу туралы белгі.",
            "effort": {"days": "күндер", "weeks": "апталар", "months": "айлар", "unclear": "белгісіз"},
            "none": ("көрінбейді", "not visible", "не видно")},
     "en": {"subs": "followers", "clone": "To replicate", "post": "post", "product": "product",
+           "early": "⏳ No traction yet (%d) — a launch signal, not a breakout.",
            "effort": {"days": "days", "weeks": "weeks", "months": "months", "unclear": "unclear"},
            "none": ("not visible", "не видно")},
 }
 EFFORT_RU = L["ru"]["effort"]
 
 
-def format_item(item, metrics, total, tier, breakdown, note=None, gist=None, lang="ru"):
+def format_item(item, metrics, total, tier, breakdown, note=None, gist=None, lang="ru",
+                sectors=None):
     """
     Одно уведомление в HTML для Telegram, на языке читателя.
 
@@ -77,6 +81,10 @@ def format_item(item, metrics, total, tier, breakdown, note=None, gist=None, lan
         sub += " · @%s" % _esc(who)
         if item["author_followers"]:
             sub += " (%s %s)" % (_num(item["author_followers"]), tx["subs"])
+    if sectors:
+        import market
+        sub += " · " + ", ".join("%s %s" % (market.SECTOR[x]["emoji"], market.sector_name(x, lang))
+                                 for x in sectors if x in market.SECTOR)
     lines.append("<i>%s</i>" % sub)
 
     if note and note.get("summary"):
@@ -108,6 +116,18 @@ def format_item(item, metrics, total, tier, breakdown, note=None, gist=None, lan
     if nums:
         lines.append("")
         lines.append(" · ".join(nums))
+
+    # Почему это пришло — одной строкой, с честной пометкой, если отклика
+    # ещё нет: Launch HN приходит в день запуска и с тремя очками, и
+    # читатель должен видеть, что это «компания YC вышла», а не «взлетело».
+    why = [k for k, v in sorted((breakdown or {}).items(), key=lambda kv: -abs(kv[1]) if isinstance(kv[1], (int, float)) else 0)
+           if isinstance(v, (int, float)) and v > 0][:2]
+    if why:
+        lines.append("📊 " + _esc("; ".join(why)))
+    likes = (metrics or {}).get("likes")
+    floor = {"hn": 20, "x": 30}.get(item["source"])
+    if floor and (likes or 0) < floor:
+        lines.append(tx["early"] % (likes or 0))
 
     lines.append("")
     lines.append('<a href="%s">%s</a>' % (_esc(item["url"] or ""), tx["post"]))

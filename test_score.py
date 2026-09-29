@@ -252,6 +252,8 @@ def seed_distribution(conn, source, rates, age_h):
                   author="bg%d" % i, posted_at=NOW - int(age_h * HOUR),
                   first_seen=NOW - int(age_h * HOUR), tags="show",
                   series=[(0, {"likes": int(round(likes))})])
+    # Эталон площадки кэшируется на прогон; после подсева он устарел.
+    score._PCT_CACHE.clear()
 
 
 def per_source_ceilings(conn):
@@ -295,15 +297,26 @@ def per_source_ceilings(conn):
     check("HN: рядовой Show HN — не дальше архива", tier == score.ARCHIVE, True,
           "%.1f" % s)
 
-    # HN: Launch HN — компания YC выходит на публику. В день запуска это
-    # мгновенное уведомление даже без отклика: прямой ответ на заказ.
+    # HN: Launch HN с тремя очками. До 2026-09-28 он получал 60 баллов за
+    # сам факт поста и прилетал «горячим» — ровно на это жаловался владелец.
+    # Теперь без отклика это сводка, а не уведомление.
     launch_quiet = make_item(
         conn, source="hn", ext_id="hn-launch", author="yc-founder", tags="launch",
         title="Launch HN: Acme (YC S26) — invoices for plumbers",
         posted_at=NOW - 2 * HOUR, first_seen=NOW - 2 * HOUR,
         series=[(60 * 60, {"likes": 2}), (5 * 60, {"likes": 3})])
     s, tier, _ = score.score_item(conn, launch_quiet, NOW)
-    check("HN: Launch HN в день запуска — мгновенно", tier == score.HOT, True, "%.1f" % s)
+    check("HN: Launch HN с 3 очками — не мгновенно", tier == score.HOT, False, "%.1f %s" % (s, tier))
+
+    # Тот же Launch HN, набравший 90 очков за 2 часа, — уже мгновенно.
+    launch_hot = make_item(
+        conn, source="hn", ext_id="hn-launch-hot", author="yc-founder4", tags="launch",
+        title="Launch HN: Bolt (YC S26) — payroll for clinics",
+        posted_at=NOW - 2 * HOUR, first_seen=NOW - 2 * HOUR,
+        series=[(90 * 60, {"likes": 30}), (45 * 60, {"likes": 60}), (5 * 60, {"likes": 90})])
+    s, tier, b = score.score_item(conn, launch_hot, NOW)
+    check("HN: Launch HN с 90 очками за 2 ч — мгновенно", tier == score.HOT, True,
+          "%.1f %s" % (s, "; ".join(list(b)[:3])))
 
     # HN: тот же Launch HN, но четырёхдневной давности и тихий — в архив,
     # иначе старые запуски висели бы в выдаче вечно.
@@ -348,8 +361,52 @@ def per_source_ceilings(conn):
               first_seen=NOW - HOUR, series=[(5 * 60, {"likes": 4})])
     yc_new = conn.execute("SELECT * FROM items WHERE ext_id = 'yc-new'").fetchone()
     s, tier, b = score.score_item(conn, yc_new, NOW)
-    check("YC: новичок, подтверждённый Launch HN — мгновенно", tier == score.HOT, True,
+    check("YC: новичок, подтверждённый тихим Launch HN — не мгновенно", tier == score.HOT, False,
           "%.1f %s" % (s, "; ".join(list(b)[:3])))
+
+    # Деньги: у компании из каталога есть свежий раунд — это уже пуш.
+    import market
+    market._ensure(conn)
+    market.add_deal(conn, "Acme raises $6M seed to build invoices for plumbers", "https://tc.example/acme",
+                    "TechCrunch", NOW - 2 * 86400, NOW)
+    conn.commit()
+    market._IDX.clear()
+    s, tier, b = score.score_item(conn, yc_new, NOW)
+    check("YC: новичок с раундом $6M seed — мгновенно", tier == score.HOT, True,
+          "%.1f %s" % (s, "; ".join(k for k in b if "раунд" in k)))
+
+    print("\n--- мало отклика — не взлёт (живой срез 2026-09-27) ---")
+
+    # «Show HN: A Claude Code skill to analyze your chess games»: 6 очков
+    # через 20 минут после публикации получили +52 «быстрее 100% постов HN».
+    chess = make_item(
+        conn, source="hn", ext_id="hn-chess", author="chessguy", tags="show",
+        posted_at=NOW - 20 * 60, first_seen=NOW - 20 * 60,
+        series=[(15 * 60, {"likes": 2}), (5 * 60, {"likes": 6})])
+    s, tier, b = score.score_item(conn, chess, NOW)
+    check("HN: 6 очков за 20 минут — не «быстрее всех»",
+          any("быстрее" in k for k in b), False, "%.1f %s" % (s, "; ".join(b) or "пусто"))
+    check("HN: 6 очков за 20 минут — не дальше архива", tier == score.ARCHIVE, True, "%.1f" % s)
+
+    # X: запуск, который набирает быстрее почти всех запусков недели,
+    # должен дойти до мгновенного уведомления и без истории автора.
+    x_bg = [2] * 30 + [6] * 12 + [15] * 6 + [40] * 2
+    seed_distribution(conn, "x", x_bg, age_h=10)
+    x_hot = make_item(
+        conn, source="x", ext_id="x-hot", author="indie1", followers=20000,
+        posted_at=NOW - 3 * HOUR, first_seen=NOW - 3 * HOUR,
+        series=[(2 * HOUR, {"likes": 200, "bookmarks": 30}),
+                (1 * HOUR, {"likes": 480, "bookmarks": 70}),
+                (5 * 60, {"likes": 900, "bookmarks": 130})])
+    s, tier, b = score.score_item(conn, x_hot, NOW)
+    check("X: быстрый запуск — мгновенно", tier == score.HOT, True,
+          "%.1f %s" % (s, "; ".join(list(b)[:3])))
+    x_meh = make_item(
+        conn, source="x", ext_id="x-meh", author="indie2", followers=40000,
+        posted_at=NOW - 8 * HOUR, first_seen=NOW - 8 * HOUR,
+        series=[(2 * HOUR, {"likes": 24}), (5 * 60, {"likes": 26})])
+    s, tier, _ = score.score_item(conn, x_meh, NOW)
+    check("X: 26 лайков за 8 часов — не мгновенно", tier != score.HOT, True, "%.1f %s" % (s, tier))
 
     print("\n--- ошибки, пойманные первой живой выдачей 2026-09-25 ---")
 

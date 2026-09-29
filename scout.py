@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT))
 
 import ai                      # noqa: E402
 import db                      # noqa: E402
+import market                  # noqa: E402
 import notify                  # noqa: E402
 import os                      # noqa: E402
 import score as scoring        # noqa: E402
@@ -56,7 +57,14 @@ IDS_FILE = ROOT / "x_account_ids.json"
 # ограничили бы в первый же день. Поиски идут каждый прогон (из них и
 # приходят свежие запуски), ленты — по кругу срезами. Итого около 20
 # запросов в 10 минут: темп активного живого пользователя.
-X_ACCOUNTS_PER_RUN = 11
+#
+# 2026-09-28: X — самая массовая площадка, а находок из неё приходило меньше,
+# чем из HN. Поиски теперь идут по кругу из большого пула (queries.txt):
+# «ядро» каждый прогон на две страницы, остальное — срезом. Лимит поиска у
+# веб-клиента X около 50 запросов в 15 минут, поэтому за прогон (раз в 10
+# минут) — не больше ~20 поисков: 4 ядра × 2 страницы + 12 по кругу.
+X_ACCOUNTS_PER_RUN = 16
+X_SEARCHES_PER_RUN = 12
 X_COOLDOWN_SECONDS = 30 * 60
 
 
@@ -135,18 +143,26 @@ def collect(conn, sources, now, verbose=True):
                 print("  x   " + note)
         else:
             seeds["x"] = not db.source_seeded(conn, "x")
-            queries = _read_list(QUERIES_FILE)
+            queries = _pick_queries(conn, _read_list(QUERIES_FILE))
             ids = _load_account_ids()
             # Ленты — по кругу: каждый прогон следующий срез списка.
             off = int(db.kv_get(conn, "x_acc_offset", 0) or 0) % max(len(ids), 1)
             part = (ids[off:] + ids[:off])[:X_ACCOUNTS_PER_RUN]
             db.kv_set(conn, "x_acc_offset", off + len(part))
-            pairs, err = x_src.fetch(session, queries, accounts_ids=part)
+            pairs, demand, raises, err = x_src.fetch(session, queries, accounts_ids=part)
+            n_mrr = market.store_x_traction(conn, raises + (x_src.fetch.last_mrr or []), now)
             if err and err.startswith("429"):
                 db.kv_set(conn, "x_cooldown_until", now + X_COOLDOWN_SECONDS)
             total, new, _ = _store(conn, pairs, now, bootstrap=seeds["x"])
-            db.log_run(conn, now, "x", total, new, not err, err or "")
+            n_dem = market.store_demand(conn, demand, now) if demand else 0
+            n_raise = market.store_x_raises(conn, raises, now) if raises else 0
+            st = x_src.fetch.last_stats or {}
+            note = "запросов %s, постов %s, запусков %s, спрос +%d, раундов %d, выручка +%d" % (
+                st.get("calls", "?"), st.get("tweets", "?"), st.get("launches", "?"), n_dem, n_raise, n_mrr)
+            db.log_run(conn, now, "x", total, new, not err, err or note)
             report["x"] = (total, new, err)
+            if verbose:
+                print("    x: " + note)
 
     conn.commit()
     if verbose:
@@ -156,6 +172,21 @@ def collect(conn, sources, now, verbose=True):
             print("%s %-3s собрано %4d, новых %3d%s %s"
                   % (mark, src, total, new, seed, ("— " + err) if err else ""))
     return report
+
+
+def _pick_queries(conn, lines):
+    """
+    Поиски X на этот прогон: всё «ядро» (строки с !) плюс следующий срез
+    остальных по кругу. Смещение хранится в базе, как у лент аккаунтов.
+    """
+    core = [q for q in lines if x_src.parse_query(q)["core"]]
+    rest = [q for q in lines if not x_src.parse_query(q)["core"]]
+    if not rest:
+        return core
+    off = int(db.kv_get(conn, "x_q_offset", 0) or 0) % len(rest)
+    part = (rest[off:] + rest[:off])[:X_SEARCHES_PER_RUN]
+    db.kv_set(conn, "x_q_offset", off + len(part))
+    return core + part
 
 
 def remeasure(conn, now, max_age_hours=36, verbose=True):
@@ -181,7 +212,12 @@ def remeasure(conn, now, max_age_hours=36, verbose=True):
     # а каждый замер — отдельный запрос с адреса раннера. 120 замеров раз в
     # 10 минут — это 17 тысяч запросов в сутки ради хвоста, который уже
     # ничего не решает.
-    caps = {"hn": (200, cutoff), "x": (40, now - 12 * 3600)}
+    #
+    # 2026-09-28: X поднят до 120 замеров за сутки. Замер идёт через
+    # syndication — без кук и без лимитов аккаунта, — а без повторных
+    # замеров у твита нет ни темпа, ни ускорения: из 38 постов X в срезе
+    # 2026-09-27 у большинства был один-единственный замер.
+    caps = {"hn": (200, cutoff), "x": (120, now - 24 * 3600)}
     by_src = {}
     # Уже измеренное в ЭТОМ прогоне (сбор только что принёс свежие цифры)
     # повторно не замеряем: это лишние запросы, а раньше ещё и затирание
@@ -217,7 +253,7 @@ def remeasure(conn, now, max_age_hours=36, verbose=True):
                 done += 1
             elif err and len(problems) < 4:
                 problems.append("x/%s: %s" % (r["ext_id"], err))
-            time.sleep(0.35)
+            time.sleep(0.25)
 
     conn.commit()
     if verbose:
@@ -318,6 +354,35 @@ def _topics_of(conn, item_id):
     return _meta_of(conn, item_id)[0]
 
 
+def _sectors_of(conn, item):
+    """Секторы находки (market.SECTORS) — для личных фильтров подписчиков."""
+    topics = _meta_of(conn, item["item_id"])[0]
+    return market.sectors_for(topics, "%s %s" % (item["title"] or "", item["body"] or ""))
+
+
+# Порог «заметного»: ниже горячего, но выше сводки. Такие находки уходят
+# сразу тем, кто выбрал чувствительность «всё заметное» (Worker решает по
+# личному порогу подписчика: 70 / 58 / 48).
+WARM_MIN = 48.0
+TOY = "ИИ: скорее игрушка, чем бизнес"
+
+
+def _pushable(e):
+    item, _m, total, tier, breakdown = e
+    if TOY in breakdown:
+        return False       # ИИ счёл игрушкой — только в сводку, не в пуш
+    # Каталог YC «заметным» не пушится: у каждого новичка батча ровно 54, и
+    # обновление каталога прислало бы полсотни сообщений разом (на пробном
+    # прогоне 2026-09-28 — 16 штук за раз). Им место в сводке.
+    # «Заметное» тоже только с живым откликом: без этого оно обходило бы
+    # порог пуша, и три лайка снова прилетали бы уведомлением.
+    likes = (_m or {}).get("likes") or 0
+    funded = any(k.startswith("раунд инвесторов") for k in breakdown)
+    real = funded or likes >= scoring.TRACTION_FULL.get(item["source"], 10 ** 9)
+    warm = item["source"] != "yc" and tier == scoring.DIGEST and total >= WARM_MIN and real
+    return tier == scoring.HOT or warm
+
+
 DIGEST_SIZE = 12
 DIGEST_PER_SOURCE = 4
 
@@ -352,20 +417,25 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
     категории, поэтому к каждой находке прикладываются её темы. Без Worker
     всё уходит владельцу напрямую, как раньше.
     """
-    hot = [e for e in evaluated if e[3] == scoring.HOT
+    hot = [e for e in evaluated if _pushable(e)
            and not db.already_sent(conn, e[0]["item_id"], scoring.HOT)]
     hot_payload, ids = [], []
     for item, metrics, total, tier, breakdown in hot:
         topics, audience, gist = _meta_of(conn, item["item_id"])
         raw = ai.get_note(conn, item["item_id"])
+        secs = _sectors_of(conn, item)
         texts = {lang: notify.format_item(item, metrics, total, tier, breakdown,
                                           note=ai.note_for(raw, lang), gist=gist.get(lang),
-                                          lang=lang)
+                                          lang=lang, sectors=secs)
                  for lang in ai.LANGS}
         # Адреса отдельно от текста: Worker ставит их кнопками под
         # уведомлением — ссылки в конце текста на телефоне не замечали.
+        # Балл, источник и секторы — для личных фильтров: Worker шлёт
+        # каждому только то, что проходит его порог, секторы и источники.
         hot_payload.append({"id": item["item_id"], "texts": texts, "text": texts["ru"],
                             "topics": topics, "audience": audience,
+                            "sectors": secs, "source": item["source"],
+                            "score": total, "tier": tier,
                             "url": item["url"], "product_url": item["product_url"]})
         ids.append((item["item_id"], scoring.HOT))
 
@@ -385,7 +455,9 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
                         total, notify._esc((item["title"] or "")[:60]),
                         notify._esc(text[:140]), notify._esc(item["url"] or ""), src)
                 lines.append({"id": item["item_id"], "lines": by_lang, "line": by_lang["ru"],
-                              "topics": topics, "audience": audience})
+                              "topics": topics, "audience": audience, "score": total,
+                              "sectors": _sectors_of(conn, item), "source": item["source"],
+                              "pushed": _pushable((item, metrics, total, tier, _b))})
                 ids.append((item["item_id"], scoring.DIGEST))
             digest_payload = {"head": "📋 <b>Сводка</b>",
                               "heads": {"ru": "📋 <b>Сводка</b>", "kk": "📋 <b>Шолу</b>",
@@ -617,12 +689,79 @@ def run(sources, dry=False, digest=False, digest_auto=False):
     print("  оценено %d: горячих %d, в сводку %d" % (len(evaluated), hot, dig))
     dispatch(conn, evaluated, now, dry=dry, digest=digest)
     try:
-        import trends
-        trends.maybe_send_weekly(conn, now, dry=dry, lang=_lang())
-    except Exception as e:
-        print("  тренды недели: ошибка %s" % e)
+        market_step(conn, now, dry=dry)
+    except Exception as e:          # рынок — надстройка: его сбой не должен ронять прогон
+        print("  рынок: ошибка %s" % e)
     conn.close()
     return 0
+
+
+def _due(conn, key, now, hours, windows=((7, 9),), weekday=None):
+    """Окно по UTC + память о прошлой отправке: та же схема, что у сводки."""
+    g = time.gmtime(now)
+    if weekday is not None and g.tm_wday != weekday:
+        return False
+    if not any(a <= g.tm_hour < b for a, b in windows):
+        return False
+    return now - int(db.kv_get(conn, key, 0) or 0) >= hours * 3600
+
+
+def market_step(conn, now, dry=False):
+    """
+    Рынок: пересчёт раз в 12 часов и три рассылки — каждая со своим
+    переключателем в настройках подписчика и фильтром по его секторам.
+
+      🚀 сдвиг рынка — сектор впервые перешёл в «растёт» (сразу);
+      💰 раунды за сутки — новые сделки от $1 млн, по секторам (ежедневно, 10:00 МСК);
+      🧭 рынок недели — полный отчёт (понедельник, 10:00 МСК).
+    """
+    rep = market.maybe_refresh(conn, now)
+    broadcast = []
+    if rep:
+        print("  рынок пересчитан: растут %s" % (", ".join(
+            s["id"] for s in rep["sectors"] if s["trend"] == "up") or "—"))
+        broadcast += market.alert_payloads(rep, market.shift_alerts(conn, rep))
+    # SEC Form D: индексы EDGAR — раз в сутки, заявки — очередью каждый
+    # прогон (их сотни в день, SEC пускает не больше 10 запросов в секунду).
+    fd = 0
+    try:
+        if now - int(db.kv_get(conn, "formd_ts", 0) or 0) >= 86400:
+            market.refresh_formd(conn, now)
+            db.kv_set(conn, "formd_ts", now)
+        fd = market.process_formd(conn, now)
+    except Exception as e:              # SEC — надстройка: его сбой не роняет рынок
+        print("  SEC Form D: ошибка %s" % e)
+    # Очередь разбора раундов — каждый прогон понемногу: ниши и стадии
+    # появляются по мере разбора, и отчёт пересчитывается без сети.
+    if market.enrich_deals(conn, now) or fd:
+        rep = market.update_report(conn, now)
+    rep = rep or market.last_report(conn)
+    if rep:
+        broadcast += market.niche_alerts(conn, rep, now)
+        # Вывод модели — не чаще раза в 12 часов на язык (кэш в story).
+        market.render_all(conn, rep, now)
+    fund_keys = []
+    if _due(conn, "last_funding", now, 20):
+        items, fund_keys = market.funding_digest(conn, now)
+        broadcast += items
+    weekly = rep and _due(conn, "last_market_weekly", now, 6 * 24, weekday=0)
+    if weekly:
+        texts = market.render_all(conn, rep, now)
+        broadcast.append({"kind": "market", "texts": texts, "text": texts["ru"]})
+    if not broadcast:
+        return
+    if dry:
+        print("  --dry: рыночных рассылок %d: %s" % (len(broadcast), ", ".join(b["kind"] for b in broadcast)))
+        return
+    ok, err = notify.deliver(broadcast=broadcast)
+    if ok or not err:
+        if fund_keys:
+            market.mark_deals_sent(conn, fund_keys)
+            db.kv_set(conn, "last_funding", now)
+        if weekly:
+            db.kv_set(conn, "last_market_weekly", now)
+        conn.commit()
+    print("  рынок: разослано %d %s" % (ok, ("— " + err) if err else ""))
 
 
 AI_PER_RUN = 20

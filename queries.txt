@@ -6,22 +6,68 @@
 #   min_faves:N       порог лайков НА МОМЕНТ ЗАПРОСА
 #   lang:en           язык
 #
+# Префиксы наши (см. sources/x.py, parse_query):
+#   !        ядро — идёт КАЖДЫЙ прогон и листается на 2 страницы
+#   top:     выдача «Top» (что X сам считает заметным) вместо хронологии
+#   demand:  поток спроса — в находки не идёт, копится для «🧭 Рынка»
+#   raise:   посты о раундах — в поток сделок «🧭 Рынка»
+#   mrr:     посты о выручке (MRR/ARR) — факты для чата
+#
+# Остальные строки идут ПО КРУГУ: за прогон — X_SEARCHES_PER_RUN штук
+# (scout.py), каждая строка возвращается примерно раз в полчаса. Так
+# запросов может быть много, а темп к аккаунту — ровный: около 20 поисков
+# в 10 минут при лимите X ~50 в 15 минут.
+#
 # Про min_faves. Это грубый предфильтр, а не метрика отбора: он нужен
 # только чтобы не тащить из X тысячи пустых постов. Настоящий отбор
 # делает score.py по скорости и аномалии. Ставить его высоко — значит
 # увидеть пост, когда он уже разошёлся, то есть опоздать. Держим низко.
 
-"just launched" filter:links -filter:replies min_faves:20 lang:en
+# --- ядро: каждый прогон, две страницы ---
+!"just launched" filter:links -filter:replies min_faves:10 lang:en
+!("we launched" OR "we just launched" OR "launching today") filter:links -filter:replies min_faves:10 lang:en
+!top: ("just launched" OR "launching today" OR "is now live") filter:links -filter:replies min_faves:50 lang:en
+!("live on Product Hunt" OR "launched on Product Hunt" OR "#1 product of the day") -filter:replies min_faves:5 lang:en
+
+# --- запуски, широко ---
 "introducing" (app OR tool OR platform OR agent) filter:links -filter:replies min_faves:30 lang:en
-"we built" filter:links -filter:replies min_faves:25 lang:en
+"we built" filter:links -filter:replies min_faves:20 lang:en
+"i built" (app OR tool OR saas) filter:links -filter:replies min_faves:15 lang:en
 "just shipped" filter:links -filter:replies min_faves:15 lang:en
-"launch day" filter:links -filter:replies min_faves:20 lang:en
+"launch day" filter:links -filter:replies min_faves:15 lang:en
 ("now live" OR "out now") (beta OR launch OR v1) filter:links -filter:replies min_faves:20 lang:en
 "excited to announce" (launch OR launching OR built) filter:links -filter:replies min_faves:30 lang:en
+("public beta" OR "open beta" OR "early access") (app OR product OR platform) filter:links -filter:replies min_faves:15 lang:en
+#buildinpublic ("launched" OR "first customers" OR "MRR") -filter:replies min_faves:20 lang:en
+top: ("I built" OR "we built") (startup OR saas OR app) filter:links -filter:replies min_faves:100 lang:en
 
-# Подтверждённый интерес инвесторов — то, ради чего заводился этот фильтр.
-("we raised" OR "raised $") (seed OR "Series A" OR pre-seed) -filter:replies min_faves:30 lang:en
+# --- по секторам: чтобы в выдаче был не только софт ---
+("just launched" OR "introducing" OR "pre-orders") (robot OR robotics OR hardware OR device OR drone) filter:links -filter:replies min_faves:15 lang:en
+("kickstarter" OR "pre-order" OR "preorders open") (launch OR live) filter:links -filter:replies min_faves:20 lang:en
+("just launched" OR "introducing") (fintech OR payments OR invoicing OR payroll) filter:links -filter:replies min_faves:15 lang:en
+("just launched" OR "introducing") (health OR clinic OR patients OR fitness) filter:links -filter:replies min_faves:15 lang:en
+("just launched" OR "introducing") (ecommerce OR shopify OR "online store" OR marketplace) filter:links -filter:replies min_faves:15 lang:en
+("just launched" OR "introducing") (AI agent OR "AI agents") filter:links -filter:replies min_faves:25 lang:en
+("just launched" OR "introducing") (energy OR solar OR battery OR climate) filter:links -filter:replies min_faves:15 lang:en
+
+# --- раунды: основатели пишут о раунде раньше, чем выходит заметка ---
+# raise: — в находки не идёт, пополняет поток сделок «🧭 Рынка» (сумма и
+# стадия берутся из текста, компанию и нишу уточняет ИИ).
+raise: ("we raised" OR "we've raised" OR "excited to announce our") (seed OR "pre-seed" OR "Series A" OR "Series B") -filter:replies min_faves:20 lang:en
+raise: ("raised $" OR "raising $") ("led by" OR "backed by") -filter:replies min_faves:30 lang:en
+raise: ("our seed round" OR "our pre-seed" OR "our Series A") -filter:replies min_faves:15 lang:en
 ("backed by" OR "joining") (YC OR "Y Combinator" OR a16z OR Sequoia) filter:links -filter:replies min_faves:20 lang:en
-
 # Батчи YC: формулировка «S26 / W26» — то, как об этом пишут сами основатели.
-("S26" OR "W26" OR "F26") ("Y Combinator" OR YC) filter:links -filter:replies min_faves:10 lang:en
+("S26" OR "W26" OR "F26" OR "W27") ("Y Combinator" OR YC) filter:links -filter:replies min_faves:10 lang:en
+
+# --- выручка: основатели пишут MRR/ARR (#buildinpublic) ---
+# mrr: — в находки не идёт; цифры выручки с датой и ссылкой — для чата и
+# отчёта. Других открытых источников выручки молодых компаний нет.
+mrr: ("MRR" OR "ARR") ("hit" OR "crossed" OR "reached" OR "just passed") "$" -filter:replies min_faves:30 lang:en
+mrr: ("$10k MRR" OR "$20k MRR" OR "$50k MRR" OR "$100k MRR" OR "$1M ARR") -filter:replies min_faves:20 lang:en
+
+# --- спрос: чего люди хотят и за что готовы платить ---
+demand: ("someone should build" OR "somebody should build" OR "someone please build") -filter:replies min_faves:20 lang:en
+demand: ("I would pay for" OR "I'd pay for" OR "shut up and take my money") (app OR tool OR service) -filter:replies min_faves:20 lang:en
+demand: ("is there an app" OR "is there a tool" OR "why is there no") -filter:replies min_faves:30 lang:en
+demand: ("startup idea" OR "billion dollar idea") -filter:replies min_faves:50 lang:en

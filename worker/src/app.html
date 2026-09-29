@@ -98,6 +98,8 @@
   ul.plain { list-style: none; padding: 0; margin: 0; }
   ul.plain li { padding: 7px 0; border-bottom: 1px solid var(--line); }
   .story { white-space: pre-wrap; background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
+  .story.market { white-space: normal; margin-bottom: 14px; line-height: 1.45; }
+  .story a { color: var(--link); }
   dialog { border: 0; border-radius: 16px 16px 0 0; padding: 0; width: 100%; max-width: 640px; margin: auto auto 0;
     background: var(--bg); color: var(--text); max-height: 88vh; }
   dialog::backdrop { background: rgb(0 0 0 / .45); }
@@ -192,18 +194,21 @@
   <section id="feed"></section>
 
   <section id="trends" hidden>
-    <div class="hero" id="hero"></div>
-    <h2 data-t="by_day"></h2>
-    <div class="legend" id="legend"></div>
-    <div class="chart" id="daily"><div class="tip" id="tip"></div></div>
-    <button class="linkbtn" id="tableToggle" data-t="table_show"></button>
-    <div id="dailyTable" hidden></div>
-    <h2 data-t="top_week"></h2>
-    <div class="note" data-t="tap_topic"></div>
-    <div class="bars" id="share"></div>
-    <div id="risingBlock"></div>
-    <div id="newBlock"></div>
-    <div id="storyBlock"></div>
+    <div id="marketBlock"></div>
+    <!-- Графики «тем среди наших находок» убраны 2026-09-28: это зеркало
+         наших фильтров, а не рынка. Узлы оставлены пустыми и скрытыми,
+         чтобы не трогать остальной код страницы. -->
+    <div hidden>
+      <div class="hero" id="hero"></div>
+      <div class="legend" id="legend"></div>
+      <div class="chart" id="daily"><div class="tip" id="tip"></div></div>
+      <button class="linkbtn" id="tableToggle"></button>
+      <div id="dailyTable"></div>
+      <div class="bars" id="share"></div>
+      <div id="risingBlock"></div>
+      <div id="newBlock"></div>
+      <div id="storyBlock"></div>
+    </div>
   </section>
 
   <section id="saved" hidden></section>
@@ -213,7 +218,7 @@
 
 <nav>
   <button data-tab="feed" aria-current="page"><i aria-hidden="true">📰</i><span data-t="tab_feed"></span></button>
-  <button data-tab="trends"><i aria-hidden="true">📈</i><span data-t="tab_trends"></span></button>
+  <button data-tab="trends"><i aria-hidden="true">🧭</i><span data-t="tab_trends"></span></button>
   <button data-tab="saved"><i aria-hidden="true">⭐</i><span data-t="tab_saved"></span></button>
   <button data-tab="settings"><i aria-hidden="true">⚙️</i><span data-t="tab_settings"></span></button>
 </nav>
@@ -244,7 +249,7 @@
   const T = {
     ru: {
       hot: "Горячие", new: "Новые", day: "Сутки", week: "Неделя", all: "Все",
-      tab_feed: "Лента", tab_trends: "Тренды", tab_saved: "В работе", tab_settings: "Настройки",
+      tab_feed: "Лента", tab_trends: "Рынок", tab_saved: "В работе", tab_settings: "Настройки",
       subs: "подписчиков", score: "балл", clone: "Повторить",
       effort: { days: "дни", weeks: "недели", months: "месяцы", unclear: "неясно" },
       open_post: "Открыть пост", open_site: "Сайт проекта", orig: "Исходный пост",
@@ -266,6 +271,12 @@
       n_hot: "🔥 Горячие находки — сразу", n_hot_d: "Запуск быстро набирает внимание",
       n_digest: "📋 Сводка — дважды в день", n_digest_d: "До 12 заметных находок за полдня",
       n_trends: "📈 Тренды недели — по понедельникам", n_trends_d: "Какие темы растут и что появилось нового",
+      n_market: "🧭 Рынок недели — по понедельникам", n_market_d: "Куда идут деньги: раунды, ниши, доля в YC",
+      n_funding: "💰 Раунды за сутки", n_funding_d: "Новые сделки от $1 млн — только в моих секторах",
+      n_alerts: "🚀 Сдвиги рынка", n_alerts_d: "Сектор из моих перешёл в рост",
+      s_sens: "Порог находок", sens_strict: "Только сильные", sens_normal: "Обычный", sens_wide: "Всё заметное",
+      s_sectors: "Секторы", s_sectors_note: "Находки, раунды и сдвиги — только по отмеченным. Ничего не отмечено — всё.",
+      s_sources: "Источники находок", s_sources_note: "Ничего не отмечено — все.",
       s_aud: "Для кого продукт", s_aud_note: "Уведомления — только по отмеченным. Ничего не отмечено — приходят все.",
       aud_b2b: "B2B — для бизнеса", aud_b2c: "B2C — для людей", aud_b2g: "B2G — для государства",
       s_cats: "Категории", s_cats_note: "Горячие и сводка — только по отмеченным. Ничего не отмечено — приходит всё.",
@@ -275,7 +286,7 @@
     },
     kk: {
       hot: "Ыстық", new: "Жаңа", day: "Тәулік", week: "Апта", all: "Барлығы",
-      tab_feed: "Лента", tab_trends: "Трендтер", tab_saved: "Жұмыста", tab_settings: "Баптаулар",
+      tab_feed: "Лента", tab_trends: "Нарық", tab_saved: "Жұмыста", tab_settings: "Баптаулар",
       subs: "жазылушы", score: "балл", clone: "Қайталау",
       effort: { days: "күндер", weeks: "апталар", months: "айлар", unclear: "белгісіз" },
       open_post: "Постты ашу", open_site: "Жоба сайты", orig: "Бастапқы пост",
@@ -297,6 +308,12 @@
       n_hot: "🔥 Ыстық табылымдар — бірден", n_hot_d: "Іске қосылым тез назар жинап жатыр",
       n_digest: "📋 Шолу — күніне екі рет", n_digest_d: "Жарты күндегі 12-ге дейін байқалған табылым",
       n_trends: "📈 Апта трендтері — дүйсенбі сайын", n_trends_d: "Қай тақырыптар өсіп жатыр, не жаңа пайда болды",
+      n_market: "🧭 Апта нарығы — дүйсенбі сайын", n_market_d: "Ақша қайда: раундтар, тауашалар, YC үлесі",
+      n_funding: "💰 Тәуліктік раундтар", n_funding_d: "$1 млн-нан жаңа мәмілелер — тек менің салаларымда",
+      n_alerts: "🚀 Нарықтағы өзгерістер", n_alerts_d: "Менің салам өсуге көшті",
+      s_sens: "Табылымдар шегі", sens_strict: "Тек күштілер", sens_normal: "Қалыпты", sens_wide: "Бәрі елеулі",
+      s_sectors: "Салалар", s_sectors_note: "Табылымдар, раундтар мен өзгерістер — тек белгіленгендер бойынша. Ештеңе белгіленбесе — бәрі.",
+      s_sources: "Табылым көздері", s_sources_note: "Ештеңе белгіленбесе — бәрі.",
       s_aud: "Өнім кімге арналған", s_aud_note: "Хабарламалар — тек белгіленгендер бойынша. Ештеңе белгіленбесе — бәрі келеді.",
       aud_b2b: "B2B — бизнеске", aud_b2c: "B2C — адамдарға", aud_b2g: "B2G — мемлекетке",
       s_cats: "Санаттар", s_cats_note: "Ыстықтар мен шолу — тек белгіленгендер бойынша. Ештеңе белгіленбесе — бәрі келеді.",
@@ -306,7 +323,7 @@
     },
     en: {
       hot: "Hot", new: "New", day: "24h", week: "Week", all: "All",
-      tab_feed: "Feed", tab_trends: "Trends", tab_saved: "In progress", tab_settings: "Settings",
+      tab_feed: "Feed", tab_trends: "Market", tab_saved: "In progress", tab_settings: "Settings",
       subs: "followers", score: "score", clone: "To replicate",
       effort: { days: "days", weeks: "weeks", months: "months", unclear: "unclear" },
       open_post: "Open post", open_site: "Project site", orig: "Original post",
@@ -328,6 +345,12 @@
       n_hot: "🔥 Hot findings — instantly", n_hot_d: "A launch is gaining attention fast",
       n_digest: "📋 Digest — twice a day", n_digest_d: "Up to 12 notable findings per half-day",
       n_trends: "📈 Weekly trends — on Mondays", n_trends_d: "Which topics are rising and what is new",
+      n_market: "🧭 Weekly market — Mondays", n_market_d: "Where money goes: rounds, niches, YC share",
+      n_funding: "💰 Daily funding rounds", n_funding_d: "New deals from $1M — only in my sectors",
+      n_alerts: "🚀 Market shifts", n_alerts_d: "One of my sectors turned upward",
+      s_sens: "Findings threshold", sens_strict: "Strong only", sens_normal: "Normal", sens_wide: "Everything notable",
+      s_sectors: "Sectors", s_sectors_note: "Findings, rounds and shifts only for the checked ones. None checked — everything.",
+      s_sources: "Finding sources", s_sources_note: "None checked — all.",
       s_aud: "Who the product is for", s_aud_note: "Notifications only for the checked ones. None checked — you get all.",
       aud_b2b: "B2B — for businesses", aud_b2c: "B2C — for consumers", aud_b2g: "B2G — for government",
       s_cats: "Categories", s_cats_note: "Hot findings and the digest only for the checked ones. None checked — you get everything.",
@@ -359,7 +382,8 @@
   const haptic = (kind) => { if (tg && tg.HapticFeedback) kind === "select" ? tg.HapticFeedback.selectionChanged() : tg.HapticFeedback.notificationOccurred(kind); };
 
   const state = { data: null, cat: null, aud: "", sort: "score", win: 168, tab: "feed", fav: new Map(), lang: "ru",
-    prefs: { lang: null, topics: [], audience: [], notify: { hot: true, digest: true, trends: true } } };
+    prefs: { lang: null, topics: [], audience: [], sectors: [], sources: [], sens: "normal",
+      notify: { hot: true, digest: true, market: true, funding: true, alerts: true } } };
 
   function setLang(l) {
     state.lang = LANGS.includes(l) ? l : "ru";
@@ -385,7 +409,8 @@
         main_risk: "Демо: зависимость от внешнего API.", localization: "Демо: оплата через Kaspi, интерфейс на русском и казахском." } };
     }
     if (path.startsWith("/api/prefs")) {
-      state.demoPrefs = state.demoPrefs || { lang: null, topics: [], audience: [], notify: { hot: true, digest: true, trends: true } };
+      state.demoPrefs = state.demoPrefs || { lang: null, topics: [], audience: [], sectors: [], sources: [], sens: "normal",
+      notify: { hot: true, digest: true, market: true, funding: true, alerts: true } };
       if (opts.method === "POST") state.demoPrefs = { ...state.demoPrefs, ...JSON.parse(opts.body) };
       return opts.method === "POST" ? { ok: true, prefs: state.demoPrefs } : state.demoPrefs;
     }
@@ -538,12 +563,21 @@
   // --- настройки -----------------------------------------------------------
   // Сохраняются сразу при каждом изменении: кнопка «Сохранить» в конце
   // длинного списка категорий легко забывается.
-  const normPrefs = (p) => ({
-    lang: p && LANGS.includes(p.lang) ? p.lang : null,
-    topics: (p && Array.isArray(p.topics) && p.topics) || [],
-    audience: (p && Array.isArray(p.audience) && p.audience) || [],
-    notify: { hot: true, digest: true, trends: true, ...((p && p.notify) || {}) },
-  });
+  const NOTIFY = ["hot", "digest", "market", "funding", "alerts"];
+  const normPrefs = (p) => {
+    const n = { ...((p && p.notify) || {}) };
+    if (n.trends === false && n.market === undefined) n.market = false;
+    delete n.trends;
+    return {
+      lang: p && LANGS.includes(p.lang) ? p.lang : null,
+      topics: (p && Array.isArray(p.topics) && p.topics) || [],
+      audience: (p && Array.isArray(p.audience) && p.audience) || [],
+      sectors: (p && Array.isArray(p.sectors) && p.sectors) || [],
+      sources: (p && Array.isArray(p.sources) && p.sources) || [],
+      sens: (p && ["strict", "normal", "wide"].includes(p.sens) && p.sens) || "normal",
+      notify: { hot: true, digest: true, market: true, funding: true, alerts: true, ...n },
+    };
+  };
 
   let saveTimer = null;
   function savePrefs(immediate) {
@@ -569,26 +603,43 @@
     toastTimer = setTimeout(() => el.classList.remove("on"), 1600);
   }
 
+  // Секторы рынка (из среза): эмодзи и названия на трёх языках.
+  const marketData = () => (state.data && state.data.market) || null;
+  const sectorList = () => ((marketData() && marketData().sectors) || []);
+  const sectorName = (x) => `${x.emoji} ${x.names[state.lang] || x.names.ru}`;
+
   function renderSettings() {
-    const p = state.prefs, names = topicNames();
-    const topics = Object.keys(names).filter((t) => t !== "other")
-      .sort((a, b) => String(names[a]).localeCompare(String(names[b]), state.lang));
-    const mineT = new Set(p.topics), mineA = new Set(p.audience);
+    const p = state.prefs;
+    const mineA = new Set(p.audience), mineS = new Set(p.sectors), mineSrc = new Set(p.sources);
     const sw = (k) => `<label class="sw"><span><b>${esc(tr("n_" + k))}</b><small>${esc(tr("n_" + k + "_d"))}</small></span>
       <input type="checkbox" data-n="${k}"${p.notify[k] !== false ? " checked" : ""}></label>`;
+    const secs = sectorList();
     $("#settings").innerHTML = `
       <h2>${esc(tr("s_lang"))}</h2>
       <div class="seg wide" role="group">${LANGS.map((l) => `<button data-set-lang="${l}" aria-pressed="${state.lang === l}">${LANG_LABEL[l]}</button>`).join("")}</div>
       <h2>${esc(tr("s_notify"))}</h2>
-      ${["hot", "digest", "trends"].map(sw).join("")}
+      ${NOTIFY.map(sw).join("")}
+      <h2>${esc(tr("s_sens"))}</h2>
+      <div class="seg wide" role="group">${["strict", "normal", "wide"].map((k) => `<button data-sens="${k}" aria-pressed="${p.sens === k}">${esc(tr("sens_" + k))}</button>`).join("")}</div>
+      ${secs.length ? `<h2>${esc(tr("s_sectors"))}</h2><div class="note">${esc(tr("s_sectors_note"))}</div>
+      ${secs.map((x) => `<label class="pref"><input type="checkbox" data-s="${esc(x.id)}"${mineS.has(x.id) ? " checked" : ""}>${esc(sectorName(x))}</label>`).join("")}` : ""}
+      <h2>${esc(tr("s_sources"))}</h2>
+      <div class="note">${esc(tr("s_sources_note"))}</div>
+      ${["x", "hn", "yc", "gh"].map((k) => `<label class="pref"><input type="checkbox" data-src="${k}"${mineSrc.has(k) ? " checked" : ""}>${esc(SRC[k])}</label>`).join("")}
       <h2>${esc(tr("s_aud"))}</h2>
       <div class="note">${esc(tr("s_aud_note"))}</div>
-      ${["b2b", "b2c", "b2g"].map((a) => `<label class="pref"><input type="checkbox" data-a="${a}"${mineA.has(a) ? " checked" : ""}>${esc(tr("aud_" + a))}</label>`).join("")}
-      <h2>${esc(tr("s_cats"))}</h2>
-      <div class="note">${esc(tr("s_cats_note"))}</div>
-      ${topics.map((t) => `<label class="pref"><input type="checkbox" data-c="${esc(t)}"${mineT.has(t) ? " checked" : ""}>${esc(names[t])}</label>`).join("")}`;
+      ${["b2b", "b2c", "b2g"].map((a) => `<label class="pref"><input type="checkbox" data-a="${a}"${mineA.has(a) ? " checked" : ""}>${esc(tr("aud_" + a))}</label>`).join("")}`;
   }
   $("#settings").addEventListener("click", (e) => {
+    const sb = e.target.closest("[data-sens]");
+    if (sb) {
+      if (sb.dataset.sens === state.prefs.sens) return;
+      state.prefs.sens = sb.dataset.sens;
+      renderSettings();
+      haptic("select");
+      savePrefs(true);
+      return;
+    }
     const b = e.target.closest("[data-set-lang]");
     if (!b || b.dataset.setLang === state.lang) return;
     state.prefs.lang = b.dataset.setLang;
@@ -602,7 +653,8 @@
     const picked = (attr) => [...document.querySelectorAll(`#settings [data-${attr}]:checked`)].map((x) => x.dataset[attr]);
     if (i.dataset.n) state.prefs.notify[i.dataset.n] = i.checked;
     else if (i.dataset.a) state.prefs.audience = picked("a");
-    else if (i.dataset.c) state.prefs.topics = picked("c");
+    else if (i.dataset.s) state.prefs.sectors = picked("s");
+    else if (i.dataset.src) state.prefs.sources = picked("src");
     else return;
     haptic("select");
     savePrefs();
@@ -667,24 +719,21 @@
 
   // --- графики -------------------------------------------------------------
   function renderTrends() {
-    const d = state.data, st = trends().stats || null, daily = d.daily;
-    const hot7 = (d.findings || []).filter((f) => f.tier === "hot" && f.first_seen >= now() - 7 * 86400).length;
-    $("#hero").innerHTML = `<div><b>${st ? st.total_cur : 0}</b><span>${esc(tr("launches_7d"))}</span></div>
-      <div><b>${hot7}</b><span>${esc(tr("of_them_hot"))}</span></div>`;
-    drawDaily(daily);
-    drawShare(st);
-    const rising = st && st.rising && st.rising.length
-      ? `<h2>${esc(tr("rising"))}${st.growth_ready ? "" : esc(tr("prelim"))}</h2>${st.growth_ready ? "" : `<div class="note">${esc(tr("history_note", { d: Math.round(st.history_days) }))}</div>`}
-         <ul class="plain">${st.rising.map((r) => `<li data-cat="${esc(r.topic)}"><b>${esc(topicName(r.topic))}</b> — ${r.cur} (${esc(tr("was"))} ${r.prev}), ×${r.growth}</li>`).join("")}</ul>` : "";
-    $("#risingBlock").innerHTML = rising;
-    $("#newBlock").innerHTML = st && st.new_topics && st.new_topics.length
-      ? `<h2>${esc(tr("new_topics"))}</h2><ul class="plain">${st.new_topics.map((n) => `<li>${esc(n.name)} — ${n.cur}</li>`).join("")}</ul>` : "";
-    // Выводы ИИ лежат в конце готового текста трендов на языке читателя
-    // (текст уже экранирован при сборке); до 2026-09-27 текст был строкой.
-    const txt = trends().text;
-    const html = typeof txt === "string" ? txt : txt ? txt[state.lang] || txt.ru || "" : "";
-    const story = html && /🧠 <b>[^<]*<\/b>\n([\s\S]*)$/.exec(html);
-    $("#storyBlock").innerHTML = story ? `<h2>${esc(tr("story"))}</h2><div class="story">${story[1]}</div>` : "";
+    // Рынок — по внешним данным: раунды инвесторов, отбор YC, запросы
+    // людей. Текст собран на сервере из цифр (теги b, i, a) и экранирован
+    // при сборке; последняя строка — подсказка про кнопки чата, её убираем.
+    const m = marketData();
+    const mt = m && m.texts ? m.texts[state.lang] || m.texts.ru : "";
+    const body = mt.replace(/\n+<i>[^<]*<\/i>\s*$/, "");
+    const rep = m && m.report;
+    const names = (rep && rep.niche_names) || {};
+    const stage = { "pre-seed": "pre-seed", seed: "seed", a: "Series A", b: "Series B", "c+": "Series C+", growth: "growth" };
+    const money = (v) => !v ? "" : v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${(v / 1e6).toFixed(v < 1e7 ? 1 : 0)}M`;
+    const niches = ((rep && rep.niches) || []).filter((n) => n.n >= 3);
+    const nicheHtml = niches.length ? `<h2>💡 ${esc(state.lang === "en" ? "Niches the money went into" : state.lang === "kk" ? "Ақша келген тауашалар" : "Ниши, куда пошли деньги")}</h2>
+      <ul class="plain">${niches.map((n) => `<li><b>${esc(state.lang === "en" ? n.niche : names[n.niche] || n.niche)}</b> — ${n.n} · ${n.early} early · ${esc(money(n.usd))}<br>${
+        (n.companies || []).slice(0, 4).map((r) => `<a href="${esc(r.url || "")}" data-ext>${esc(r.company || "")}</a> ${esc([money(r.usd), stage[r.stage] || ""].filter(Boolean).join(", "))}${(r.what || {})[state.lang === "en" ? "en" : "ru"] ? " — " + esc(r.what[state.lang === "en" ? "en" : "ru"]) : ""}`).join("<br>")}</li>`).join("")}</ul>` : "";
+    $("#marketBlock").innerHTML = (mt ? `<div class="story market">${body.replace(/\n/g, "<br>")}</div>` : "") + nicheHtml;
   }
 
   function drawDaily(daily) {

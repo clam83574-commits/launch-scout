@@ -73,22 +73,78 @@ async function meta(env, k) {
   return r ? r.v : null;
 }
 
+/**
+ * Записать мелкое состояние — только если значение изменилось.
+ *
+ * Раньше каждый тик часов (раз в 10 минут) переписывал две-три строки kv
+ * без нужды. Сами по себе это ~1000 записей в сутки, но D1 на бесплатном
+ * тарифе делит суточный лимит записи (100 тыс. строк) на ВЕСЬ аккаунт, и
+ * 2026-09-28 его выжег соседний tm-scout — после чего у бота падали и
+ * приём среза, и сохранение настроек. Лишних записей здесь быть не должно.
+ */
 async function setMeta(env, k, v) {
+  const cur = await meta(env, k);
+  if (cur === String(v)) return;
   await env.DB.prepare("INSERT OR REPLACE INTO kv (k, v) VALUES (?1, ?2)")
     .bind(k, String(v))
-    .run();
+    .run()
+    .catch((e) => console.log("kv не записан:", k, String(e).slice(0, 120)));
 }
 
-/** Срез находок из D1: {updated, findings[]} или null. */
+// Разобранный срез держим в памяти экземпляра минуту: разбор JSON в
+// полмегабайта на каждое нажатие кнопки — это заметная доля бесплатных
+// 10 мс процессора на вызов.
+let snapCache = { at: 0, data: null };
+
+/**
+ * Срез находок: {updated, findings[], trends, market} или null.
+ *
+ * Основное место — Workers KV (привязка SNAP), запасное — D1. KV выбран,
+ * потому что его лимиты не общие с D1: 2026-09-28 чужой проект на том же
+ * аккаунте выжег суточный лимит записи D1, и срез перестал приниматься
+ * (Worker отвечал 1101 на каждый /ingest). Без привязки SNAP всё работает
+ * по-старому, через D1.
+ */
 async function loadSnapshot(env) {
-  const row = await env.DB.prepare("SELECT data FROM snapshot WHERE k = 'findings'")
-    .first()
-    .catch(() => null);
-  if (!row) return null;
+  const now = Date.now();
+  if (snapCache.data && now - snapCache.at < 60000) return snapCache.data;
+  let raw = null;
+  if (env.SNAP) raw = await env.SNAP.get("findings").catch(() => null);
+  if (!raw) {
+    const row = await env.DB.prepare("SELECT data FROM snapshot WHERE k = 'findings'")
+      .first()
+      .catch(() => null);
+    raw = row ? row.data : null;
+  }
+  if (!raw) return null;
   try {
-    return JSON.parse(row.data);
+    const data = JSON.parse(raw);
+    snapCache = { at: now, data };
+    return data;
   } catch {
     return null;
+  }
+}
+
+/** Сохранить срез. Возвращает текст ошибки или null. */
+async function saveSnapshot(env, raw, updated) {
+  if (env.SNAP) {
+    try {
+      await env.SNAP.put("findings", raw);
+      snapCache = { at: 0, data: null };
+      return null;
+    } catch (e) {
+      console.log("KV не принял срез:", String(e).slice(0, 200));
+    }
+  }
+  try {
+    await env.DB.prepare("INSERT OR REPLACE INTO snapshot (k, data, updated) VALUES ('findings', ?1, ?2)")
+      .bind(raw, updated)
+      .run();
+    snapCache = { at: 0, data: null };
+    return null;
+  } catch (e) {
+    return String(e).slice(0, 300);
   }
 }
 
@@ -248,8 +304,98 @@ const I18N = {
     digest: "📋 <b>Digest</b>",
   },
 };
+// Рынок, секторы и настройки (2026-09-28). Отдельным словарём, чтобы не
+// перекраивать основной; казахский — машинный перевод, как и остальной.
+const EXTRA = {
+  ru: {
+    hello: "<b>launch-scout</b> — радар рынка для стартаперов.\n\n🧭 <b>Рынок</b> — куда идут деньги инвесторов, по секторам и в цифрах: раунды и их стадии, доля в батчах YC, запросы людей.\n💡 <b>Ниши</b> — где за месяц прошло несколько ранних раундов: туда инвесторы только начали ставить.\n🔥 <b>Находки</b> — продукты с реальным откликом или свежим раундом, а не три лайка.\n💬 <b>Спросите</b> — напишите, чем занимаетесь, и ИИ-аналитик ответит по раундам и запускам последних суток, с датами и ссылками.\n⚙️ <b>Настройки</b> — какие секторы, источники и какие уведомления присылать.",
+    kb_market: "🧭 Рынок", kb_sectors: "🗂 Секторы", kb_settings: "⚙️ Настройки", kb_niches: "💡 Ниши",
+    commands: "Команды: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nИли просто напишите вопрос — например: «я делаю CRM для клиник, что рядом со мной сейчас получает деньги?»",
+    niches_title: "💡 <b>Ниши, куда пошли деньги</b> — %d дн.\nНиша — где несколько компаний подняли раунды. Ранние раунды (pre-seed, seed, A) значат, что ниша только открывается.",
+    niches_empty: "Ниш пока нет: раунды разбираются ИИ по мере сбора, первые появятся в течение суток.",
+    niche_line: "раундов: %d, ранних %d, %s", sec_niches: "💡 <b>Ниши сектора</b>",
+    chat_limit: "Сегодня уже %d вопросов — это предел, завтра снова можно.", chat_reset: "Разговор и профиль очищены — начнём заново.",
+    set_title: "⚙️ <b>Настройки</b>\nНажмите, чтобы включить или выключить.",
+    n_hot: "🔥 Горячие находки — сразу", n_digest: "📋 Сводка — 2 раза в день", n_market: "🧭 Рынок недели — по понедельникам",
+    n_funding: "💰 Раунды за сутки в моих секторах", n_alerts: "🚀 Сдвиги рынка — сектор пошёл в рост",
+    sens: "🎚 Порог находок:", sens_strict: "только сильные", sens_normal: "обычный", sens_wide: "всё заметное",
+    my_sectors: "🗂 Секторы: %s", my_sources: "📡 Источники: %s", my_aud: "👥 Кто платит: %s", all: "все",
+    lang_btn: "🌐 Язык", done: "✅ Готово", back: "← Назад",
+    pick_sectors: "🗂 <b>Секторы</b>\nПо ним фильтруются находки, раунды и сдвиги рынка. Ничего не выбрано — присылаем всё.",
+    pick_sources: "📡 <b>Источники находок</b>\nНичего не выбрано — все.",
+    pick_aud: "👥 <b>Кто платит</b>\nB2B — бизнес, B2C — люди, B2G — государство. Ничего не выбрано — все.",
+    onboard: "Последний шаг: какие секторы вам интересны? Можно пропустить — тогда будет всё.",
+    follow: "🔔 Следить", following: "✅ Слежу", sec_findings: "📰 Находки сектора", back_market: "← Рынок",
+    trend: { up: "▲ растёт", down: "▼ остывает", flat: "→ ровно" },
+    deals: "💰 раундов: %s за %d дн. (ранних %d), %s · было %d, %s", yc: "🎓 доля в YC %s: %s%% (было %s%%)",
+    dem: "🙋 запросы людей в X: %d (было %d)",
+    big_deals: "💰 <b>Крупные раунды</b>", analysis: "📰 <b>Аналитика</b>", launches: "🛠 <b>Свежие запуски</b>",
+    market_empty: "Данных о рынке пока нет: первый сбор раундов и батчей YC идёт в ближайшем прогоне.",
+    sec_empty: "По этому сектору пока нет цифр.", no_amount: "сумм нет", bn: "млрд", mn: "млн",
+    sectors_title: "🗂 <b>Секторы</b> — находки за трое суток. Нажмите, чтобы открыть карточку сектора.",
+    aud_b2b: "B2B", aud_b2c: "B2C", aud_b2g: "B2G",
+  },
+  kk: {
+    hello: "<b>launch-scout</b> — стартаперларға арналған нарық радары.\n\n🧭 <b>Нарық</b> — инвесторлардың ақшасы қайда бара жатыр, салалар бойынша және сандармен: раундтар мен олардың кезеңдері, YC батчтарындағы үлес, адамдардың сұраулары.\n💡 <b>Тауашалар</b> — бір айда бірнеше ерте раунд өткен жерлер.\n🔥 <b>Табылымдар</b> — нақты үн қатуы немесе жаңа раунды бар өнімдер.\n💬 <b>Сұраңыз</b> — немен айналысатыныңызды жазыңыз, ЖИ-талдаушы соңғы тәуліктің раундтары мен іске қосулары бойынша күні мен сілтемесімен жауап береді.\n⚙️ <b>Баптаулар</b> — қандай салалар, көздер және хабарламалар.",
+    kb_market: "🧭 Нарық", kb_sectors: "🗂 Салалар", kb_settings: "⚙️ Баптаулар", kb_niches: "💡 Тауашалар",
+    commands: "Командалар: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nНемесе сұрағыңызды жай жазыңыз — мысалы: «мен клиникаларға CRM жасаймын, қазір маған жақын не ақша алып жатыр?»",
+    niches_title: "💡 <b>Ақша келген тауашалар</b> — %d күн\nТауаша — бірнеше компания раунд тартқан жер. Ерте раундтар (pre-seed, seed, A) тауашаның енді ашылып жатқанын білдіреді.",
+    niches_empty: "Тауашалар әзірге жоқ: раундтарды ЖИ жинау барысында талдайды, алғашқылары бір тәулік ішінде шығады.",
+    niche_line: "раунд: %d, ерте %d, %s", sec_niches: "💡 <b>Сала тауашалары</b>",
+    chat_limit: "Бүгін %d сұрақ қойылды — бұл шек, ертең қайта болады.", chat_reset: "Әңгіме мен профиль тазартылды — қайта бастаймыз.",
+    set_title: "⚙️ <b>Баптаулар</b>\nҚосу немесе өшіру үшін басыңыз.",
+    n_hot: "🔥 Ыстық табылымдар — бірден", n_digest: "📋 Шолу — күніне 2 рет", n_market: "🧭 Апта нарығы — дүйсенбі сайын",
+    n_funding: "💰 Менің салаларымдағы тәуліктік раундтар", n_alerts: "🚀 Нарықтағы өзгерістер — сала өсуге көшті",
+    sens: "🎚 Табылымдар шегі:", sens_strict: "тек күштілер", sens_normal: "қалыпты", sens_wide: "бәрі елеулі",
+    my_sectors: "🗂 Салалар: %s", my_sources: "📡 Көздер: %s", my_aud: "👥 Кім төлейді: %s", all: "бәрі",
+    lang_btn: "🌐 Тіл", done: "✅ Дайын", back: "← Артқа",
+    pick_sectors: "🗂 <b>Салалар</b>\nТабылымдар, раундтар және нарық өзгерістері осы бойынша сүзіледі. Ештеңе таңдалмаса — бәрі.",
+    pick_sources: "📡 <b>Табылым көздері</b>\nЕштеңе таңдалмаса — бәрі.",
+    pick_aud: "👥 <b>Кім төлейді</b>\nB2B — бизнес, B2C — адамдар, B2G — мемлекет. Ештеңе таңдалмаса — бәрі.",
+    onboard: "Соңғы қадам: қандай салалар қызық? Өткізіп жіберуге болады — онда бәрі келеді.",
+    follow: "🔔 Бақылау", following: "✅ Бақылап отырмын", sec_findings: "📰 Сала табылымдары", back_market: "← Нарық",
+    trend: { up: "▲ өсіп келеді", down: "▼ суып барады", flat: "→ бірқалыпты" },
+    deals: "💰 раунд: %s (%d күн, ерте %d), %s · бұрын %d, %s", yc: "🎓 YC %s үлесі: %s%% (бұрын %s%%)",
+    dem: "🙋 X-тегі адамдардың сұраулары: %d (бұрын %d)",
+    big_deals: "💰 <b>Ірі раундтар</b>", analysis: "📰 <b>Аналитика</b>", launches: "🛠 <b>Жаңа іске қосулар</b>",
+    market_empty: "Нарық туралы деректер әзірге жоқ: алғашқы жинау келесі іске қосуда.",
+    sec_empty: "Бұл сала бойынша әзірге сандар жоқ.", no_amount: "сомасы жоқ", bn: "млрд", mn: "млн",
+    sectors_title: "🗂 <b>Салалар</b> — үш тәуліктегі табылымдар. Сала картасын ашу үшін басыңыз.",
+    aud_b2b: "B2B", aud_b2c: "B2C", aud_b2g: "B2G",
+  },
+  en: {
+    hello: "<b>launch-scout</b> — a market radar for founders.\n\n🧭 <b>Market</b> — where investor money is moving, by sector and in numbers: rounds and their stages, share of YC batches, what people ask for.\n💡 <b>Niches</b> — where several early rounds closed within a month: investors have just started betting there.\n🔥 <b>Findings</b> — products with real traction or a fresh round, not three likes.\n💬 <b>Ask</b> — tell it what you build, and the AI analyst answers from the last day’s rounds and launches, with dates and links.\n⚙️ <b>Settings</b> — which sectors, sources and notifications you get.",
+    kb_market: "🧭 Market", kb_sectors: "🗂 Sectors", kb_settings: "⚙️ Settings", kb_niches: "💡 Niches",
+    commands: "Commands: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nOr just type a question — e.g. “I build a CRM for clinics, what near me is getting funded right now?”",
+    niches_title: "💡 <b>Niches the money went into</b> — %d days\nA niche is where several companies raised rounds. Early rounds (pre-seed, seed, A) mean the niche is only opening up.",
+    niches_empty: "No niches yet: rounds are parsed by AI as they come in, the first ones appear within a day.",
+    niche_line: "%d rounds, %d early, %s", sec_niches: "💡 <b>Sector niches</b>",
+    chat_limit: "You have asked %d questions today — that is the limit, try again tomorrow.", chat_reset: "Conversation and profile cleared — let's start over.",
+    set_title: "⚙️ <b>Settings</b>\nTap to switch on or off.",
+    n_hot: "🔥 Hot findings — right away", n_digest: "📋 Digest — twice a day", n_market: "🧭 Weekly market — Mondays",
+    n_funding: "💰 Daily funding rounds in my sectors", n_alerts: "🚀 Market shifts — a sector turns upward",
+    sens: "🎚 Findings threshold:", sens_strict: "strong only", sens_normal: "normal", sens_wide: "everything notable",
+    my_sectors: "🗂 Sectors: %s", my_sources: "📡 Sources: %s", my_aud: "👥 Who pays: %s", all: "all",
+    lang_btn: "🌐 Language", done: "✅ Done", back: "← Back",
+    pick_sectors: "🗂 <b>Sectors</b>\nFindings, funding rounds and market shifts are filtered by these. None selected — everything.",
+    pick_sources: "📡 <b>Finding sources</b>\nNone selected — all.",
+    pick_aud: "👥 <b>Who pays</b>\nB2B — businesses, B2C — consumers, B2G — government. None selected — all.",
+    onboard: "Last step: which sectors interest you? You can skip it and get everything.",
+    follow: "🔔 Follow", following: "✅ Following", sec_findings: "📰 Sector findings", back_market: "← Market",
+    trend: { up: "▲ rising", down: "▼ cooling", flat: "→ flat" },
+    deals: "💰 %s rounds in %d days (%d early), %s · was %d, %s", yc: "🎓 share of YC %s: %s%% (was %s%%)",
+    dem: "🙋 people asking on X: %d (was %d)",
+    big_deals: "💰 <b>Largest rounds</b>", analysis: "📰 <b>Analysis</b>", launches: "🛠 <b>Fresh launches</b>",
+    market_empty: "No market data yet: the first pass over funding rounds and YC batches runs on the next cycle.",
+    sec_empty: "No numbers for this sector yet.", no_amount: "no amounts", bn: "B", mn: "M",
+    sectors_title: "🗂 <b>Sectors</b> — findings over the last 3 days. Tap to open a sector card.",
+    aud_b2b: "B2B", aud_b2c: "B2C", aud_b2g: "B2G",
+  },
+};
+for (const l of LANGS) Object.assign(I18N[l], EXTRA[l]);
+
 const L = (lang) => I18N[lang] || I18N.ru;
-const fmt = (s, ...a) => a.reduce((acc, v) => acc.replace(/%[ds]/, String(v)), s);
+const fmt = (s, ...a) => a.reduce((acc, v) => acc.replace(/%[ds]/, String(v)), s).replace(/%%/g, "%");
 
 // Пост и сайт проекта — кнопками под сообщением: ссылки текстом в конце
 // карточки на телефоне не замечали (отзыв владельца 2026-09-27).
@@ -279,9 +425,9 @@ function keyboardFor(lang) {
   const s = L(lang);
   return {
     inline_keyboard: [
-      [{ text: s.kb_top, callback_data: "top:0" }, { text: s.kb_fresh, callback_data: "fresh:0" }],
-      [{ text: s.kb_trends, callback_data: "trends" }, { text: s.kb_cats, callback_data: "cats" }],
-      [{ text: s.kb_app, web_app: { url: APP_URL } }],
+      [{ text: s.kb_market, callback_data: "market" }, { text: s.kb_niches, callback_data: "niches" }],
+      [{ text: s.kb_sectors, callback_data: "sectors" }, { text: s.kb_top, callback_data: "top:0" }],
+      [{ text: s.kb_settings, callback_data: "set" }, { text: s.kb_app, web_app: { url: APP_URL } }],
     ],
   };
 }
@@ -295,7 +441,10 @@ const LANG_PICKER = {
 };
 
 async function tg(env, method, payload) {
-  const r = await fetch(`https://api.telegram.org/bot${env.LS_BOT_TOKEN}/${method}`, {
+  // LS_TG_API — только для локальной проверки (wrangler dev): заглушка
+  // вместо Telegram записывает, что бот отправил бы. В бою не задаётся.
+  const base = env.LS_TG_API || "https://api.telegram.org";
+  const r = await fetch(`${base}/bot${env.LS_BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
@@ -380,7 +529,7 @@ function card(row, lang = "ru") {
   return lines.join("\n");
 }
 
-async function listTop(env, chatId, offset, windowHours, title, topic = null, lang = "ru") {
+async function listTop(env, chatId, offset, windowHours, title, topic = null, lang = "ru", sector = null) {
   const s = L(lang);
   const cutoff = Math.floor(Date.now() / 1000) - windowHours * 3600;
   const snap = await loadSnapshot(env);
@@ -392,6 +541,7 @@ async function listTop(env, chatId, offset, windowHours, title, topic = null, la
   for (const f of all) {
     if (f.first_seen < cutoff || !(f.score > 0)) continue;
     if (topic && !(f.topics || []).includes(topic)) continue;
+    if (sector && !(f.sectors || []).includes(sector)) continue;
     if (f.domain) {
       if (seen.has(f.domain)) continue;
       seen.add(f.domain);
@@ -410,7 +560,7 @@ async function listTop(env, chatId, offset, windowHours, title, topic = null, la
       linkRow(row, s), [[{ text: s.btn_idea, callback_data: `idea:${row.id}` }, { text: s.btn_fav, callback_data: `fav:${row.id}` }]]);
   }
   const more = offset + PAGE;
-  const key = topic ? `cat:${topic}` : windowHours === 24 ? "fresh" : "top";
+  const key = sector ? `sf:${sector}` : topic ? `cat:${topic}` : windowHours === 24 ? "fresh" : "top";
   await tg(env, "sendMessage", {
     chat_id: chatId,
     text: s.next,
@@ -449,6 +599,326 @@ async function categories(env, chatId, lang = "ru") {
     rows.push(top.slice(i, i + 2).map(([tp, n]) => ({ text: `${topicName(snap, tp, lang)} · ${n}`, callback_data: `cat:${tp}:0`.slice(0, 64) })));
   }
   await tg(env, "sendMessage", { chat_id: chatId, text: s.cats_title, parse_mode: "HTML", reply_markup: { inline_keyboard: rows } });
+}
+
+// ---------------------------------------------------------------------------
+// 🧭 Рынок и секторы
+// ---------------------------------------------------------------------------
+function marketOf(snap) {
+  return (snap && snap.market) || null;
+}
+
+function sectorMeta(snap, sid) {
+  const m = marketOf(snap);
+  return ((m && m.sectors) || []).find((x) => x.id === sid) || null;
+}
+
+function sectorLabel(snap, sid, lang) {
+  const x = sectorMeta(snap, sid);
+  return x ? `${x.emoji} ${x.names[lang] || x.names.ru}` : sid;
+}
+
+function usd(v, s) {
+  if (!v) return s.no_amount;
+  return v >= 1e9 ? `$${(v / 1e9).toFixed(1)} ${s.bn}` : `$${Math.round(v / 1e6)} ${s.mn}`;
+}
+
+/** Строки с цифрами по сектору — зеркало market.sector_lines в Python. */
+function pillarLines(sec, rep, s) {
+  const out = [];
+  const m = sec.money || {}, y = sec.yc || {}, d = sec.demand || {};
+  if (m.cur_n || m.prev_n) {
+    out.push(fmt(s.deals, m.sat ? `${m.cur_n}+` : m.cur_n, rep.window_days || 14, m.cur_early || 0, usd(m.cur_usd, s), m.prev_n, usd(m.prev_usd, s)));
+  }
+  if (y.share !== null && y.share !== undefined && y.prev !== null && y.prev !== undefined) out.push(fmt(s.yc, y.batch, y.share, y.prev));
+  if ((d.cur || 0) + (d.prev || 0) >= 5) out.push(fmt(s.dem, d.cur, d.prev));
+  return out;
+}
+
+const STAGE = { "pre-seed": "pre-seed", seed: "seed", a: "Series A", b: "Series B", "c+": "Series C+", growth: "growth" };
+
+/** «Baselayer — $35 млн, Series A: что делают» — зеркало market.round_line. */
+function roundLine(r, lang, s) {
+  const bits = [];
+  if (r.usd) bits.push(usd(r.usd, s));
+  if (r.stage) bits.push(STAGE[r.stage] || r.stage);
+  const what = (r.what || {})[lang === "en" ? "en" : "ru"] || "";
+  const name = esc(r.company || "—");
+  const head = okUrl(r.url) ? `<a href="${esc(r.url)}">${name}</a>` : name;
+  return `${head}${bits.length ? " — " + bits.join(", ") : ""}${what ? ": " + esc(what) : ""}`;
+}
+
+function nicheName(rep, n, lang) {
+  return lang === "en" ? n.niche : ((rep.niche_names || {})[n.niche] || n.niche);
+}
+
+/** Ниши, куда за окно пришло несколько раундов, — главный ответ «что залетает». */
+async function nichesMsg(env, chatId, lang, sid = null) {
+  const s = L(lang);
+  const snap = await loadSnapshot(env);
+  const m = marketOf(snap);
+  const rep = m && m.report;
+  const list = ((rep && rep.niches) || []).filter((n) => n.n >= 3 && (!sid || n.sector === sid));
+  if (!list.length) {
+    await tg(env, "sendMessage", { chat_id: chatId, text: s.niches_empty, reply_markup: keyboardFor(lang) });
+    return;
+  }
+  const lines = [fmt(s.niches_title, rep.niche_days || 28)];
+  for (const n of list.slice(0, 8)) {
+    const emo = sectorMeta(snap, n.sector);
+    lines.push("", `${emo ? emo.emoji + " " : ""}<b>${esc(nicheName(rep, n, lang))}</b> — ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}`);
+    for (const r of (n.companies || []).slice(0, 3)) lines.push("   • " + roundLine(r, lang, s));
+  }
+  let text = lines.join("\n");
+  while (text.length > 3900 && lines.length > 3) { lines.pop(); text = lines.join("\n"); }
+  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true,
+    reply_markup: { inline_keyboard: [[{ text: s.kb_market, callback_data: "market" }, { text: s.kb_sectors, callback_data: "sectors" }]] } });
+}
+
+/** Кнопки секторов: по две в ряд, самые растущие первыми. */
+function sectorButtons(snap, lang, prefix = "sec:") {
+  const m = marketOf(snap);
+  const rep = m && m.report;
+  const order = rep ? rep.sectors.map((x) => x.id) : ((m && m.sectors) || []).map((x) => x.id);
+  const rows = [];
+  for (let i = 0; i < order.length; i += 2) {
+    rows.push(order.slice(i, i + 2).map((sid) => ({ text: sectorLabel(snap, sid, lang).slice(0, 40), callback_data: prefix + sid })));
+  }
+  return rows;
+}
+
+async function marketMsg(env, chatId, lang = "ru") {
+  const s = L(lang);
+  const snap = await loadSnapshot(env);
+  const m = marketOf(snap);
+  const text = m && m.texts ? m.texts[lang] || m.texts.ru : null;
+  if (!text) {
+    // Рынка в срезе ещё нет — показываем прежние тренды находок, если есть.
+    const tt = snap && snap.trends && snap.trends.text;
+    const old = typeof tt === "string" ? tt : tt ? tt[lang] || tt.ru : null;
+    await tg(env, "sendMessage", { chat_id: chatId, text: old || s.market_empty, parse_mode: "HTML",
+      disable_web_page_preview: true, reply_markup: keyboardFor(lang) });
+    return;
+  }
+  const rows = sectorButtons(snap, lang).slice(0, 4);
+  rows.push([{ text: s.kb_niches, callback_data: "niches" }, { text: s.kb_sectors, callback_data: "sectors" }]);
+  rows.push([{ text: s.kb_settings, callback_data: "set" }]);
+  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true,
+    reply_markup: { inline_keyboard: rows } });
+}
+
+/** Карточка сектора: тренд и цифры, крупные раунды, аналитика, свежие запуски. */
+async function sectorCard(env, chatId, sid, lang, prefs, editMsg = null) {
+  const s = L(lang);
+  const snap = await loadSnapshot(env);
+  const m = marketOf(snap);
+  const rep = m && m.report;
+  const sec = rep && rep.sectors.find((x) => x.id === sid);
+  const lines = [`<b>${esc(sectorLabel(snap, sid, lang))}</b>`];
+  if (sec) {
+    lines.push(`<i>${s.trend[sec.trend] || ""}</i>`, "");
+    const pl = pillarLines(sec, rep, s);
+    lines.push(...(pl.length ? pl : [s.sec_empty]));
+    const deals = (sec.money && sec.money.top) || [];
+    if (deals.length) {
+      lines.push("", s.big_deals);
+      for (const dl of deals.slice(0, 3)) lines.push("• " + roundLine(dl, lang, s));
+    }
+  } else {
+    lines.push("", s.sec_empty);
+  }
+  const secNiches = ((rep && rep.niches) || []).filter((n) => n.sector === sid && n.n >= 2).slice(0, 3);
+  if (secNiches.length) {
+    lines.push("", s.sec_niches);
+    for (const n of secNiches) {
+      lines.push(`• <b>${esc(nicheName(rep, n, lang))}</b> — ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}: ` +
+        (n.companies || []).slice(0, 3).map((r) => esc(r.company)).join(", "));
+    }
+  }
+  const an = ((m && m.analysis) || {})[sid] || [];
+  if (an.length) {
+    lines.push("", s.analysis);
+    for (const a of an.slice(0, 2)) lines.push(`• <a href="${esc(a.url)}">${esc((a.title || "").slice(0, 120))}</a>`);
+  }
+  const cutoff = Math.floor(Date.now() / 1000) - 72 * 3600;
+  const fresh = ((snap && snap.findings) || []).filter((f) => f.first_seen >= cutoff && (f.sectors || []).includes(sid) && f.score > 0)
+    .sort((a, b) => b.score - a.score).slice(0, 3);
+  if (fresh.length) {
+    lines.push("", s.launches);
+    for (const f of fresh) lines.push(`• <a href="${esc(f.url || "")}">${esc((f.title || "").slice(0, 80))}</a> <code>${f.score}</code>`);
+  }
+  const mine = (prefs.sectors || []).includes(sid);
+  const kb = { inline_keyboard: [
+    [{ text: mine ? s.following : s.follow, callback_data: `follow:${sid}` }, { text: s.sec_findings, callback_data: `sf:${sid}:0` }],
+    [{ text: s.back_market, callback_data: "market" }],
+  ] };
+  const payload = { chat_id: chatId, text: lines.join("\n").slice(0, 4000), parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb };
+  if (editMsg) {
+    const r = await tg(env, "editMessageText", { ...payload, message_id: editMsg });
+    if (r && r.ok) return;
+  }
+  await tg(env, "sendMessage", payload);
+}
+
+/** Секторы с числом находок за трое суток — кнопками. */
+async function sectorsMsg(env, chatId, lang) {
+  const s = L(lang);
+  const snap = await loadSnapshot(env);
+  const cutoff = Math.floor(Date.now() / 1000) - 72 * 3600;
+  const count = {};
+  for (const f of (snap && snap.findings) || []) {
+    if (f.first_seen < cutoff) continue;
+    for (const x of f.sectors || []) count[x] = (count[x] || 0) + 1;
+  }
+  const m = marketOf(snap);
+  const ids = ((m && m.sectors) || []).map((x) => x.id);
+  if (!ids.length) {
+    await categories(env, chatId, lang);   // срез без рынка: прежние категории
+    return;
+  }
+  const rows = [];
+  for (let i = 0; i < ids.length; i += 2) {
+    rows.push(ids.slice(i, i + 2).map((sid) => ({ text: `${sectorLabel(snap, sid, lang)} · ${count[sid] || 0}`.slice(0, 48), callback_data: `sec:${sid}` })));
+  }
+  await tg(env, "sendMessage", { chat_id: chatId, text: s.sectors_title, parse_mode: "HTML", reply_markup: { inline_keyboard: rows } });
+}
+
+// ---------------------------------------------------------------------------
+// ⚙️ Настройки: одно сообщение, которое правится на месте
+// ---------------------------------------------------------------------------
+function settingsView(p, lang, snap) {
+  const s = L(lang);
+  const on = (k) => (p.notify[k] !== false ? "✅ " : "▫️ ");
+  const secs = p.sectors ? `${p.sectors.length}` : s.all;
+  const srcs = p.sources ? p.sources.map((x) => SRC_RU[x] || x).join(", ") : s.all;
+  const aud = p.audience ? p.audience.map((a) => a.toUpperCase()).join(", ") : s.all;
+  const sensBtn = (k) => ({ text: (p.sens === k ? "🔘 " : "⚪ ") + s["sens_" + k], callback_data: `sens:${k}` });
+  return {
+    text: s.set_title,
+    reply_markup: { inline_keyboard: [
+      ...NOTIFY_KEYS.map((k) => [{ text: on(k) + s["n_" + k], callback_data: `nt:${k}` }]),
+      [{ text: s.sens, callback_data: "noop" }],
+      [sensBtn("strict"), sensBtn("normal"), sensBtn("wide")],
+      [{ text: fmt(s.my_sectors, secs), callback_data: "ps" }],
+      [{ text: fmt(s.my_sources, srcs), callback_data: "psrc" }, { text: fmt(s.my_aud, aud), callback_data: "paud" }],
+      [{ text: s.lang_btn, callback_data: "lang" }, { text: s.done, callback_data: "home" }],
+    ] },
+  };
+}
+
+function sectorsPicker(p, lang, snap, back = "set") {
+  const s = L(lang);
+  const m = marketOf(snap);
+  const ids = ((m && m.sectors) || []).map((x) => x.id);
+  const mine = new Set(p.sectors || []);
+  const rows = [];
+  for (let i = 0; i < ids.length; i += 2) {
+    rows.push(ids.slice(i, i + 2).map((sid) => ({ text: (mine.has(sid) ? "✅ " : "") + sectorLabel(snap, sid, lang).slice(0, 36), callback_data: `ts:${sid}:${back}` })));
+  }
+  rows.push([{ text: s.done, callback_data: back }]);
+  return { text: back === "home" ? s.onboard + "\n\n" + s.pick_sectors : s.pick_sectors, reply_markup: { inline_keyboard: rows } };
+}
+
+function sourcesPicker(p, lang) {
+  const s = L(lang);
+  const mine = new Set(p.sources || []);
+  return { text: s.pick_sources, reply_markup: { inline_keyboard: [
+    SOURCES.map((x) => ({ text: (mine.has(x) ? "✅ " : "") + (SRC_RU[x] || x), callback_data: `tsrc:${x}` })),
+    [{ text: s.back, callback_data: "set" }],
+  ] } };
+}
+
+function audPicker(p, lang) {
+  const s = L(lang);
+  const mine = new Set(p.audience || []);
+  return { text: s.pick_aud, reply_markup: { inline_keyboard: [
+    ["b2b", "b2c", "b2g"].map((a) => ({ text: (mine.has(a) ? "✅ " : "") + s["aud_" + a], callback_data: `taud:${a}` })),
+    [{ text: s.back, callback_data: "set" }],
+  ] } };
+}
+
+/** Показать экран: правим то же сообщение, а если нельзя — шлём новое. */
+async function show(env, chatId, msgId, view) {
+  const payload = { chat_id: chatId, text: view.text, parse_mode: "HTML", reply_markup: view.reply_markup, disable_web_page_preview: true };
+  if (msgId) {
+    const r = await tg(env, "editMessageText", { ...payload, message_id: msgId });
+    if (r && (r.ok || /not modified/.test(r.description || ""))) return;
+  }
+  await tg(env, "sendMessage", payload);
+}
+
+const toggle = (list, x) => {
+  const set = new Set(list || []);
+  if (set.has(x)) set.delete(x); else set.add(x);
+  return set.size ? [...set] : null;
+};
+
+/** Кнопки настроек. Возвращает true, если нажатие было про настройки. */
+async function settingsAction(env, chatId, msgId, data, prefs, lang) {
+  const snap = await loadSnapshot(env);
+  let p = prefs;
+  if (data === "set") return show(env, chatId, msgId, settingsView(p, lang, snap)), true;
+  if (data.startsWith("nt:")) {
+    const k = data.slice(3);
+    if (!NOTIFY_KEYS.includes(k)) return true;
+    p = await setPrefs(env, chatId, { notify: { ...p.notify, [k]: p.notify[k] === false } });
+    await show(env, chatId, msgId, settingsView(p, lang, snap));
+    return true;
+  }
+  if (data.startsWith("sens:")) {
+    const k = data.slice(5);
+    if (SENS[k] && k !== p.sens) p = await setPrefs(env, chatId, { sens: k });
+    await show(env, chatId, msgId, settingsView(p, lang, snap));
+    return true;
+  }
+  if (data === "ps") return show(env, chatId, msgId, sectorsPicker(p, lang, snap)), true;
+  if (data.startsWith("ts:")) {
+    const [, sid, back] = data.split(":");
+    p = await setPrefs(env, chatId, { sectors: toggle(p.sectors, sid) });
+    await show(env, chatId, msgId, sectorsPicker(p, lang, snap, back || "set"));
+    return true;
+  }
+  if (data === "psrc") return show(env, chatId, msgId, sourcesPicker(p, lang)), true;
+  if (data.startsWith("tsrc:")) {
+    p = await setPrefs(env, chatId, { sources: toggle(p.sources, data.slice(5)) });
+    await show(env, chatId, msgId, sourcesPicker(p, lang));
+    return true;
+  }
+  if (data === "paud") return show(env, chatId, msgId, audPicker(p, lang)), true;
+  if (data.startsWith("taud:")) {
+    p = await setPrefs(env, chatId, { audience: toggle(p.audience, data.slice(5)) });
+    await show(env, chatId, msgId, audPicker(p, lang));
+    return true;
+  }
+  if (data.startsWith("follow:")) {
+    const sid = data.slice(7);
+    p = await setPrefs(env, chatId, { sectors: toggle(p.sectors, sid) });
+    await sectorCard(env, chatId, sid, lang, p, msgId);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Меню команд в Telegram — один раз на версию (помечается в kv). Раньше
+ * команд в меню не было вовсе: /trends, /lang знали только те, кому сказали.
+ */
+const COMMANDS_VERSION = "2026-09-29";
+async function setupCommands(env) {
+  if ((await meta(env, "commands_version")) === COMMANDS_VERSION) return;
+  const list = {
+    ru: [["market", "🧭 Куда движется рынок"], ["niches", "💡 Ниши, куда пошли деньги"], ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
+      ["sectors", "🗂 Секторы"], ["settings", "⚙️ Настройки уведомлений"], ["lang", "🌐 Язык"]],
+    en: [["market", "🧭 Where the market is heading"], ["niches", "💡 Niches the money went into"], ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
+      ["sectors", "🗂 Sectors"], ["settings", "⚙️ Notification settings"], ["lang", "🌐 Language"]],
+    kk: [["market", "🧭 Нарық қайда бет алды"], ["niches", "💡 Ақша келген тауашалар"], ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
+      ["sectors", "🗂 Салалар"], ["settings", "⚙️ Хабарлама баптаулары"], ["lang", "🌐 Тіл"]],
+  };
+  const cmd = (arr) => arr.map(([command, description]) => ({ command, description }));
+  const r = await tg(env, "setMyCommands", { commands: cmd(list.ru) });
+  await tg(env, "setMyCommands", { commands: cmd(list.en), language_code: "en" });
+  await tg(env, "setMyCommands", { commands: cmd(list.kk), language_code: "kk" });
+  if (r && r.ok) await setMeta(env, "commands_version", COMMANDS_VERSION);
 }
 
 async function trendsMsg(env, chatId, lang = "ru") {
@@ -625,21 +1095,66 @@ async function handleUpdate(env, update) {
   }
 
   const prefs = await getPrefs(env, chatId);
+  const msgId = cb && cb.message ? cb.message.message_id : null;
   if (data.startsWith("lang:")) {
     const lang = LANGS.includes(data.slice(5)) ? data.slice(5) : "ru";
-    await setPrefs(env, chatId, { lang });
+    const first = !prefs.lang;
+    const p = await setPrefs(env, chatId, { lang });
+    if (first) {
+      // Первый вход: сразу предложить секторы — без этого шага новичок
+      // получал бы всё подряд и не знал бы, что можно настроить.
+      const snap = await loadSnapshot(env);
+      if (marketOf(snap)) {
+        await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).lang_set + "\n\n" + L(lang).hello, parse_mode: "HTML" });
+        await show(env, chatId, null, sectorsPicker(p, lang, snap, "home"));
+        return;
+      }
+    }
     await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).lang_set + "\n\n" + L(lang).hello, parse_mode: "HTML", reply_markup: keyboardFor(lang) });
     return;
   }
   // Язык спрашиваем при первом входе и по /lang. Нажатие кнопки под
   // уведомлением не перехватываем: человек ждёт карточку, а не вопрос —
   // до выбора языка такие ответы идут по-русски.
-  if (text.startsWith("/lang") || (!prefs.lang && !data)) {
+  if (text.startsWith("/lang") || data === "lang" || (!prefs.lang && !data)) {
     await tg(env, "sendMessage", { chat_id: chatId, text: "Выберите язык · Тілді таңдаңыз · Choose your language", reply_markup: LANG_PICKER });
     return;
   }
   const lang = prefs.lang || "ru";
   const s = L(lang);
+
+  if (data === "noop") return;
+  if (data && (await settingsAction(env, chatId, msgId, data, prefs, lang))) return;
+  if (data === "home") {
+    await show(env, chatId, msgId, { text: s.hello, reply_markup: keyboardFor(lang) });
+    return;
+  }
+  if (data === "market" || data === "trends" || text.startsWith("/market") || text.startsWith("/trends")) {
+    await marketMsg(env, chatId, lang);
+    return;
+  }
+  if (data === "niches" || text.startsWith("/niches")) {
+    await nichesMsg(env, chatId, lang);
+    return;
+  }
+  if (data === "sectors" || text.startsWith("/sectors")) {
+    await sectorsMsg(env, chatId, lang);
+    return;
+  }
+  if (data.startsWith("sec:")) {
+    await sectorCard(env, chatId, data.slice(4), lang, prefs);
+    return;
+  }
+  if (data.startsWith("sf:")) {
+    const [, sid, off] = data.split(":");
+    const snap = await loadSnapshot(env);
+    await listTop(env, chatId, Number(off) || 0, 72, sectorLabel(snap, sid, lang), null, lang, sid);
+    return;
+  }
+  if (data === "set" || text.startsWith("/settings")) {
+    await show(env, chatId, msgId, settingsView(prefs, lang, await loadSnapshot(env)));
+    return;
+  }
 
   if (data.startsWith("idea:")) {
     await ideaForChat(env, chatId, data.slice(5), lang);
@@ -659,8 +1174,6 @@ async function handleUpdate(env, update) {
     const topic = parts.slice(1).join(":");
     const snap = await loadSnapshot(env);
     await listTop(env, chatId, off, 72, topicName(snap, topic, lang), topic, lang);
-  } else if (data === "trends" || text.startsWith("/trends")) {
-    await trendsMsg(env, chatId, lang);
   } else if (data.startsWith("top:")) {
     await listTop(env, chatId, Number(data.split(":")[1]) || 0, 72, s.top_title, null, lang);
   } else if (data.startsWith("fresh:")) {
@@ -691,6 +1204,14 @@ async function handleUpdate(env, update) {
     await listTop(env, chatId, 0, 24, s.fresh_title, null, lang);
   } else if (text.startsWith("/status")) {
     await status(env, chatId);
+  } else if (text.startsWith("/reset")) {
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM chat_log WHERE user_id = ?1").bind(String(chatId)),
+      env.DB.prepare("DELETE FROM chat_profile WHERE user_id = ?1").bind(String(chatId)),
+    ]);
+    await tg(env, "sendMessage", { chat_id: chatId, text: s.chat_reset });
+  } else if (raw && !raw.startsWith("/")) {
+    await chatReply(env, chatId, raw, lang);
   } else if (text) {
     await tg(env, "sendMessage", { chat_id: chatId, text: s.commands, reply_markup: keyboardFor(lang) });
   }
@@ -747,7 +1268,7 @@ const IDEA_SYSTEM = `You prepare an "idea card" for a founder in Kazakhstan who 
 Use web search to check whether analogs already exist in Kazakhstan, then in Russia/CIS. Search in Russian and Kazakh as well as English.
 Reply with JSON only, no markdown:
 {"analogs": [{"name": "...", "url": "...", "market": "KZ|RU|CIS|global", "note": {"ru": "...", "kk": "...", "en": "..."}}], "ru": {"why_now": "...", "who_pays": "...", "analog_verdict": "...", "mvp": ["...", "..."], "main_risk": "...", "localization": "..."}, "kk": {...the same fields...}, "en": {...the same fields...}}
-Rules: the ru, kk and en blocks say the same thing in Russian, Kazakh (Cyrillic script) and English — plain and short. why_now: 1-2 sentences grounded ONLY in the traction numbers given and the product itself — never invent numbers. who_pays: who exactly pays and roughly how. analogs: only services you actually found, each with a real URL; at most 4; an empty list if none. analog_verdict: one line — is the Kazakhstan/CIS niche free, partly taken or crowded. mvp: 3-5 bullets a small team can ship in two weeks. main_risk: one line. localization: one line on what to adapt for Kazakhstan (payments such as Kaspi, Russian/Kazakh language, local rules).`;
+Rules: the ru, kk and en blocks say the same thing in Russian, Kazakh (Cyrillic script) and English — plain and short. why_now: 1-2 sentences grounded in the INVESTOR DATA given (rounds in this sector and niche, their stage and sums, YC share) and only then in the product's own traction — cite the numbers, never invent any; if the investor data shows no money in this direction, say so plainly. who_pays: who exactly pays and roughly how. analogs: only services you actually found, each with a real URL; at most 4; an empty list if none. analog_verdict: one line — is the Kazakhstan/CIS niche free, partly taken or crowded. mvp: 3-5 bullets a small team can ship in two weeks. main_risk: one line. localization: one line on what to adapt for Kazakhstan (payments such as Kaspi, Russian/Kazakh language, local rules).`;
 
 /**
  * Карточка на одном языке из сохранённой трёхъязычной. Карточки до
@@ -763,11 +1284,76 @@ function ideaFor(data, lang) {
   return { ...tx, analogs: (data.analogs || []).map((a) => ({ name: a.name, url: a.url, market: a.market, note: note(a.note) })) };
 }
 
+/**
+ * Ключи Groq: LS_GROQ_KEY (можно несколько через запятую) и LS_GROQ_KEY_2 … _3.
+ * Ротация спасает, только если ключи из разных организаций Groq — лимиты
+ * считаются на организацию, а не на ключ.
+ */
+function groqKeys(env) {
+  const raw = [env.LS_GROQ_KEY, env.LS_GROQ_KEY_2, env.LS_GROQ_KEY_3].filter(Boolean).join(",");
+  return [...new Set(raw.split(",").map((k) => k.trim()).filter(Boolean))];
+}
+
+/**
+ * Запрос к Groq с ротацией ключей и моделей: на 429 — следующий ключ, когда
+ * ключи кончились — следующая модель. Возвращает последний ответ (или null
+ * при таймауте); 429 наружу — только если на пределе всё.
+ */
+async function groqFetch(env, body, models, timeoutMs = 27000) {
+  const started = Date.now();
+  let last = null;
+  for (const model of models) {
+    for (const key of groqKeys(env)) {
+      const left = timeoutMs - (Date.now() - started);
+      if (left < 3000) return last;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), left);
+      try {
+        last = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST", signal: ctrl.signal,
+          headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+          body: JSON.stringify({ ...body, model }),
+        });
+      } catch (e) {
+        return last;
+      } finally {
+        clearTimeout(timer);
+      }
+      if (last.status !== 429) return last;
+    }
+  }
+  return last;
+}
+
 /** «Please try again in 11m7.44s» из ответа 429 — в минутах, вверх. */
 function waitMinutes(text) {
   const m = /try again in (?:(\d+)h)?(?:(\d+)m)?(?:([\d.]+)s)?/.exec(text || "");
   if (!m) return null;
   return Math.max(1, Math.ceil(Number(m[1] || 0) * 60 + Number(m[2] || 0) + Number(m[3] || 0) / 60));
+}
+
+/**
+ * Рыночный фон для карточки идеи: раунды в секторах находки и ниши там же.
+ * «Почему сейчас» должно опираться на деньги инвесторов, а не на лайки
+ * одного поста (решение владельца 2026-09-28).
+ */
+async function marketContext(env, f) {
+  const snap = await loadSnapshot(env);
+  const rep = marketOf(snap) && marketOf(snap).report;
+  if (!rep) return "";
+  const w = rep.window_days || 14;
+  const out = [`INVESTOR DATA (last ${w} days vs the ${w} before):`];
+  for (const sid of (f.sectors || []).slice(0, 2)) {
+    const sec = (rep.sectors || []).find((x) => x.id === sid);
+    if (!sec) continue;
+    const m = sec.money || {}, y = sec.yc || {};
+    out.push(`- sector ${sid}: trend ${sec.trend}; ${m.cur_n || 0} rounds (${m.cur_early || 0} early), $${Math.round((m.cur_usd || 0) / 1e6)}M vs ${m.prev_n || 0} rounds, $${Math.round((m.prev_usd || 0) / 1e6)}M before; YC share ${y.share ?? "?"}% vs ${y.prev ?? "?"}%`);
+    for (const n of (rep.niches || []).filter((x) => x.sector === sid).slice(0, 4)) {
+      out.push(`  niche "${n.niche}": ${n.n} rounds in ${rep.niche_days || 28} days (${n.early} early), $${Math.round(n.usd / 1e6)}M: ` +
+        (n.companies || []).slice(0, 3).map((r) => `${r.company}${r.stage ? " " + r.stage : ""}${r.usd ? " $" + (r.usd / 1e6).toFixed(1) + "M" : ""}`).join(", "));
+    }
+  }
+  return out.length > 1 ? out.join("\n") : "";
 }
 
 async function ideaCard(env, f, uid, lang = "ru") {
@@ -785,7 +1371,7 @@ async function ideaCard(env, f, uid, lang = "ru") {
   const mine = Number((await meta(env, `idea_user_${uid}_${day}`)) || 0);
   if (total >= IDEA_MAX_PER_DAY) return { error: s.e_day };
   if (mine >= IDEA_MAX_PER_USER) return { error: fmt(s.e_user, mine) };
-  if (!env.LS_GROQ_KEY) return { error: s.e_noai };
+  if (!groqKeys(env).length) return { error: s.e_noai };
 
   const ai = f.ai || {};
   const tx = ai.i18n ? ai.i18n.en || ai.i18n.ru : ai;
@@ -794,31 +1380,19 @@ async function ideaCard(env, f, uid, lang = "ru") {
     f.product_url ? `URL: ${f.product_url}` : "",
     tx && tx.summary ? `What it is: ${tx.summary}` : `Post: ${(f.body || "").slice(0, 800)}`,
     `Source: ${f.source}; traction numbers: likes/points ${f.likes ?? "?"}, replies ${f.replies ?? "?"}, bookmarks ${f.bookmarks ?? "?"}; score ${f.score} because: ${f.breakdown || "n/a"}`,
+    await marketContext(env, f),
   ].filter(Boolean).join("\n");
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 28000);
-  let r;
-  try {
-    r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      signal: ctrl.signal,
-      headers: { authorization: `Bearer ${env.LS_GROQ_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: [{ role: "system", content: IDEA_SYSTEM }, { role: "user", content: user }],
-        tools: [{ type: "browser_search" }],
-        tool_choice: "auto",
-        reasoning_effort: "low",
-        max_completion_tokens: 4000,
-        temperature: 0.2,
-      }),
-    });
-  } catch (e) {
-    return { error: s.e_time };
-  } finally {
-    clearTimeout(timer);
-  }
+  // Только 120b: поиск аналогов (browser_search) есть не у всех моделей.
+  const r = await groqFetch(env, {
+    messages: [{ role: "system", content: IDEA_SYSTEM }, { role: "user", content: user }],
+    tools: [{ type: "browser_search" }],
+    tool_choice: "auto",
+    reasoning_effort: "low",
+    max_completion_tokens: 4000,
+    temperature: 0.2,
+  }, ["openai/gpt-oss-120b"], 28000);
+  if (!r) return { error: s.e_time };
   await setMeta(env, "idea_calls_" + day, total + 1);
   await setMeta(env, `idea_user_${uid}_${day}`, mine + 1);
   if (r.status === 429) {
@@ -861,6 +1435,134 @@ function ideaCardHtml(f, card, lang = "ru") {
   return lines.join("\n").slice(0, 4000);
 }
 
+// ---------------------------------------------------------------------------
+// 💬 Чат с аналитиком: вопросы свободным текстом
+//
+// Отвечает ТОЛЬКО по фактам среза: раунды последних трёх суток, выручка из
+// статей и постов основателей, аналитика изданий, ниши и находки с откликом.
+// У каждого факта есть дата и ссылка, и модель обязана их приводить: чат,
+// который «вспоминает» стартапы годичной давности из обучения, бесполезен —
+// стартаперу нужно то, что произошло вчера (требование владельца 2026-09-29).
+// Помнит, чем занимается пользователь (коротко, в chat_profile), и последние
+// реплики разговора.
+// ---------------------------------------------------------------------------
+const CHAT_MAX_PER_USER = 25;
+const CHAT_MAX_PER_DAY = 250;
+const CHAT_TURNS = 6;
+
+const CHAT_SYSTEM = `You are the analyst inside launch-scout, a Telegram market radar for startup founders (Kazakhstan first, then the CIS and the English-speaking world).
+You answer ONLY from the DATA block: venture rounds of the last 72 hours, revenue facts, analyst articles, niches with several rounds, fresh product launches with measured traction. Every fact there has a date and a link.
+Rules:
+- Every claim about a company must carry its date, the number (round size, stage, revenue, likes/points) and the link from DATA. Never use companies, numbers or events from your own memory; if DATA has nothing relevant, say so plainly and suggest what to follow instead.
+- Freshness first: prefer items from the last 24 hours, then 72 hours; say how old each item is.
+- Revenue (MRR/ARR) is rarely public. Mention it only when DATA has it; otherwise write that revenue is not disclosed.
+- Tailor the answer to the user's PROFILE (what they build, their skills, market). End with 1-3 concrete next steps a small team can take this week (a product, a customer segment, a test), grounded in the facts you cited.
+- Short paragraphs or bullets, no markdown headers, no tables, no hype. Plain text; put links as bare URLs.
+- Answer in %LANG%.
+Reply with JSON only: {"answer": "...", "profile": "..."} — profile is the user's updated profile in one or two English sentences (what they do, their market, interests) merged from the old PROFILE and this message; keep the old one if nothing new.`;
+
+const LANG_EN = { ru: "Russian", kk: "Kazakh (Cyrillic)", en: "English" };
+
+function ago(ts) {
+  const h = Math.max(0, Math.round((Date.now() / 1000 - ts) / 3600));
+  return h < 48 ? `${h}h ago` : `${Math.round(h / 24)}d ago`;
+}
+
+const day = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
+
+/** Факты среза одним текстом, сначала то, что ближе к вопросу и профилю. */
+function chatData(snap, question, profile) {
+  const m = marketOf(snap) || {};
+  const c = m.chat || {};
+  const rep = m.report || {};
+  const words = new Set(`${question} ${profile}`.toLowerCase().match(/[a-zа-яё0-9]{4,}/g) || []);
+  const rel = (t) => { let n = 0; for (const w of String(t).toLowerCase().match(/[a-zа-яё0-9]{4,}/g) || []) if (words.has(w)) n++; return n; };
+  const out = [];
+  const rounds = (c.rounds || []).map((r) => {
+    const what = (r.what || {}).en || (r.what || {}).ru || "";
+    const line = `${day(r.ts)} (${ago(r.ts)}) | ${r.company} | ${r.usd ? "$" + (r.usd / 1e6).toFixed(1) + "M" : "amount n/a"}${r.stage ? " " + (STAGE[r.stage] || r.stage) : ""} | sector ${r.sector || "?"} | niche: ${r.niche || "?"} | ${what} | ${r.url || ""}`;
+    return { line, score: rel(line) * 10 + (r.ts / 1e9) };
+  }).sort((a, b) => b.score - a.score).slice(0, 45);
+  if (rounds.length) out.push("ROUNDS (last 72h, one per company):", ...rounds.map((x) => "- " + x.line));
+  const rev = (c.revenue || []).slice(0, 20).map((r) => `- ${day(r.ts)} (${ago(r.ts)}) | ${r.kind.toUpperCase()} ${r.usd ? "$" + Math.round(r.usd).toLocaleString("en-US") : ""} | ${r.who || ""} | ${String(r.text || "").slice(0, 220)} | ${r.source || ""} ${r.url || ""}`);
+  if (rev.length) out.push("", "REVENUE FACTS (last 7 days):", ...rev);
+  const niches = (rep.niches || []).filter((n) => n.n >= 2).slice(0, 10).map((n) => `- ${n.niche} (${n.sector}): ${n.n} rounds in ${rep.niche_days || 28}d, ${n.early} early, $${Math.round(n.usd / 1e6)}M — ` +
+    (n.companies || []).slice(0, 3).map((r) => `${r.company} ${day(r.ts)}${r.usd ? " $" + (r.usd / 1e6).toFixed(1) + "M" : ""}`).join(", "));
+  if (niches.length) out.push("", "NICHES WITH SEVERAL ROUNDS:", ...niches);
+  const secs = (rep.sectors || []).filter((s) => s.signals).slice(0, 16).map((s) => `${s.id} ${s.trend} (${(s.money || {}).cur_n || 0} rounds/${rep.window_days || 14}d, ${(s.money || {}).cur_early || 0} early)`);
+  if (secs.length) out.push("", "SECTOR TRENDS: " + secs.join("; "));
+  const arts = (c.articles || []).slice(0, 4).map((a) => `- ${day(a.ts)} ${a.outlet}: ${a.title} — ${String(a.excerpt || "").slice(0, 350)} ${a.url}`);
+  if (arts.length) out.push("", "ANALYST ARTICLES:", ...arts);
+  const cutoff = Date.now() / 1000 - 48 * 3600;
+  const launches = ((snap && snap.findings) || []).filter((f) => f.first_seen >= cutoff && f.score >= 42)
+    .map((f) => ({ f, score: rel(`${f.title} ${f.body}`) * 10 + f.score / 100 })).sort((a, b) => b.score - a.score).slice(0, 12)
+    .map(({ f }) => `- ${day(f.first_seen)} (${ago(f.first_seen)}) | ${f.source} | ${String(f.title || "").slice(0, 100)} | traction: ${f.likes ?? "?"} likes/points, ${f.replies ?? "?"} replies | ${(f.gist || {}).en || ""} | ${f.url}`);
+  if (launches.length) out.push("", "FRESH LAUNCHES WITH TRACTION (last 48h):", ...launches);
+  return out.join("\n").slice(0, 14000);
+}
+
+async function chatHistory(env, uid) {
+  const { results } = await env.DB.prepare("SELECT role, text FROM chat_log WHERE user_id = ?1 ORDER BY ts DESC LIMIT ?2")
+    .bind(String(uid), CHAT_TURNS).all().catch(() => ({ results: [] }));
+  return (results || []).reverse();
+}
+
+async function chatReply(env, chatId, question, lang) {
+  const s = L(lang);
+  const today = new Date().toISOString().slice(0, 10);
+  const total = Number((await meta(env, "chat_calls_" + today)) || 0);
+  const mine = Number((await meta(env, `chat_user_${chatId}_${today}`)) || 0);
+  if (!groqKeys(env).length) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_noai });
+  if (total >= CHAT_MAX_PER_DAY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_day });
+  if (mine >= CHAT_MAX_PER_USER) return tg(env, "sendMessage", { chat_id: chatId, text: fmt(s.chat_limit, mine) });
+  await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
+
+  const prof = await env.DB.prepare("SELECT about FROM chat_profile WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
+  const profile = (prof && prof.about) || "";
+  const snap = await loadSnapshot(env);
+  const hist = await chatHistory(env, chatId);
+  const messages = [
+    { role: "system", content: CHAT_SYSTEM.replace("%LANG%", LANG_EN[lang] || "Russian") },
+    { role: "user", content: `TODAY: ${today}\nPROFILE: ${profile || "unknown"}\n\nDATA:\n${chatData(snap, question, profile)}` },
+    ...hist.map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, 1500) })),
+    { role: "user", content: question.slice(0, 1500) },
+  ];
+  const r = await groqFetch(env, { messages, reasoning_effort: "low", max_completion_tokens: 2000, temperature: 0.3,
+    response_format: { type: "json_object" } }, ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]);
+  await setMeta(env, "chat_calls_" + today, total + 1);
+  await setMeta(env, `chat_user_${chatId}_${today}`, mine + 1);
+  if (!r) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_time });
+  if (r.status === 429) {
+    const mins = waitMinutes(await r.text().catch(() => ""));
+    return tg(env, "sendMessage", { chat_id: chatId, text: mins ? fmt(s.e_quota_in, mins) : s.e_quota });
+  }
+  if (!r.ok) return tg(env, "sendMessage", { chat_id: chatId, text: fmt(s.e_http, r.status) });
+  let data;
+  try {
+    const content = ((await r.json()).choices[0].message.content || "").trim();
+    data = JSON.parse(content.slice(content.indexOf("{"), content.lastIndexOf("}") + 1));
+  } catch {
+    return tg(env, "sendMessage", { chat_id: chatId, text: s.e_bad });
+  }
+  const answer = String((data && data.answer) || "").trim();
+  if (!answer) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_bad });
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.batch([
+    env.DB.prepare("INSERT INTO chat_log (user_id, ts, role, text) VALUES (?1, ?2, 'user', ?3)").bind(String(chatId), now, question.slice(0, 1500)),
+    env.DB.prepare("INSERT INTO chat_log (user_id, ts, role, text) VALUES (?1, ?2, 'assistant', ?3)").bind(String(chatId), now + 1, answer.slice(0, 3000)),
+    env.DB.prepare("DELETE FROM chat_log WHERE user_id = ?1 AND ts < ?2").bind(String(chatId), now - 3 * 86400),
+  ]).catch(() => null);
+  const about = String((data && data.profile) || "").trim().slice(0, 400);
+  if (about && about !== profile) {
+    await env.DB.prepare("INSERT OR REPLACE INTO chat_profile (user_id, about, ts) VALUES (?1, ?2, ?3)")
+      .bind(String(chatId), about, now).run().catch(() => null);
+  }
+  // Telegram: не больше 4096 символов в сообщении — длинный ответ частями.
+  for (let i = 0; i < answer.length; i += 3800) {
+    await tg(env, "sendMessage", { chat_id: chatId, text: esc(answer.slice(i, i + 3800)), parse_mode: "HTML", disable_web_page_preview: true });
+  }
+}
+
 // Один раз на экземпляр Worker: иначе каждое нажатие кнопки стоило бы
 // пяти лишних запросов к D1.
 let tablesReady = false;
@@ -869,11 +1571,14 @@ async function ensureTables(env) {
   if (tablesReady) return;
   await env.DB.batch([
     env.DB.prepare("CREATE TABLE IF NOT EXISTS idea_cards (item_id INTEGER PRIMARY KEY, data TEXT, ts INTEGER)"),
-    env.DB.prepare("CREATE TABLE IF NOT EXISTS prefs (user_id TEXT PRIMARY KEY, topics TEXT, ts INTEGER, lang TEXT, audience TEXT, notify TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS prefs (user_id TEXT PRIMARY KEY, topics TEXT, ts INTEGER, lang TEXT, audience TEXT, notify TEXT, sectors TEXT, sources TEXT, sens TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS chat_log (user_id TEXT, ts INTEGER, role TEXT, text TEXT)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS chat_log_user ON chat_log (user_id, ts)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS chat_profile (user_id TEXT PRIMARY KEY, about TEXT, ts INTEGER)"),
   ]);
   // Таблица prefs создавалась раньше без языка и фильтров — дополняем на
   // месте. Повторное добавление колонки D1 отклоняет, это ожидаемо.
-  for (const col of ["lang", "audience", "notify"]) {
+  for (const col of ["lang", "audience", "notify", "sectors", "sources", "sens"]) {
     await env.DB.prepare(`ALTER TABLE prefs ADD COLUMN ${col} TEXT`).run().catch(() => null);
   }
   tablesReady = true;
@@ -916,19 +1621,32 @@ async function saveFav(env, uid, f) {
   ).bind(String(uid), Number(f.id), JSON.stringify(card), Math.floor(Date.now() / 1000)).run();
 }
 
-// --- личные категории и рассылка ---------------------------------------------
-const NOTIFY_DEFAULT = { hot: true, digest: true, trends: true };
+// --- личные настройки и рассылка ----------------------------------------------
+// Виды уведомлений. «market» — прежний «trends»: еженедельный отчёт теперь
+// про рынок, а не про темы наших находок; старое значение переносится.
+const NOTIFY_KEYS = ["hot", "digest", "market", "funding", "alerts"];
+const NOTIFY_DEFAULT = { hot: true, digest: true, market: true, funding: true, alerts: true };
+const SOURCES = ["x", "hn", "yc", "gh"];
+// Порог находок: «только сильные» / «обычный» (горячие) / «всё заметное».
+const SENS = { strict: 70, normal: 58, wide: 48 };
 
 async function getPrefs(env, uid) {
-  const row = await env.DB.prepare("SELECT topics, lang, audience, notify FROM prefs WHERE user_id = ?1")
+  const row = await env.DB.prepare("SELECT * FROM prefs WHERE user_id = ?1")
     .bind(String(uid)).first().catch(() => null);
   const j = (v, d) => { try { return v ? JSON.parse(v) : d; } catch { return d; } };
   const arr = (v) => (Array.isArray(v) && v.length ? v : null);
+  const n = j(row && row.notify, {});
+  if (n.trends === false && n.market === undefined) n.market = false;
+  delete n.trends;
   return {
     lang: row && LANGS.includes(row.lang) ? row.lang : null,
     topics: arr(j(row && row.topics, null)),
     audience: arr(j(row && row.audience, null)),
-    notify: { ...NOTIFY_DEFAULT, ...j(row && row.notify, {}) },
+    sectors: arr(j(row && row.sectors, null)),
+    sources: arr(j(row && row.sources, null)),
+    sens: row && SENS[row.sens] ? row.sens : "normal",
+    notify: { ...NOTIFY_DEFAULT, ...n },
+    exists: !!row,
   };
 }
 
@@ -936,9 +1654,11 @@ async function setPrefs(env, uid, patch) {
   const cur = await getPrefs(env, uid);
   const next = { ...cur, ...patch };
   await env.DB.prepare(
-    "INSERT OR REPLACE INTO prefs (user_id, topics, ts, lang, audience, notify) VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
+    "INSERT OR REPLACE INTO prefs (user_id, topics, ts, lang, audience, notify, sectors, sources, sens) " +
+      "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)"
   ).bind(String(uid), JSON.stringify(next.topics || []), Math.floor(Date.now() / 1000), next.lang || null,
-    JSON.stringify(next.audience || []), JSON.stringify(next.notify || NOTIFY_DEFAULT)).run();
+    JSON.stringify(next.audience || []), JSON.stringify(next.notify || NOTIFY_DEFAULT),
+    JSON.stringify(next.sectors || []), JSON.stringify(next.sources || []), next.sens || "normal").run();
   return next;
 }
 
@@ -952,6 +1672,18 @@ const wants = (topics, filter) => !filter || (topics || []).some((t) => filter.i
 // Аудитория неизвестна (ИИ ещё не разметил) — не отсекаем: лучше лишняя
 // находка, чем пропущенная.
 const wantsAud = (aud, filter) => !filter || !(aud || []).length || aud.some((a) => filter.includes(a));
+const wantsSrc = (src, filter) => !filter || !src || filter.includes(src);
+
+/**
+ * Проходит ли находка личные фильтры. Секторы, если выбраны, главнее
+ * старых «категорий» (тем ИИ-разметки): категории остались у тех, кто
+ * настроил их до 2026-09-28, и работают, пока секторы не выбраны.
+ */
+function passes(p, f) {
+  if (!wantsAud(f.audience, p.audience) || !wantsSrc(f.source, p.sources)) return false;
+  if (p.sectors) return wants(f.sectors, p.sectors);
+  return wants(f.topics, p.topics);
+}
 
 /**
  * Рассылка находок подписчикам по их настройкам.
@@ -969,9 +1701,14 @@ async function notifyAll(env, body) {
     const p = await getPrefs(env, uid);
     const lang = p.lang || "ru";
     const s = L(lang);
+    const floor = SENS[p.sens] || SENS.normal;
     if (p.notify.hot !== false) {
       for (const h of body.hot || []) {
-        if (!wants(h.topics, p.topics) || !wantsAud(h.audience, p.audience)) continue;
+        if (!passes(p, h)) continue;
+        // Горячее (tier hot) идёт всем, кроме «только сильные» с порогом 70;
+        // «заметное» (48–58) — только тем, кто выбрал «всё заметное».
+        const score = Number(h.score);
+        if (Number.isFinite(score) ? score < floor : false) continue;
         const r = await sendWithLinks(env, {
           chat_id: uid,
           text: (h.texts && h.texts[lang]) || h.text,
@@ -984,7 +1721,9 @@ async function notifyAll(env, body) {
       }
     }
     if (p.notify.digest !== false && body.digest) {
-      const lines = (body.digest.items || []).filter((d) => wants(d.topics, p.topics) && wantsAud(d.audience, p.audience));
+      // Что уже пришло этому подписчику сразу (заметное при пороге «всё
+      // заметное»), в сводку второй раз не кладём.
+      const lines = (body.digest.items || []).filter((d) => passes(p, d) && !(d.pushed && Number(d.score) >= floor));
       if (lines.length) {
         const head = (body.digest.heads && body.digest.heads[lang]) || body.digest.head || s.digest;
         const r = await tg(env, "sendMessage", {
@@ -997,7 +1736,13 @@ async function notifyAll(env, body) {
       }
     }
     for (const b of body.broadcast || []) {
-      if (typeof b !== "string" && b.kind === "trends" && p.notify.trends === false) continue;
+      if (typeof b !== "string") {
+        const kind = b.kind === "trends" ? "market" : b.kind;
+        if (NOTIFY_KEYS.includes(kind) && p.notify[kind] === false) continue;
+        // Раунды и сдвиги — только по своим секторам, если они выбраны.
+        if ((kind === "funding" || kind === "alert" || kind === "alerts") && p.sectors && !wants(b.sectors, p.sectors)) continue;
+        if (kind === "alert" && p.notify.alerts === false) continue;
+      }
       const text = typeof b === "string" ? b : (b.texts && b.texts[lang]) || b.text;
       if (!text) continue;
       const r = await tg(env, "sendMessage", { chat_id: uid, text, parse_mode: "HTML", disable_web_page_preview: true });
@@ -1120,13 +1865,22 @@ export default {
           if (Array.isArray(body.topics)) patch.topics = body.topics.map(String).slice(0, 60);
           if (Array.isArray(body.audience)) patch.audience = body.audience.filter((a) => ["b2b", "b2c", "b2g"].includes(a));
           if (body.notify && typeof body.notify === "object") {
-            patch.notify = { hot: body.notify.hot !== false, digest: body.notify.digest !== false, trends: body.notify.trends !== false };
+            // Старое приложение шлёт trends — это нынешний market.
+            const n = { ...body.notify };
+            if (n.trends !== undefined && n.market === undefined) n.market = n.trends;
+            patch.notify = Object.fromEntries(NOTIFY_KEYS.map((k) => [k, n[k] !== false]));
           }
+          const known = (list, ok) => (Array.isArray(list) ? list.map(String).filter(ok).slice(0, 30) : undefined);
+          if (Array.isArray(body.sectors)) patch.sectors = known(body.sectors, (x) => /^[a-z_]{2,20}$/.test(x));
+          if (Array.isArray(body.sources)) patch.sources = known(body.sources, (x) => SOURCES.includes(x));
+          if (SENS[body.sens]) patch.sens = body.sens;
+          for (const k of ["sectors", "sources"]) if (patch[k] && !patch[k].length) patch[k] = null;
           const next = await setPrefs(env, user.id, patch);
           return json({ ok: true, prefs: next });
         }
         const p = await getPrefs(env, user.id);
-        return json({ lang: p.lang, topics: p.topics || [], audience: p.audience || [], notify: p.notify });
+        return json({ lang: p.lang, topics: p.topics || [], audience: p.audience || [], notify: p.notify,
+          sectors: p.sectors || [], sources: p.sources || [], sens: p.sens });
       }
       return json({ error: "не найдено" }, 404);
     }
@@ -1167,12 +1921,11 @@ export default {
       if (!data || !Array.isArray(data.findings)) {
         return new Response("нет findings", { status: 400 });
       }
-      await env.DB.prepare(
-        "INSERT OR REPLACE INTO snapshot (k, data, updated) VALUES ('findings', ?1, ?2)"
-      )
-        .bind(raw, Number(data.updated) || Math.floor(Date.now() / 1000))
-        .run();
-      return new Response(`принято: ${data.findings.length}`);
+      const err = await saveSnapshot(env, raw, Number(data.updated) || Math.floor(Date.now() / 1000));
+      // Текст ошибки — в ответ, а не безликий 1101: в логе прогона сразу
+      // видно, что именно не так (лимит D1, размер, права).
+      if (err) return new Response(`срез не сохранён: ${err}`, { status: 503 });
+      return new Response(`принято: ${data.findings.length}${env.SNAP ? " (KV)" : " (D1)"}`);
     }
 
     if (request.method === "POST" && url.pathname === "/tg") {
@@ -1201,8 +1954,8 @@ export default {
     const now = Math.floor(Date.now() / 1000);
     const err = await dispatchRun(env, { digest: "auto" });
     await setMeta(env, "last_dispatch_error", err || "");
-    await setMeta(env, "last_dispatch", now);
     await watchdog(env, now);
     await tokenReminder(env, now);
+    await setupCommands(env);
   },
 };

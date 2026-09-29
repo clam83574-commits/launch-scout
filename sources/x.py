@@ -104,6 +104,13 @@ LAUNCH_MARKERS = (
     "we shipped", "now live", "we built", "i built", "launch day",
     "out now", "public beta", "早期", "go live", "v1.0", "1.0 is out",
     "today we're launching", "excited to launch", "excited to announce",
+    # Расширено 2026-09-28: прежний список пропускал обычные для инди-
+    # запусков формулировки, и из X приходило меньше, чем из HN.
+    "is live", "we're live", "we are live", "it's live", "live on product hunt",
+    "#buildinpublic", "open beta", "early access", "waitlist is open", "just released",
+    "we just released", "shipped", "launched", "pre-order", "preorders", "kickstarter",
+    "we're building", "i made", "i've built", "i just built", "my new app", "our new app",
+    "first customers", "paying customers", "mrr",
 )
 # Явный мусор: розыгрыши, подборки чужих продуктов, запуски криптотокенов,
 # художественные заказы. Криптотокены — отдельно важны: первая же живая
@@ -117,6 +124,10 @@ NOISE_MARKERS = (
     "memecoin", "meme coin", "pump.fun", "presale", "pre-sale", "stealth launch",
     "fair launch", "contract address", "ca:", "dexscreener", "1000x", "100x",
     "commission", "commissions open",
+    # Выдача «Top» (2026-09-28) принесла NFT-вайтлисты и проп-трейдинг:
+    # у них все маркеры запуска («is now live»), а стартапа нет.
+    "nft", "whitelist", "gtd/wl", "wl form", "mint is live", "minting now", "token launch",
+    "prop firm", "funded account", "instant funding", "trade any asset", "copy trading",
 )
 # Тикер криптотокена: «$BAGM», «$PEPE2». Требуем 2-8 заглавных после $,
 # чтобы не резать цены вроде «$20/month» — у них за $ идёт цифра.
@@ -314,14 +325,31 @@ class XSession:
             _save_queries(self.queries)
 
     # --- высокоуровневое ------------------------------------------------
-    def search(self, query, limit=40, product="Latest"):
-        """Поиск. product=Latest — хронология, она и нужна, чтобы ловить рано."""
-        variables = {"rawQuery": query, "count": min(limit, 50),
-                     "querySource": "typed_query", "product": product}
-        data, err = self.graphql("SearchTimeline", variables)
-        if err:
-            return [], err
-        return _extract_tweets(data), None
+    def search(self, query, limit=40, product="Latest", pages=1):
+        """
+        Поиск. product=Latest — хронология, она и нужна, чтобы ловить рано;
+        Top — то, что X сам считает заметным за последние сутки: ловит
+        разогнавшиеся запуски, которые в хронологии пролистались.
+
+        pages > 1 — листать курсором: страница X отдаёт ~20 постов, и у
+        частых запросов вторая страница — это посты получасовой давности,
+        то есть всё ещё свежие.
+        """
+        out, cursor = [], None
+        for _ in range(max(1, pages)):
+            variables = {"rawQuery": query, "count": min(limit, 50),
+                         "querySource": "typed_query", "product": product}
+            if cursor:
+                variables["cursor"] = cursor
+            data, err = self.graphql("SearchTimeline", variables)
+            if err:
+                return out, (err if not out else None)
+            got = _extract_tweets(data)
+            out += got
+            cursor = _bottom_cursor(data)
+            if not cursor or not got:
+                break
+        return out, None
 
     def user_tweets(self, user_id, limit=20):
         """Последние посты конкретного аккаунта по его числовому id."""
@@ -463,6 +491,23 @@ def _extract_tweets(data):
     return out
 
 
+def _bottom_cursor(node):
+    """Курсор следующей страницы поиска (entry с cursorType=Bottom)."""
+    if isinstance(node, dict):
+        if node.get("cursorType") == "Bottom" and node.get("value"):
+            return node["value"]
+        for v in node.values():
+            c = _bottom_cursor(v)
+            if c:
+                return c
+    elif isinstance(node, list):
+        for v in node:
+            c = _bottom_cursor(v)
+            if c:
+                return c
+    return None
+
+
 def _int_or_none(v):
     try:
         return int(v)
@@ -556,33 +601,89 @@ def session_from_env():
     return XSession(auth, ct0, delay=delay), None
 
 
+def parse_query(line):
+    """
+    Строка queries.txt -> (режим, страниц, запрос).
+
+    Префиксы (можно сочетать, порядок любой):
+      !        — «ядро»: запрос идёт КАЖДЫЙ прогон и листается на 2 страницы;
+                 остальные идут по кругу срезами (scout.py);
+      top:     — выдача «Top» вместо хронологии;
+      demand:  — поток спроса («сделайте кто-нибудь…»): в находки не идёт,
+                 копится для рыночной аналитики (market.py);
+      raise:   — основатели о своих раундах («we raised $4M seed»): идут в
+                 поток сделок рынка, а не в находки;
+      mrr:     — основатели о выручке («hit $20k MRR»): факты для чата и
+                 отчёта — единственный открытый источник выручки стартапов.
+    """
+    q, mode, pages = line.strip(), "Latest", 1
+    core = False
+    while True:
+        if q.startswith("!"):
+            core, pages, q = True, 2, q[1:].strip()
+        elif q.lower().startswith("top:"):
+            mode, q = "Top", q[4:].strip()
+        elif q.lower().startswith("demand:"):
+            mode, q = "demand", q[7:].strip()
+        elif q.lower().startswith("raise:"):
+            mode, q = "raise", q[6:].strip()
+        elif q.lower().startswith("mrr:"):
+            mode, q = "mrr", q[4:].strip()
+        else:
+            break
+    return {"mode": mode, "pages": pages, "query": q, "core": core}
+
+
 def fetch(session, queries, accounts_ids=None, per_query=40, window_hours=24):
     """
     Основной сбор: поисковые запросы + ленты избранных аккаунтов.
 
-    Возвращает (список пар, ошибка). Частичный успех — нормальный исход:
+    queries — строки queries.txt (см. parse_query). Возвращает
+    (список пар, посты спроса, посты о раундах, ошибка). Частичный успех — нормальный исход:
     один запрос мог упереться в лимит, остальные принесли данные.
     """
     now = int(time.time())
     cutoff = now - window_hours * 3600
-    out, errors, seen = [], [], set()
+    out, demand, raises, mrr, errors, seen = [], [], [], [], [], set()
+    fetch.last_mrr = mrr
+    stats = {"calls": 0, "tweets": 0, "launches": 0}
 
     # Ответ «слишком часто» (429) — сигнал остановиться сразу, а не
     # добивать оставшиеся запросы: каждый следующий только приближает
     # аккаунт к ограничению. Вызывающий код по «429» в тексте ошибки
     # ставит паузу на следующие прогоны.
-    for q in queries:
-        tweets, err = session.search(q, limit=per_query)
+    for line in queries:
+        q = parse_query(line)
+        product = "Latest" if q["mode"] in ("demand", "raise", "mrr") else q["mode"]
+        tweets, err = session.search(q["query"], limit=per_query, product=product, pages=q["pages"])
+        stats["calls"] += q["pages"]
         if err:
-            errors.append("поиск «%s»: %s" % (q[:40], err))
+            errors.append("поиск «%s»: %s" % (q["query"][:40], err))
             if "429" in err:
-                return out, "429: " + "; ".join(errors[:3])
+                return out, demand, raises, "429: " + "; ".join(errors[:3])
             continue
+        stats["tweets"] += len(tweets)
         for tw in tweets:
             if tw["id"] in seen or tw.get("is_retweet"):
                 continue
             ts = _parse_twitter_time(tw.get("created_at"))
-            if ts and ts < cutoff:
+            if ts and ts < cutoff and q["mode"] != "demand":
+                continue
+            if q["mode"] in ("raise", "mrr"):
+                if is_noise(tw.get("text")):
+                    continue
+                seen.add(tw["id"])
+                (raises if q["mode"] == "raise" else mrr).append({"id": tw["id"], "text": tw.get("text"), "likes": tw.get("likes"), "ts": ts,
+                               "screen_name": tw.get("screen_name"),
+                               "domain": domain_of(tw.get("product_url")),
+                               "url": "https://x.com/%s/status/%s" % (tw.get("screen_name") or "i", tw["id"])})
+                continue
+            if q["mode"] == "demand":
+                if is_noise(tw.get("text")):
+                    continue
+                seen.add(tw["id"])
+                demand.append({"id": tw["id"], "text": tw.get("text"), "likes": tw.get("likes"), "ts": ts,
+                               "url": "https://x.com/%s/status/%s" % (tw.get("screen_name") or "i", tw["id"])})
                 continue
             if not looks_like_launch(tw.get("text")):
                 continue
@@ -591,10 +692,11 @@ def fetch(session, queries, accounts_ids=None, per_query=40, window_hours=24):
 
     for uid in (accounts_ids or []):
         tweets, err = session.user_tweets(uid, limit=20)
+        stats["calls"] += 1
         if err:
             errors.append("лента %s: %s" % (uid, err))
             if "429" in err:
-                return out, "429: " + "; ".join(errors[:3])
+                return out, demand, raises, "429: " + "; ".join(errors[:3])
             continue
         for tw in tweets:
             if tw["id"] in seen or tw.get("is_retweet"):
@@ -614,4 +716,10 @@ def fetch(session, queries, accounts_ids=None, per_query=40, window_hours=24):
             seen.add(tw["id"])
             out.append(to_item(tw, now))
 
-    return out, ("; ".join(errors[:4]) if errors else None)
+    stats["launches"] = len(out)
+    fetch.last_stats = stats
+    return out, demand, raises, ("; ".join(errors[:4]) if errors else None)
+
+
+fetch.last_stats = {}
+fetch.last_mrr = []

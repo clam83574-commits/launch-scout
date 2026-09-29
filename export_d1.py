@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 
 import ai                  # noqa: E402
 import db                  # noqa: E402
+import market              # noqa: E402
 import os                  # noqa: E402
 import score as scoring    # noqa: E402
 from common import load_env, setup_logging  # noqa: E402
@@ -136,10 +137,41 @@ def snapshot(conn, now, window_hours=168, top_all=200, top_day=150):
             "bookmarks": m.get("bookmarks"), "views": m.get("views"),
             "ai": _ai_brief(conn, item["item_id"]),
             "topics": _topics(conn, item["item_id"]),
+            "sectors": market.sectors_for(_topics(conn, item["item_id"]),
+                                          "%s %s" % (item["title"] or "", item["body"] or "")),
             "audience": _meta(conn, item["item_id"], "audience", []),
             "gist": _meta(conn, item["item_id"], "gist", {}),
         })
     return picked
+
+
+def market_block(conn, now):
+    """
+    Рынок для бота: отчёт в цифрах, готовый текст на трёх языках, названия
+    секторов и аналитические заголовки по каждому. Карточку сектора Worker
+    собирает сам — из этих цифр и находок среза с тем же сектором.
+    """
+    rep = market.last_report(conn)
+    if not rep:
+        return None
+    try:
+        analysis = json.loads(db.kv_get(conn, "market_analysis", "{}") or "{}")
+    except ValueError:
+        analysis = {}
+    texts = {}
+    for lang in ai.LANGS:
+        # Вывод модели — только из кэша: срез выгружается каждые 10 минут,
+        # а запрос к модели делает market_step раз в 12 часов.
+        texts[lang] = market.render(rep, lang, db.kv_get(conn, "market_story_" + lang))
+    try:
+        chat = market.chat_facts(conn, now)
+    except Exception as e:       # чат — надстройка: без фактов он просто скажет, что данных нет
+        print("факты для чата не собраны: %s" % e)
+        chat = None
+    return {"report": rep, "texts": texts, "analysis": analysis, "chat": chat,
+            "sectors": [{"id": sid, "emoji": market.SECTOR[sid]["emoji"],
+                         "names": market.SECTOR[sid]["names"]} for sid in market.SECTOR_IDS],
+            "physical": list(market.PHYSICAL)}
 
 
 def _topics(conn, item_id):
@@ -155,44 +187,6 @@ def _topics(conn, item_id):
         return [x for x in json.loads(row["topics"]) if x != "other"]
     except ValueError:
         return []
-
-
-def daily_series(conn, now, days=14, top=3):
-    """
-    Запуски по дням с разбивкой на самые массовые темы — для графика.
-
-    Серий три плюс «прочее», не больше: так требует палитра — первые три
-    цвета различимы при любой форме цветового зрения, дальше уже нет.
-    Посевные записи не считаются: у них дата — момент запуска системы.
-    """
-    start = now - days * 86400
-    try:
-        rows = conn.execute(
-            "SELECT i.first_seen, t.topics FROM items i "
-            "JOIN item_topics t ON t.item_id = i.item_id "
-            "WHERE i.first_seen >= ? AND i.bootstrap = 0", (start,)).fetchall()
-    except Exception:
-        return None
-    day_keys = [time.strftime("%Y-%m-%d", time.gmtime(now - (days - 1 - d) * 86400))
-                for d in range(days)]
-    per_day, totals = {k: {} for k in day_keys}, {}
-    for r in rows:
-        k = time.strftime("%Y-%m-%d", time.gmtime(r["first_seen"]))
-        if k not in per_day:
-            continue
-        try:
-            tps = [x for x in json.loads(r["topics"] or "[]") if x != "other"] or ["other"]
-        except ValueError:
-            tps = ["other"]
-        main = tps[0]
-        per_day[k][main] = per_day[k].get(main, 0) + 1
-        if main != "other":
-            totals[main] = totals.get(main, 0) + 1
-    leaders = [tp for tp, _ in sorted(totals.items(), key=lambda kv: -kv[1])[:top]]
-    series = {tp: [per_day[k].get(tp, 0) for k in day_keys] for tp in leaders}
-    series["other"] = [sum(v for tp, v in per_day[k].items() if tp not in leaders)
-                       for k in day_keys]
-    return {"days": day_keys, "leaders": leaders, "series": series}
 
 
 def _ai_brief(conn, item_id):
@@ -236,16 +230,16 @@ def main():
         conn = db.connect()
         now = int(time.time())
         data = {"updated": now, "findings": snapshot(conn, now, args.window_hours)}
+        # «Тренды» по нашим же находкам (trends.py) в срез больше не идут
+        # (2026-09-28): это зеркало наших фильтров, а не рынка, и бот не
+        # должен выдавать его за аналитику. Рынок строится на внешних данных
+        # — market_block ниже. Остались только названия тем для фильтров.
+        import trends
+        data["trends"] = {"topic_names": trends.TOPIC_NAMES, "topic_ru": trends.TOPIC_RU}
         try:
-            import trends
-            st = trends.compute(conn, now)
-            data["trends"] = {"stats": st,
-                              "text": trends.render_all(conn, st, now),
-                              "topic_names": trends.TOPIC_NAMES,
-                              "topic_ru": trends.TOPIC_RU}
-            data["daily"] = daily_series(conn, now)
-        except Exception as e:  # тренды — надстройка, срез без них всё равно нужен
-            print("тренды не посчитаны: %s" % e)
+            data["market"] = market_block(conn, now)
+        except Exception as e:  # рынок — тоже надстройка
+            print("рынок не выгружен: %s" % e)
         out = Path(args.json)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")),

@@ -199,7 +199,26 @@ def rate_of(source, likes, posted_at, at_ts):
         return None
     if source == "gh":
         return likes / max(age_h / 24.0, 1.0)     # звёзд в сутки
-    return likes / max(age_h, 0.5)                # очков / лайков в час
+    # Делитель не меньше часа. С прежним полу-часом пост двадцати минут от
+    # роду с 6 очками получал «12 в час» и обгонял всю неделю HN — ровно
+    # так «Show HN: …chess games» с шестью очками стал «быстрее 100%»
+    # (живой срез 2026-09-27). Первый час темп ещё ничего не значит.
+    return likes / max(age_h, 1.0)                # очков / лайков в час
+
+
+# Сколько реакций должно быть у записи, чтобы её темп вообще сравнивать с
+# площадкой. Ниже — это не взлёт, а случайность первых минут: три лайка от
+# друзей автора делят на двадцать минут жизни и получают «рекорд недели».
+# Отдельно от порога — «полное доверие»: между ними слагаемое идёт вполовину.
+TRACTION_FLOOR = {"hn": 20, "x": 30, "gh": 150}
+TRACTION_FULL = {"hn": 40, "x": 150, "gh": 300}
+# Порог МГНОВЕННОГО уведомления в абсолютных числах (2026-09-28). Балл
+# складывается из многих слагаемых, и до этой правки Launch HN с тремя
+# очками получал 60 баллов за сам факт поста и прилетал как «горячий».
+# Теперь без настоящего отклика — или без подтверждённого раунда
+# инвесторов — в пуш не уходит ничего: такая находка ждёт сводки.
+PUSH_FLOOR = {"hn": 40, "x": 100, "gh": 250}
+UNIT = {"hn": "очков", "x": "лайков", "gh": "звёзд"}
 
 
 _PCT_CACHE = {}
@@ -245,7 +264,9 @@ def percentile(sorted_vals, v):
     import bisect
     if not sorted_vals:
         return None
-    return bisect.bisect_left(sorted_vals, v) / float(max(len(sorted_vals) - 1, 1))
+    # Потолок 1.0: запись, которой ещё нет в кэшированном эталоне, иначе
+    # получала «быстрее 101%» (поймано test_score.py 2026-09-28).
+    return min(1.0, bisect.bisect_left(sorted_vals, v) / float(max(len(sorted_vals) - 1, 1)))
 
 
 # Ступени, а не гладкая кривая: в разборе балла человек должен видеть
@@ -259,10 +280,17 @@ def percentile(sorted_vals, v):
 # а 50 самых звёздных новых репозиториев со ВСЕГО GitHub. Верхние 3% такой
 # выборки — это первое-второе место среди всех новых репозиториев, а у HN,
 # где в выборке весь поток Show HN, те же 3% — просто хороший день.
+#
+# У X ступени ниже, чем у HN: у твита есть ещё отклик к аудитории и доля
+# закладок (36 баллов бюджета), которых у HN нет. Без этого слагаемого у X
+# вовсе не было сравнения «быстрее площадки», и твиты проигрывали любому
+# Show HN — в живом срезе 2026-09-27 из 38 постов X горячим не стал ни один.
 PCT_STEPS = {
     "hn": ((0.99, 52.0), (0.97, 38.0), (0.94, 26.0), (0.90, 14.0)),
     "gh": ((0.97, 52.0), (0.92, 38.0), (0.85, 26.0), (0.75, 14.0)),
+    "x": ((0.99, 34.0), (0.97, 26.0), (0.93, 18.0), (0.85, 10.0)),
 }
+PCT_WORD = {"hn": "постов HN", "gh": "репозиториев GitHub", "x": "запусков в X"}
 PCT_MIN_SAMPLE = 30
 
 
@@ -299,16 +327,22 @@ def score_item(conn, item, now=None):
 
     # --- 1. Отбор акселератора: факт вместо реакции публики (0-40) -------
     if src == "yc":
-        add = 40.0
-        breakdown["батч YC"] = add
-        total += add
         # Свежесть здесь — это когда мы увидели компанию впервые.
         # Вес подобран так, чтобы новая компания батча сама по себе доходила
-        # до сводки (54 при пороге 52), но в мгновенное уведомление попадала
+        # до сводки (54 при пороге 42), но в мгновенное уведомление попадала
         # только с подтверждением: всплыла в другом источнике или домен
         # зарегистрирован на днях. Иначе каждое обновление каталога YC
         # разрывало бы телефон полусотней сообщений.
-        if now - item["first_seen"] < 3 * 86400:
+        #
+        # Старожил каталога весит 26, а не 40, как раньше: плоские 40 у
+        # двухсот компаний батча занимали весь «Топ» (в живом срезе
+        # 2026-09-27 — 188 записей YC из 250), и свежие запуски с реальным
+        # откликом до выдачи не доходили.
+        fresh = now - item["first_seen"] < 3 * 86400
+        add = 40.0 if fresh else 26.0
+        breakdown["батч YC"] = add
+        total += add
+        if fresh:
             breakdown["новичок в каталоге"] = 14.0
             total += 14.0
 
@@ -320,11 +354,11 @@ def score_item(conn, item, now=None):
     # каталога YC весит меньше (сводка), потому что там часто ещё нет
     # продукта, а здесь он уже есть и его можно пощупать.
     if src == "hn" and (item["tags"] or "") == "launch":
-        breakdown["Launch HN: компания YC выходит на публику"] = 40.0
-        total += 40.0
+        breakdown["Launch HN: компания YC выходит на публику"] = 30.0
+        total += 30.0
         if item["posted_at"] and now - item["posted_at"] < 86400:
-            breakdown["день запуска"] = 20.0
-            total += 20.0
+            breakdown["день запуска"] = 10.0
+            total += 10.0
 
     # --- 2. Аномалия относительно автора (0-25) -------------------------
     z = author_z(conn, src, item["author"], last["likes"] if last else None)
@@ -343,21 +377,33 @@ def score_item(conn, item, now=None):
     # насколько этот пост набирает быстрее остальных постов площадки за
     # неделю. Порог самокалибруется и не требует подбирать константы
     # под каждую площадку руками.
-    if src in ("hn", "gh") and last and item["posted_at"]:
+    #
+    # Порог отклика (TRACTION_FLOOR) обязателен: без него в «быстрее 100%»
+    # попадали посты с шестью очками. Число реакций и возраст пишутся прямо
+    # в разбор — «быстрее 97%» без «62 очка за 3 ч» читается как взлёт,
+    # даже когда за ним три лайка.
+    likes_now = (last["likes"] if last else None) or 0
+    enough = likes_now >= TRACTION_FLOOR.get(src, 0)
+    if src in PCT_STEPS and last and item["posted_at"] and enough:
         r = rate_of(src, last["likes"], item["posted_at"], last["ts"])
         dist = source_rates(conn, src, now)
         if r is not None and len(dist) >= PCT_MIN_SAMPLE:
             p = percentile(dist, r)
-            word = "постов HN" if src == "hn" else "репозиториев GitHub"
             for edge, pts in PCT_STEPS[src]:
                 if p >= edge:
-                    breakdown["быстрее %d%% %s за неделю" % (int(p * 100), word)] = pts
+                    if likes_now < TRACTION_FULL.get(src, 0):
+                        pts = round(pts / 2.0, 1)
+                    age = max((last["ts"] - item["posted_at"]) / 3600.0, 0.0)
+                    when = ("%.0f ч" % age) if age < 72 else ("%.0f дн." % (age / 24))
+                    breakdown["%d %s за %s — быстрее %d%% %s за неделю"
+                              % (likes_now, UNIT[src], when, int(p * 100), PCT_WORD[src])] = pts
                     total += pts
                     break
 
     # --- 3. Скорость и ускорение (0-30) ---------------------------------
+    # Тот же порог отклика: «темп 3/час» у поста с пятью очками — не темп.
     v, acc = velocity(rows)
-    if v is not None and v > 0:
+    if v is not None and v > 0 and (enough or src == "yc"):
         # Логарифм: разница между 5 и 50 в час важна, между 500 и 5000 — нет.
         add = min(20.0, 7.0 * math.log10(1 + v))
         breakdown["темп %.0f/час" % v] = round(add, 1)
@@ -431,8 +477,37 @@ def score_item(conn, item, now=None):
         breakdown["ниша под вопросом: %s" % soft] = -12.0
         total -= 12.0
 
+    # --- 9. Деньги: у компании есть свежий раунд (0-20) -----------------
+    # Самое прямое подтверждение, что продукт — бизнес: за него уже
+    # заплатили инвесторы. Раунд берётся из потока сделок рынка (market.py).
+    deal = None
+    try:
+        import market
+        deal = market.deal_for_item(conn, item, now)
+    except Exception:
+        deal = None
+    if deal:
+        add = 20.0 if (deal.get("usd") or 0) >= 1e6 or deal.get("stage") else 12.0
+        bits = [market.usd(deal.get("usd"))] if deal.get("usd") else []
+        if deal.get("stage"):
+            bits.append(market.STAGE_NAME.get(deal["stage"], deal["stage"]))
+        breakdown["раунд инвесторов: %s" % (", ".join(bits) or "есть")] = add
+        total += add
+
     total = max(0.0, min(100.0, total))
     tier = HOT if total >= HOT_MIN else (DIGEST if total >= DIGEST_MIN else ARCHIVE)
+    # Без отклика в абсолютных числах — не пуш и не сводка. Относительные
+    # слагаемые («выше нормы автора», «домен свежий») без реальных людей за
+    # ними — не сигнал. Исключения: подтверждённый раунд и каталог YC
+    # (отбор акселератора — сам по себе факт, но только в сводку).
+    floor, push = TRACTION_FLOOR.get(src), PUSH_FLOOR.get(src)
+    is_launch_hn = src == "hn" and (item["tags"] or "") == "launch"
+    if tier == HOT and not deal and (src == "yc" or (push and likes_now < push)):
+        tier = DIGEST
+        breakdown["мало отклика для уведомления: %d %s (нужно %d)"
+                  % (likes_now, UNIT.get(src, ""), push or 0) if push else "каталог YC — только в сводку"] = 0.0
+    if tier == DIGEST and not deal and floor and likes_now < floor and not (is_launch_hn and likes_now >= 10):
+        tier = ARCHIVE
     # Посевная запись остаётся в базе со своим баллом — она нужна как фон
     # для дедупликации и для норм авторов, — но уведомления не порождает.
     if _col(item, "bootstrap"):
