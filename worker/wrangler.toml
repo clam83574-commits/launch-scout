@@ -1,6 +1,10 @@
 name = "launch-scout-bot"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
+# Деплой не трогает переменные, заведённые в панели Cloudflare: без этого
+# каждый `wrangler deploy` стирал их (так пропал ключ OpenRouter, 2026-09-29).
+# Ключи всё равно лучше заводить как Secret — секреты деплой не трогает никогда.
+keep_vars = true
 
 # Аккаунт указан явно. Без него wrangler на этой машине уходит в чужой
 # account id и отвечает «Authentication error [code: 10000]» — при том что

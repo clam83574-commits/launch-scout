@@ -1655,7 +1655,7 @@ function ago(ts) {
 const day = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
 
 /** Факты среза одним текстом, сначала то, что ближе к вопросу и профилю. */
-function chatData(snap, question, profile) {
+function chatData(snap, question, profile, limit = 14000) {
   const m = marketOf(snap) || {};
   const c = m.chat || {};
   const rep = m.report || {};
@@ -1686,7 +1686,7 @@ function chatData(snap, question, profile) {
     .map((f) => ({ f, score: rel(`${f.title} ${f.body}`) * 10 + f.score / 100 })).sort((a, b) => b.score - a.score).slice(0, 12)
     .map(({ f }) => `- ${day(f.first_seen)} (${ago(f.first_seen)}) | ${f.source} | ${String(f.title || "").slice(0, 100)} | traction: ${f.likes ?? "?"} likes/points, ${f.replies ?? "?"} replies | ${(f.gist || {}).en || ""} | ${f.url}`);
   if (launches.length) out.push("", "FRESH LAUNCHES WITH TRACTION (last 48h):", ...launches);
-  return out.join("\n").slice(0, 14000);
+  return out.join("\n").slice(0, limit);
 }
 
 async function chatHistory(env, uid) {
@@ -1709,13 +1709,18 @@ async function chatReply(env, chatId, question, lang) {
   const profile = (prof && prof.about) || "";
   const snap = await loadSnapshot(env);
   const hist = await chatHistory(env, chatId);
+  // Без OpenRouter чат идёт в бесплатный Groq, где запрос вместе с ответом
+  // должен уложиться в 8000 токенов в минуту: 2026-09-29 он весил 8557 и
+  // получал отказ. Для Groq — меньше фактов, короче история и ответ.
+  const big = !!env.LS_OPENROUTER_KEY;
+  const turns = big ? hist : hist.slice(-4);
   const messages = [
     { role: "system", content: CHAT_SYSTEM.replace("%LANG%", LANG_EN[lang] || "Russian") },
-    { role: "user", content: `TODAY: ${today}\nPROFILE: ${profile || "unknown"}\n\nDATA:\n${chatData(snap, question, profile)}` },
-    ...hist.map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, 1500) })),
+    { role: "user", content: `TODAY: ${today}\nPROFILE: ${profile || "unknown"}\n\nDATA:\n${chatData(snap, question, profile, big ? 14000 : 7000)}` },
+    ...turns.map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, big ? 1500 : 700) })),
     { role: "user", content: question.slice(0, 1500) },
   ];
-  const r = await smartFetch(env, { messages, reasoning_effort: "low", max_completion_tokens: 2000, temperature: 0.3,
+  const r = await smartFetch(env, { messages, reasoning_effort: "low", max_completion_tokens: big ? 2000 : 1300, temperature: 0.3,
     response_format: { type: "json_object" } }, ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]);
   await setMeta(env, "chat_calls_" + today, total + 1);
   await setMeta(env, `chat_user_${chatId}_${today}`, mine + 1);
