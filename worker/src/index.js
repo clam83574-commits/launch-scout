@@ -1455,8 +1455,8 @@ async function smartFetch(env, body, groqModels, { web = false, timeoutMs = 2700
 }
 
 /**
- * Голосовое сообщение -> текст. Groq Whisper: бесплатный тариф, русский и
- * казахский распознаёт. Возвращает текст или null.
+ * Голосовое сообщение -> текст: Groq Whisper, при сбое — OpenRouter.
+ * Русский и казахский распознаются оба. Возвращает текст или null.
  */
 const VOICE_MAX_SECONDS = 180;
 
@@ -1467,31 +1467,9 @@ async function transcribe(env, voice, lang) {
   const audio = await fetch(`https://api.telegram.org/file/bot${env.LS_BOT_TOKEN}/${f.result.file_path}`);
   if (!audio.ok) return null;
   const blob = await audio.blob();
-  // OpenRouter первым, если есть ключ (решение владельца 2026-09-29): Gemini
-  // слушает ogg из Telegram напрямую, около $0,001 за минуту. Groq Whisper —
-  // запасной и бесплатный.
-  if (env.LS_OPENROUTER_KEY) {
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    let bin = "";
-    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
-      body: JSON.stringify({
-        model: env.LS_VOICE_MODEL || "google/gemini-3.1-flash-lite", temperature: 0,
-        messages: [{ role: "user", content: [
-          { type: "text", text: "Transcribe this voice message verbatim in its original language (Russian, Kazakh or English). Output only the transcript." },
-          { type: "input_audio", input_audio: { data: btoa(bin), format: "ogg" } },
-        ] }],
-      }),
-    }).catch(() => null);
-    if (r && r.ok) {
-      const j = await r.json().catch(() => null);
-      const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      if (t && String(t).trim()) return String(t).trim();
-    }
-  }
+  // Groq Whisper первым (решение владельца 2026-09-29): быстрый, точный и
+  // бесплатный. OpenRouter (Gemini слушает ogg напрямую, ~$0,001 за минуту) —
+  // только если у Groq ошибка или кончился лимит на всех ключах.
   for (const key of groqKeys(env)) {
     const form = new FormData();
     form.append("file", blob, "voice.ogg");
@@ -1501,12 +1479,37 @@ async function transcribe(env, voice, lang) {
     const r = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
       method: "POST", headers: { authorization: `Bearer ${key}` }, body: form,
     }).catch(() => null);
-    if (!r || r.status === 429) continue;
-    if (!r.ok) return null;
-    const j = await r.json().catch(() => null);
-    return j && j.text ? String(j.text).trim() : null;
+    if (r && r.ok) {
+      const j = await r.json().catch(() => null);
+      if (j && j.text && String(j.text).trim()) return String(j.text).trim();
+      break;
+    }
+    await noteAiError(env, "groq whisper", r ? r.status : 0, r ? await r.text().catch(() => "") : "сеть");
+    if (!r || r.status !== 429) break;             // 429 — пробуем следующий ключ, иное — сразу OpenRouter
   }
-  return null;
+  if (!env.LS_OPENROUTER_KEY) return null;
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
+      "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+    body: JSON.stringify({
+      model: env.LS_VOICE_MODEL || "google/gemini-3.1-flash-lite", temperature: 0,
+      messages: [{ role: "user", content: [
+        { type: "text", text: "Transcribe this voice message verbatim in its original language (Russian, Kazakh or English). Output only the transcript." },
+        { type: "input_audio", input_audio: { data: btoa(bin), format: "ogg" } },
+      ] }],
+    }),
+  }).catch(() => null);
+  if (!r || !r.ok) {
+    await noteAiError(env, "openrouter voice", r ? r.status : 0, r ? await r.text().catch(() => "") : "сеть");
+    return null;
+  }
+  const j = await r.json().catch(() => null);
+  const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+  return t && String(t).trim() ? String(t).trim() : null;
 }
 
 /** «Please try again in 11m7.44s» из ответа 429 — в минутах, вверх. */
