@@ -116,6 +116,12 @@
   .niche .top em { font-style: normal; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .niche .top em small { font-size: 12px; font-weight: 400; color: var(--hint); }
   .niche .who b { color: var(--text); font-weight: 600; }
+  .niche .row { font-size: 12.5px; margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .niche .row a { color: var(--link); text-decoration: none; }
+  .niche .spark { margin-top: 6px; }
+  .niche .follow { margin-top: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    border-radius: 10px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+  .niche .follow.on { background: color-mix(in srgb, var(--s1) 16%, var(--bg)); border-color: var(--s1); }
   .niche .who { color: var(--hint); font-size: 12px; margin-top: 4px; }
   .niche .who a { color: var(--link); text-decoration: none; }
   ul.plain { list-style: none; padding: 0; margin: 0; }
@@ -600,6 +606,7 @@
       audience: (p && Array.isArray(p.audience) && p.audience) || [],
       sectors: (p && Array.isArray(p.sectors) && p.sectors) || [],
       sources: (p && Array.isArray(p.sources) && p.sources) || [],
+      niches: (p && Array.isArray(p.niches) && p.niches) || [],
       sens: (p && ["strict", "normal", "wide"].includes(p.sens) && p.sens) || "normal",
       notify: { brief: true, hot: false, digest: false, market: false, funding: false, alerts: false, ...n },
     };
@@ -755,7 +762,9 @@
       n_rounds: "раундов", n_early: "ранних",
       phys_t: "Физический продукт в батчах YC", phys_s: "железо, роботы, оборона, энергетика, логистика",
       now: "сейчас", before: "было", empty: "Данных о рынке пока нет — первый сбор раундов идёт.", unknown: "стадия не указана",
-      rounds_w: "раундов", early_w: "ранних" },
+      rounds_w: "раундов", early_w: "ранних", by_week: "Раунды по неделям · полгода", by_week_s: "синим — ранние раунды",
+      investors: "Инвесторы", pain: "Просят", kz: "Казахстан", cis: "СНГ", free: "свободно", partly: "частично", crowded: "занято",
+      follow: "🔔 Следить", following: "✅ Слежу", mega: "мегараунд", trend6: "за полгода" },
     kk: { rounds: "раунд (%d күн)", money: "тартылды", early: "ерте раундтар", sec: "Form D өтінімдері (АҚШ)",
       phys: "YC-дегі физ. өнім", by_day: "Күн бойынша раундтар", by_day_s: "28 күн · бір компания = бір раунд",
       sectors: "Салалар", sectors_s: "раундтар: қазір ● және өткен %d күн ○", stages: "Раунд кезеңдері",
@@ -763,7 +772,9 @@
       n_rounds: "раунд", n_early: "ерте",
       phys_t: "YC батчтарындағы физикалық өнім", phys_s: "құрылғылар, роботтар, қорғаныс, энергетика, логистика",
       now: "қазір", before: "бұрын", empty: "Нарық деректері әзірге жоқ — алғашқы жинау жүріп жатыр.", unknown: "кезең көрсетілмеген",
-      rounds_w: "раунд", early_w: "ерте" },
+      rounds_w: "раунд", early_w: "ерте", by_week: "Апта бойынша раундтар · жарты жыл", by_week_s: "көкпен — ерте раундтар",
+      investors: "Инвесторлар", pain: "Сұрайды", kz: "Қазақстан", cis: "ТМД", free: "бос", partly: "ішінара", crowded: "бос емес",
+      follow: "🔔 Бақылау", following: "✅ Бақылаймын", mega: "мега-раунд", trend6: "жарты жылда" },
     en: { rounds: "rounds in %d days", money: "raised", early: "early rounds", sec: "Form D filings (US)",
       phys: "physical in YC", by_day: "Rounds per day", by_day_s: "28 days · one company = one round",
       sectors: "Sectors", sectors_s: "rounds: now ● vs previous %d days ○", stages: "Round stages",
@@ -771,7 +782,9 @@
       n_rounds: "rounds", n_early: "early",
       phys_t: "Physical products in YC batches", phys_s: "hardware, robotics, defense, energy, logistics",
       now: "now", before: "before", empty: "No market data yet — the first pass over rounds is running.", unknown: "stage not stated",
-      rounds_w: "rounds", early_w: "early" },
+      rounds_w: "rounds", early_w: "early", by_week: "Rounds per week · six months", by_week_s: "blue = early rounds",
+      investors: "Investors", pain: "People ask", kz: "Kazakhstan", cis: "CIS", free: "free", partly: "partly taken", crowded: "crowded",
+      follow: "🔔 Follow", following: "✅ Following", mega: "mega-round", trend6: "over six months" },
   };
   const mk = (k, n) => { const v = (MK[state.lang] || MK.ru)[k]; return n === undefined ? v : v.replace("%d", n); };
   const usdS = (v) => !v ? "—" : v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e7 ? `$${Math.round(v / 1e6)}M` : `$${(v / 1e6).toFixed(1)}M`;
@@ -822,6 +835,32 @@
   }
 
   /** Гантели: раунды сектора сейчас (●) против прошлого окна (○). */
+  /** Мини-кривая ниши за полгода: одна линия, без осей — форма, а не цифры. */
+  function spark(v) {
+    const W = 120, H = 24, max = Math.max(1, ...v), n = v.length;
+    const pts = v.map((x, i) => `${(i / (n - 1)) * W},${H - (x / max) * (H - 3) - 1.5}`).join(" ");
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><polyline fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" points="${pts}"/></svg>`;
+  }
+
+  /** Раунды по неделям за полгода: ранние (синим) под поздними (серым). */
+  function weeklyChart(wk, W) {
+    const H = 110, n = wk.total.length, max = Math.max(1, ...wk.total), bw = W / n;
+    const start = new Date(wk.start + "T00:00:00Z");
+    let svg = `<svg viewBox="0 0 ${W} ${H + 16}" height="${H + 16}" role="img" aria-label="${esc(mk("by_week"))}">`;
+    svg += `<line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/>`;
+    wk.total.forEach((t, i) => {
+      const e = wk.early[i] || 0, x = i * bw, he = (e / max) * (H - 14), ht = (t / max) * (H - 14);
+      const d = new Date(start.getTime() + i * 7 * 86400000).toISOString().slice(5, 10);
+      if (ht - he > 0) svg += `<rect x="${x + 1}" y="${H - ht}" width="${Math.max(bw - 2, 1)}" height="${Math.max(ht - he - 2, 0)}" rx="2" fill="var(--s-other)"/>`;
+      if (he > 0) svg += `<rect x="${x + 1}" y="${H - he}" width="${Math.max(bw - 2, 1)}" height="${he}" rx="2" fill="var(--s1)"/>`;
+      svg += `<rect class="hit" x="${x}" y="0" width="${bw}" height="${H}" data-tip="${esc(`${d}: ${t} ${mk("rounds_w")}, ${mk("early_w")} ${e}`)}"/>`;
+    });
+    const last = new Date(start.getTime() + (n - 1) * 7 * 86400000).toISOString().slice(5, 10);
+    svg += `<text x="0" y="${H + 13}">${esc(wk.start.slice(5))}</text><text x="${W}" y="${H + 13}" text-anchor="end">${esc(last)}</text>`;
+    svg += `<text x="${W}" y="10" text-anchor="end">max ${max}</text>`;
+    return svg + "</svg>";
+  }
+
   function sectorChart(rep, W) {
     const rows = (rep.sectors || []).filter((s) => (s.money || {}).cur_n || (s.money || {}).prev_n)
       .sort((a, b) => b.money.cur_n - a.money.cur_n).slice(0, 10);
@@ -893,24 +932,39 @@
     ].join("");
     const names = rep.niche_names || {};
     const niches = (rep.niches || []).filter((n) => n.n >= 2).slice(0, 6);
+    const GAPI = { free: "🟢", partly: "🟡", crowded: "🔴" };
+    const mine = new Set((state.prefs && state.prefs.niches) || []);
     const nicheCards = niches.map((n) => {
       const meta = sectorList().find((z) => z.id === n.sector) || { emoji: "" };
-      const who = (n.companies || []).slice(0, 3).map((r) => `<a href="${esc(r.url || "")}" data-ext>${esc(r.company)}</a>${r.usd ? " " + usdS(r.usd) : ""}`).join(" · ");
+      const reg = (n.companies || []).filter((r) => !(r.usd >= 1e9));
+      const who = reg.slice(0, 3).map((r) => `<a href="${esc(r.url || "")}" data-ext>${esc(r.company)}</a>${r.usd ? " " + usdS(r.usd) : ""}`).join(" · ");
+      const mega = (n.mega || [])[0];
+      const g = n.gap, p0 = (n.pain || [])[0];
+      const gap = g && (g.kz || g.cis) ? `<div class="row"><span>${GAPI[g.kz] || "⚪"} ${esc(mk("kz"))}: ${esc(mk(g.kz) || "?")}</span><span>${GAPI[g.cis] || "⚪"} ${esc(mk("cis"))}: ${esc(mk(g.cis) || "?")}</span>
+          ${(g.analogs || []).slice(0, 3).map((x) => `<a href="${esc(x.url)}" data-ext>${esc(x.name)}</a>`).join(" · ")}</div>` : "";
+      const on = mine.has(n.niche);
       return `<div class="niche"><div class="top"><b>${meta.emoji} ${esc(state.lang === "en" ? n.niche : names[n.niche] || n.niche)}</b>
         <em>${n.n} <small>${esc(roundsWord(n.n))}</small></em></div>
         <div class="stack" style="height:8px" data-tip="${esc(`${mk("n_early")}: ${n.early} / ${n.n}`)}"><i style="flex:${n.early};background:var(--s1)"></i><i style="flex:${n.n - n.early};background:var(--s-other)"></i></div>
-        <div class="who"><b>${esc(mk("n_early"))}: ${n.early} (${Math.round(n.early / n.n * 100)}%)</b> · ${usdS(n.usd)} · ${who}</div></div>`;
+        <div class="who"><b>${esc(mk("n_early"))}: ${n.early} (${Math.round(n.early / n.n * 100)}%)</b> · ${usdS(n.usd)} · ${who}${mega ? ` · ${esc(mk("mega"))} <a href="${esc(mega.url || "")}" data-ext>${esc(mega.company)}</a> ${usdS(mega.usd)}` : ""}</div>
+        ${(n.weekly || []).some((x) => x) ? `<div class="spark" data-tip="${esc(mk("trend6"))}: ${esc(n.weekly.join(" · "))}">${spark(n.weekly)}</div>` : ""}
+        ${(n.investors || []).length ? `<div class="row">💼 ${esc(mk("investors"))}: ${esc(n.investors.join(", "))}</div>` : ""}
+        ${p0 ? `<div class="row">🙋 ${esc(mk("pain"))}: <a href="${esc(p0.url || "")}" data-ext>«${esc(String(p0.text || "").slice(0, 110))}»</a></div>` : ""}
+        ${gap}
+        <button class="follow${on ? " on" : ""}" data-follow="${esc(n.niche)}">${esc(mk(on ? "following" : "follow"))}</button></div>`;
     }).join("");
-    const daily = am.daily || [];
+    const daily = am.daily || [], wk = am.weekly;
     box.innerHTML = `<div class="mk">
       <div class="kpis">${kpis}</div>
       ${nicheCards ? `<h2>${esc(mk("niches"))}</h2><div class="sub">${esc(mk("niches_s", rep.niche_days || 28))}</div><div class="niches">${nicheCards}</div>` : ""}
-      ${daily.length ? `<h2>${esc(mk("by_day"))}</h2><div class="sub">${esc(mk("by_day_s"))}</div><div class="chart" id="mkDaily">${dailyChart(daily, W)}</div>` : ""}
+      ${wk && wk.total.some((x) => x) ? `<h2>${esc(mk("by_week"))}</h2><div class="sub">${esc(mk("by_week_s"))}</div><div class="chart" id="mkWeek">${weeklyChart(wk, W)}</div>`
+        : daily.length ? `<h2>${esc(mk("by_day"))}</h2><div class="sub">${esc(mk("by_day_s"))}</div><div class="chart" id="mkDaily">${dailyChart(daily, W)}</div>` : ""}
       <h2>${esc(mk("sectors"))}</h2><div class="sub">${esc(mk("sectors_s", win))}</div><div class="chart" id="mkSec">${sectorChart(rep, W)}</div>
       ${am.stages ? `<h2>${esc(mk("stages"))}</h2><div class="sub">${esc(mk("stages_s"))}</div><div class="chart" id="mkStage">${stageBar(am.stages)}</div>` : ""}
       ${rep.physical ? `<h2>${esc(mk("phys_t"))}</h2><div class="sub">${esc(mk("phys_s"))}</div><div class="chart" id="mkPhys">${physChart(rep.physical.history, W)}</div>` : ""}
     </div>`;
-    for (const id of ["mkDaily", "mkSec", "mkStage", "mkPhys"]) { const el = document.getElementById(id); if (el) withTip(el); }
+    for (const id of ["mkDaily", "mkWeek", "mkSec", "mkStage", "mkPhys"]) { const el = document.getElementById(id); if (el) withTip(el); }
+    box.querySelectorAll(".niche").forEach((el) => withTip(el));
   }
 
   function drawDaily(daily) {
@@ -1021,7 +1075,17 @@
       return;
     }
     const a = e.target.closest("a[data-ext]");
-    if (a) { e.preventDefault(); tg && tg.openLink ? tg.openLink(a.href) : open(a.href, "_blank"); }
+    if (a) { e.preventDefault(); tg && tg.openLink ? tg.openLink(a.href) : open(a.href, "_blank"); return; }
+    // 🔔 Следить за нишей: новые раунды в ней придут сообщением в чат.
+    const nf = e.target.closest("[data-follow]");
+    if (nf && state.prefs) {
+      const k = nf.dataset.follow, list = new Set(state.prefs.niches || []);
+      if (list.has(k)) list.delete(k); else list.add(k);
+      state.prefs.niches = [...list];
+      savePrefs(true);
+      haptic("light");
+      renderTrends();
+    }
   });
   $("#tableToggle").onclick = () => {
     const t = $("#dailyTable"), b = $("#tableToggle");

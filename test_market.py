@@ -145,11 +145,34 @@ def dedupe():
     check("компания: хвост AI не мешает", market.company_norm("Dextr AI") == market.company_norm("Dextr"), "")
 
 
+def niche_extras():
+    """Мегараунд не раздувает сумму ниши; кривая за полгода; инвесторы."""
+    print("\n--- ниши: мегараунд, кривая, инвесторы ---")
+    conn = db.connect(Path(tempfile.mkdtemp()) / "n.sqlite")
+    market._ensure(conn)
+    now = int(time.time())
+    rows = [("Alpha", 12e9, 2, "c+", '["a16z"]'), ("Beta", 5e6, 3, "seed", '["a16z", "YC"]'),
+            ("Gamma", 3e6, 5, "seed", '["YC"]'), ("Delta", 2e6, 60, "seed", None)]
+    for name, usd, days, stage, inv in rows:
+        conn.execute("INSERT INTO deals (key, ts, seen, title, url, outlet, company, amount_usd, sectors, stage, "
+                     "niche, ai, investors) VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?)",
+                     (name, now - days * 86400, now, name + " raises", "u", "o", name, usd, '["ai_agents"]',
+                      stage, "ai agents for sales", inv))
+    conn.commit()
+    n = market.niches(conn, now)[0]
+    check("мегараунд не в сумме ниши", n["usd"] == 8e6, str(n["usd"]))
+    check("мегараунд показан отдельно", n["mega"] and n["mega"][0]["company"] == "Alpha", "")
+    check("инвесторы по частоте", set(n["investors"][:2]) == {"a16z", "YC"}, str(n["investors"]))
+    check("кривая за полгода: 26 недель", len(n["weekly"]) == market.HISTORY_WEEKS, "")
+    check("раунд 60 дней назад — в кривой, но не в окне", n["n"] == 3 and sum(n["weekly"]) == 4, str(n["weekly"]))
+
+
 def main():
     deals()
     classify()
     momentum()
     dedupe()
+    niche_extras()
     print()
     if FAILED:
         print("ПРОВАЛЕНО %d: %s" % (len(FAILED), ", ".join(FAILED)))

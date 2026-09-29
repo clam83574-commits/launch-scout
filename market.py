@@ -227,12 +227,17 @@ def _ensure(conn):
     # решила, что это не раунд (обзор, фонд, IPO), такие не считаются.
     have = {r[1] for r in conn.execute("PRAGMA table_info(deals)")}
     for col, typ in (("stage", "TEXT"), ("niche", "TEXT"), ("what", "TEXT"), ("country", "TEXT"),
-                     ("ai", "INTEGER DEFAULT 0"), ("is_round", "INTEGER DEFAULT 1"), ("src", "TEXT")):
+                     ("ai", "INTEGER DEFAULT 0"), ("is_round", "INTEGER DEFAULT 1"), ("src", "TEXT"),
+                     ("investors", "TEXT")):
         if col not in have:
             conn.execute("ALTER TABLE deals ADD COLUMN %s %s" % (col, typ))
     conn.execute(
         "CREATE TABLE IF NOT EXISTS demand ("
         " ext_id TEXT PRIMARY KEY, ts INTEGER, text TEXT, url TEXT, likes INTEGER, sectors TEXT)")
+    # Ниша, которую решил бы продукт по запросу («сделайте кто-нибудь…»):
+    # '' — разобрано, подходящей ниши нет; NULL — ещё не разобрано.
+    if "niche" not in {r[1] for r in conn.execute("PRAGMA table_info(demand)")}:
+        conn.execute("ALTER TABLE demand ADD COLUMN niche TEXT")
 
 
 # ---------------------------------------------------------------------------
@@ -470,16 +475,17 @@ def add_deal(conn, title, url, outlet, ts, now, sid=None, src="news", company=No
 
 def refresh_deals(conn, now, verbose=True):
     """
-    Раунды по каждому сектору за два окна по 14 дней: текущее и прошлое.
-
-    Прошлое окно запрашивается тоже, а не берётся из накопленной базы:
-    иначе первые две недели после запуска сравнивать было бы не с чем.
-    32 запроса раз в 12 часов — вежливо для RSS.
+    Раунды по каждому сектору за последние четыре недели — по неделе на
+    запрос. Неделями, а не двумя окнами по 14 дней (2026-09-29): так живой
+    сбор режет время теми же кусками, что и загрузка истории за полгода
+    (backfill_deals), и недели сравнимы между собой — у Google News потолок
+    в 100 заголовков на запрос, и 14-дневное окно упиралось в него чаще.
+    64 запроса раз в 6 часов — вежливо для RSS.
     """
     _ensure(conn)
     stats, errors, analysis = {}, [], {}
-    windows = (("cur", now - WINDOW_DAYS * 86400, now + 86400),
-               ("prev", now - 2 * WINDOW_DAYS * 86400, now - WINDOW_DAYS * 86400))
+    windows = [("w%d" % k, now - (k + 1) * 7 * 86400, now + 86400 if k == 0 else now - k * 7 * 86400)
+               for k in range(4)]
     for sid in SECTOR_IDS:
         for name, a, b in windows:
             q = '%s (startup OR company) (raises OR funding OR "seed round" OR "series a" OR "series b") ' \
@@ -493,7 +499,7 @@ def refresh_deals(conn, now, verbose=True):
             stats[(sid, name)] = {"raw": len(rows)}
             for title, url, outlet, ts in rows:
                 if not add_deal(conn, title, url, outlet, ts, now, sid=sid):
-                    if name == "cur" and ANALYSIS.search(title) and (ts or 0) >= now - 21 * 86400:
+                    if name in ("w0", "w1") and ANALYSIS.search(title) and (ts or 0) >= now - 21 * 86400:
                         analysis.setdefault(sid, []).append(
                             {"title": _clean_title(title)[:200], "url": url, "outlet": outlet, "ts": ts})
             time.sleep(0.8)
@@ -572,9 +578,12 @@ def enrich_deals(conn, now, verbose=True):
     """
     import ai
     _ensure(conn)
+    # Свежие первыми, затем история за полгода: с ключом OpenRouter за
+    # прогон уходит 200 заголовков, на Groq — 40 (его минутный лимит).
+    per_run = ai.DEAL_BATCH * (ai.OR_BATCHES_PER_RUN if ai.openrouter_key() else ai.DEAL_BATCHES_PER_RUN)
     rows = conn.execute(
         "SELECT key, title, outlet, src FROM deals WHERE ai = 0 AND ts >= ? ORDER BY ts DESC LIMIT ?",
-        (now - (2 * WINDOW_DAYS + 3) * 86400, ai.DEAL_BATCH * ai.DEAL_BATCHES_PER_RUN)).fetchall()
+        (now - (HISTORY_WEEKS * 7 + 3) * 86400, per_run)).fetchall()
     if not rows:
         return 0
     ids = {str(i): r["key"] for i, r in enumerate(rows)}
@@ -604,14 +613,16 @@ def enrich_deals(conn, now, verbose=True):
         stage = e.get("stage") if e.get("stage") in STAGES else None
         what = e.get("what") if isinstance(e.get("what"), dict) else {}
         what = {k: str(what[k]).strip()[:140] for k in ("ru", "en") if what.get(k)}
+        raw_inv = e.get("investors") if isinstance(e.get("investors"), list) else []
+        inv = [str(x).strip()[:40] for x in raw_inv if str(x).strip()][:3]
         conn.execute(
             "UPDATE deals SET ai = 1, is_round = 1, company = COALESCE(?, company), "
             "amount_usd = COALESCE(?, amount_usd), stage = COALESCE(?, stage), "
-            "sectors = COALESCE(?, sectors), niche = ?, what = ?, country = ? WHERE key = ?",
+            "sectors = COALESCE(?, sectors), niche = ?, what = ?, country = ?, investors = ? WHERE key = ?",
             ((e.get("company") or "").strip()[:80] or None, usd, stage,
              json.dumps([sector]) if sector else None, niche,
              json.dumps(what, ensure_ascii=False) if what else None,
-             str(e.get("country") or "")[:2].upper(), key))
+             str(e.get("country") or "")[:2].upper(), json.dumps(inv) if inv else None, key))
     # Строки из отвеченных пачек, которые модель пропустила, — не повторять
     # каждый прогон: помечаем разобранными как есть.
     for i in answered:
@@ -642,7 +653,7 @@ def rounds(conn, since, until=None):
         if g is None:
             g = groups[k] = {"company": r["company"], "usd": None, "stage": None, "niche": None, "what": {},
                              "sectors": [], "ts": r["ts"], "url": r["url"], "title": r["title"],
-                             "outlets": set(), "keys": [], "sent": False, "ai": False, "country": ""}
+                             "outlets": set(), "keys": [], "sent": False, "ai": False, "country": "", "investors": []}
         g["keys"].append(r["key"])
         g["outlets"].add(r["outlet"] or r["url"])
         g["sent"] = g["sent"] or bool(r["sent"])
@@ -656,6 +667,9 @@ def rounds(conn, since, until=None):
             g["stage"] = g["stage"] or r["stage"]
             g["niche"] = g["niche"] or r["niche"]
             g["country"] = g["country"] or (r["country"] or "")
+            for inv in json.loads(r["investors"] or "[]"):
+                if inv not in g["investors"]:
+                    g["investors"].append(inv)
             if r["what"] and not g["what"]:
                 try:
                     g["what"] = json.loads(r["what"])
@@ -683,7 +697,8 @@ def money(conn, now):
         pass
     cut_cur, cut_prev = now - WINDOW_DAYS * 86400, now - 2 * WINDOW_DAYS * 86400
     out = {sid: {"cur_n": 0, "prev_n": 0, "cur_usd": 0.0, "prev_usd": 0.0, "cur_early": 0, "prev_early": 0,
-                 "top": [], "sat": raw.get("%s|cur" % sid, 0) >= 95} for sid in SECTOR_IDS}
+                 "top": [], "sat": max(raw.get("%s|w0" % sid, 0), raw.get("%s|w1" % sid, 0),
+                                       raw.get("%s|cur" % sid, 0)) >= 95} for sid in SECTOR_IDS}
     for r in rounds(conn, cut_prev):
         side = "cur" if r["ts"] >= cut_cur else "prev"
         for sid in r["sectors"]:
@@ -701,11 +716,21 @@ def money(conn, now):
 def _round_brief(r):
     return {"company": r["company"], "title": r["title"], "url": r["url"], "usd": r["usd"],
             "stage": r["stage"], "what": r["what"], "niche": r["niche"], "ts": r["ts"],
-            "outlets": r["outlets"]}
+            "outlets": r["outlets"], "investors": r.get("investors") or []}
 
 
 NICHE_DAYS = 28
 NICHE_MIN = 3            # раундов в нише за окно, чтобы о ней говорить
+HISTORY_WEEKS = 26       # история за полгода — для кривых ниш и секторов
+# Мегараунд (от $1 млрд) не складывается в сумму ниши: один Prometheus на
+# $12 млрд делал «ИИ-агентов для предприятий» нишей на $15 млрд и прятал,
+# сколько получили остальные 30 компаний (2026-09-29). Он показывается отдельно.
+MEGA_USD = 1e9
+
+
+def week_index(ts, now):
+    """Номер недели от текущей: 0 — последние 7 дней, 1 — неделя до них…"""
+    return int((now - ts) // (7 * 86400))
 
 
 def niches(conn, now, days=NICHE_DAYS, limit=12):
@@ -716,30 +741,51 @@ def niches(conn, now, days=NICHE_DAYS, limit=12):
     Ранний раунд (pre-seed, seed, A) весит больше позднего: три seed-раунда
     в одной нише за месяц — это ниша, которая только открывается, а три
     раунда C — ниша, где места уже поделены.
+
+    К каждой нише: кто в неё вкладывает, кривая раундов по неделям за
+    полгода, «боль» — посты людей, которые просят такой продукт, — и метка,
+    свободна ли ниша в Казахстане и СНГ (gap_step).
     """
-    by = {}
-    for r in rounds(conn, now - days * 86400):
+    hist = {}
+    for r in rounds(conn, now - HISTORY_WEEKS * 7 * 86400):
         if r["niche"]:
-            by.setdefault(r["niche"], []).append(r)
-    prev = {}
-    for r in rounds(conn, now - 2 * days * 86400, now - days * 86400):
-        if r["niche"]:
-            prev[r["niche"]] = prev.get(r["niche"], 0) + 1
+            hist.setdefault(r["niche"], []).append(r)
+    try:
+        gaps = json.loads(db.kv_get(conn, "niche_gaps", "{}") or "{}")
+    except ValueError:
+        gaps = {}
     out = []
-    for niche, lst in by.items():
+    for niche, allr in hist.items():
+        lst = [r for r in allr if r["ts"] >= now - days * 86400]
         if len(lst) < 2:
             continue
-        secs = {}
+        secs, inv = {}, {}
         for r in lst:
-            for s in r["sectors"][:1]:
-                secs[s] = secs.get(s, 0) + 1
+            for x in r["sectors"][:1]:
+                secs[x] = secs.get(x, 0) + 1
+            for i in r.get("investors") or []:
+                inv[i] = inv.get(i, 0) + 1
+        weekly = [0] * HISTORY_WEEKS
+        for r in allr:
+            w = week_index(r["ts"], now)
+            if 0 <= w < HISTORY_WEEKS:
+                weekly[HISTORY_WEEKS - 1 - w] += 1
+        mega = [r for r in lst if (r["usd"] or 0) >= MEGA_USD]
+        pain = conn.execute("SELECT text, url, likes, ts FROM demand WHERE niche = ? AND ts >= ? "
+                            "ORDER BY likes DESC LIMIT 2", (niche, now - 60 * 86400)).fetchall()
         early = sum(1 for r in lst if r["stage"] in EARLY)
+        prev = sum(1 for r in allr if now - 2 * days * 86400 <= r["ts"] < now - days * 86400)
         out.append({
             "niche": niche, "n": len(lst), "early": early,
-            "usd": round(sum(r["usd"] or 0 for r in lst)),
-            "prev": prev.get(niche, 0),
+            "usd": round(sum(r["usd"] or 0 for r in lst if (r["usd"] or 0) < MEGA_USD)),
+            "mega": [_round_brief(r) for r in mega[:2]],
+            "prev": prev,
             "sector": max(secs, key=secs.get) if secs else None,
             "last7": sum(1 for r in lst if r["ts"] >= now - 7 * 86400),
+            "investors": [k for k, _v in sorted(inv.items(), key=lambda kv: -kv[1])[:4]],
+            "weekly": weekly,
+            "pain": [{"text": p["text"][:200], "url": p["url"], "likes": p["likes"], "ts": p["ts"]} for p in pain],
+            "gap": gaps.get(niche),
             "companies": [_round_brief(r) for r in sorted(lst, key=lambda r: -(r["usd"] or 0))[:5]],
         })
     out.sort(key=lambda d: (-d["early"], -d["n"], -d["usd"]))
@@ -985,6 +1031,20 @@ def compute(conn, now):
     days = [time.strftime("%Y-%m-%d", time.gmtime(now - (27 - i) * 86400)) for i in range(28)]
     all_money["daily"] = [{"d": d, "n": daily.get(d, [0, 0])[0], "usd": round(daily.get(d, [0, 0])[1])} for d in days]
     all_money["stages"] = stages
+    # Полгода по неделям: всего раундов, ранних и по секторам — для кривых.
+    wk_total, wk_early = [0] * HISTORY_WEEKS, [0] * HISTORY_WEEKS
+    wk_sec = {sid: [0] * HISTORY_WEEKS for sid in SECTOR_IDS}
+    for r in rounds(conn, now - HISTORY_WEEKS * 7 * 86400):
+        w = week_index(r["ts"], now)
+        if not 0 <= w < HISTORY_WEEKS:
+            continue
+        i = HISTORY_WEEKS - 1 - w
+        wk_total[i] += 1
+        wk_early[i] += 1 if r["stage"] in EARLY else 0
+        for sid in r["sectors"][:1]:
+            wk_sec[sid][i] += 1
+    all_money["weekly"] = {"total": wk_total, "early": wk_early, "sectors": wk_sec,
+                           "start": time.strftime("%Y-%m-%d", time.gmtime(now - HISTORY_WEEKS * 7 * 86400))}
     return {"generated": now, "formd": formd_stats(conn, now), "window_days": WINDOW_DAYS, "sectors": sectors,
             "physical": physical, "physical_money": phys_money, "all_money": all_money,
             "yc_batches": [{"name": x["name"], "n": x["n"]} for x in yc],
@@ -1723,6 +1783,181 @@ def chat_facts(conn, now):
                      "text": r["text"], "url": r["url"], "source": r["source"]} for r in rev],
         "articles": analysis_articles(conn, now, days=10, limit=6),
     }
+
+
+# ---------------------------------------------------------------------------
+# 📜 История за полгода: те же запросы к Google News, по неделям назад
+# ---------------------------------------------------------------------------
+BACKFILL_QUERIES_PER_RUN = 60
+
+
+def backfill_deals(conn, now, verbose=True):
+    """
+    Догрузить раунды за полгода — по неделе на запрос, как и живой сбор.
+
+    Google News отдаёт старые заголовки по after:/before: (проверено
+    2026-09-29: 20–30 заголовков о раундах на сектор в неделю даже в марте).
+    Запросов ~500, поэтому по BACKFILL_QUERIES_PER_RUN за прогон: вся история
+    набирается за полтора часа прогонов, а каждый прогон дольше на минуту.
+    Разбор заголовков ИИ идёт общей очередью (enrich_deals), свежие первыми.
+    """
+    _ensure(conn)
+    done = json.loads(db.kv_get(conn, "backfill_done", "{}") or "{}")
+    base = now - now % 86400
+    todo = []
+    for k in range(4, HISTORY_WEEKS):                 # последние 4 недели собирает refresh_deals
+        a, b = base - (k + 1) * 7 * 86400, base - k * 7 * 86400
+        for sid in SECTOR_IDS + ["_general"]:
+            key = "%s|%s" % (_day(a), sid)
+            if key not in done:
+                todo.append((key, sid, a, b))
+    if not todo:
+        return 0
+    added, errs = 0, []
+    for key, sid, a, b in todo[:BACKFILL_QUERIES_PER_RUN]:
+        if sid == "_general":
+            q = '(raises OR raised OR secures) ("pre-seed" OR "seed round" OR "Series A" OR "Series B" OR ' \
+                '"Series C") startup after:%s before:%s' % (_day(a), _day(b))
+        else:
+            q = '%s (startup OR company) (raises OR funding OR "seed round" OR "series a" OR "series b") ' \
+                'after:%s before:%s' % (SECTOR[sid]["q"], _day(a), _day(b))
+        rows, err = fetch_gnews(q)
+        if err:
+            errs.append(err)
+            if err.startswith("HTTP 429") or err.startswith("HTTP 503"):
+                break
+            continue
+        for title, url, outlet, ts in rows:
+            added += 1 if add_deal(conn, title, url, outlet, ts, now, sid=None if sid == "_general" else sid) else 0
+        done[key] = len(rows)
+        time.sleep(0.8)
+    db.kv_set(conn, "backfill_done", json.dumps(done))
+    conn.commit()
+    if verbose:
+        print("  история: запросов %d из %d, заголовков о раундах %d%s"
+              % (len(done), len(done) + len(todo) - min(len(todo), BACKFILL_QUERIES_PER_RUN), added,
+                 (" — " + errs[0]) if errs else ""))
+    return added
+
+
+# ---------------------------------------------------------------------------
+# 🙋 «Боль» -> ниша
+# ---------------------------------------------------------------------------
+def tag_demand_step(conn, now, verbose=True):
+    """Посты «сделайте кто-нибудь…» с откликом — привязать к нишам. Одна пачка за прогон."""
+    import ai
+    _ensure(conn)
+    rows = conn.execute("SELECT ext_id, text FROM demand WHERE niche IS NULL AND likes >= 20 AND ts >= ? "
+                        "ORDER BY likes DESC LIMIT 30", (now - 60 * 86400,)).fetchall()
+    known = known_niches(conn, now, days=HISTORY_WEEKS * 7)
+    if not rows or not known:
+        return 0
+    got, err = ai.tag_demand([{"id": r["ext_id"], "text": (r["text"] or "")[:280]} for r in rows], known)
+    if err and not got:
+        return 0
+    found = dict(got)
+    for r in rows:
+        conn.execute("UPDATE demand SET niche = ? WHERE ext_id = ?", (found.get(r["ext_id"], ""), r["ext_id"]))
+    conn.commit()
+    if verbose and found:
+        print("  «боль» привязана к нишам: %d из %d" % (len(found), len(rows)))
+    return len(found)
+
+
+# ---------------------------------------------------------------------------
+# 🇰🇿 Свободна ли ниша в Казахстане и СНГ
+# ---------------------------------------------------------------------------
+GAP_PER_RUN = 1
+GAP_MAX_AGE = 14 * 86400
+
+
+def gap_step(conn, now, rep, verbose=True):
+    """
+    Проверить на аналоги в Казахстане и СНГ верхние ниши отчёта — по одной
+    за прогон, каждую не чаще раза в две недели. Поиск в сети дорог и
+    медленен, поэтому результат хранится (kv niche_gaps).
+    """
+    import ai
+    gaps = json.loads(db.kv_get(conn, "niche_gaps", "{}") or "{}")
+    cands = [n for n in (rep.get("niches") or []) if n["n"] >= NICHE_MIN][:8]
+    todo = [n for n in cands if now - int((gaps.get(n["niche"]) or {}).get("ts", 0)) > GAP_MAX_AGE]
+    done = 0
+    for n in todo[:GAP_PER_RUN]:
+        examples = ["%s (%s)" % (c["company"], (c.get("what") or {}).get("en", "")) for c in n["companies"]]
+        data, err = ai.gap_check(n["niche"], examples)
+        if err or not isinstance(data, dict):
+            if verbose:
+                print("  аналоги в СНГ: %s — %s" % (n["niche"], err))
+            continue
+        ok = ("free", "partly", "crowded")
+        analogs = [a for a in (data.get("analogs") or []) if isinstance(a, dict) and a.get("name")
+                   and str(a.get("url") or "").startswith("http")][:5]
+        gaps[n["niche"]] = {"kz": data.get("kz") if data.get("kz") in ok else None,
+                            "cis": data.get("cis") if data.get("cis") in ok else None,
+                            "analogs": [{"name": str(a["name"])[:60], "url": str(a["url"])[:300],
+                                         "country": str(a.get("country") or "")[:3]} for a in analogs],
+                            "note": data.get("note") if isinstance(data.get("note"), dict) else {}, "ts": now}
+        done += 1
+        if verbose:
+            print("  аналоги в СНГ: %s — КЗ %s, СНГ %s, найдено %d"
+                  % (n["niche"], gaps[n["niche"]]["kz"], gaps[n["niche"]]["cis"], len(analogs)))
+    if done:
+        db.kv_set(conn, "niche_gaps", json.dumps(gaps, ensure_ascii=False))
+        conn.commit()
+    return done
+
+
+# ---------------------------------------------------------------------------
+# 🔔 Раунды в нишах, за которыми следят
+# ---------------------------------------------------------------------------
+NR = {
+    "ru": "🔔 <b>Новый раунд в нише «%s»</b>",
+    "kk": "🔔 <b>«%s» тауашасында жаңа раунд</b>",
+    "en": "🔔 <b>New round in “%s”</b>",
+}
+
+
+def niche_round_payloads(conn, now):
+    """
+    Свежие разобранные раунды (за 3 суток), о которых ещё не сообщали, — по
+    одному блоку на нишу. Worker шлёт блок только тем, кто следит за нишей.
+    Возвращает (блоки, ключи строк для отметки).
+    """
+    import ai
+    _ensure(conn)
+    sent = set(json.loads(db.kv_get(conn, "niche_round_sent", "[]") or "[]"))
+    first = not sent and db.kv_get(conn, "niche_round_sent") is None
+    by, keys = {}, []
+    names = niche_names(conn)
+    for r in rounds(conn, now - 3 * 86400):
+        k = company_norm(r["company"])
+        if not r["niche"] or not r["ai"] or k in sent:
+            continue
+        by.setdefault(r["niche"], []).append(r)
+        keys.append(k)
+    if first:
+        # Первый запуск только запоминает: иначе ушёл бы залп за трое суток.
+        db.kv_set(conn, "niche_round_sent", json.dumps(keys))
+        conn.commit()
+        return [], []
+    out = []
+    for niche, lst in by.items():
+        texts = {}
+        for lang in ai.LANGS:
+            lines = [NR[lang] % html.escape(niche_label(niche, lang, names))]
+            lines += ["• " + round_line(_round_brief(r), lang) +
+                      ((" · " + ", ".join(html.escape(i) for i in r["investors"][:2])) if r.get("investors") else "")
+                      for r in lst[:4]]
+            texts[lang] = "\n".join(lines)
+        out.append({"kind": "niche", "niche": niche, "sectors": lst[0]["sectors"][:1], "texts": texts,
+                    "text": texts["ru"]})
+    return out, keys
+
+
+def mark_niche_rounds(conn, keys):
+    sent = json.loads(db.kv_get(conn, "niche_round_sent", "[]") or "[]")
+    db.kv_set(conn, "niche_round_sent", json.dumps((sent + keys)[-3000:]))
+    conn.commit()
 
 
 def main():

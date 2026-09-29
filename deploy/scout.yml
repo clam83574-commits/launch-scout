@@ -70,6 +70,9 @@ jobs:
       # следующим. Помогает, только если ключи из разных организаций Groq.
       GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
       GROQ_API_KEY_3: ${{ secrets.GROQ_API_KEY_3 }}
+      # OpenRouter: массовый разбор раундов и история за полгода (дёшево, без
+      # минутного лимита Groq) и проверка аналогов в СНГ с поиском в сети.
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       # SEC EDGAR требует User-Agent с контактом («Имя email@домен»). Без
       # секрета — ссылка на репозиторий; если SEC ответит 403, завести его.
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}

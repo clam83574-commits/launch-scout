@@ -619,11 +619,49 @@ For every input item return:
 - niche: the specific market niche a founder could enter — WHO the customer is plus WHAT job is done, without geography: "en" in 2-5 lowercase English words (good: "identity for ai agents", "warehouse picking robots", "ai agents for hotels", "sme lending", "insurance claims automation"; bad, too broad: "ai agent platform", "digital health platform", "consumer app", "fintech", "saas") and "ru" — the same in Russian. Never use the words platform, app, solution or tech as the core of the niche. If one of the KNOWN NICHES given in the input means the same thing, reuse its English name exactly; do not force an item into a known niche that is only loosely related.
 - what: what the company does, max 12 words, plain, in Russian (ru) and English (en).
 - country: ISO 3166 two-letter code of the company's home country, or "".
-Reply with JSON only: {"items": [{"id": ..., "is_round": ..., "company": "...", "usd": ..., "stage": "...", "sector": "...", "niche": {"en": "...", "ru": "..."}, "what": {"ru": "...", "en": "..."}, "country": "..."}]}. For is_round=false items you may leave the other fields empty."""
+- investors: up to 3 investors named in the text as leading or joining the round (firm names as written, e.g. "a16z", "Sequoia", "Y Combinator"); [] if none are named.
+Reply with JSON only: {"items": [{"id": ..., "is_round": ..., "company": "...", "usd": ..., "stage": "...", "sector": "...", "niche": {"en": "...", "ru": "..."}, "what": {"ru": "...", "en": "..."}, "country": "...", "investors": ["..."]}]}. For is_round=false items you may leave the other fields empty."""
 
 DEAL_BATCH = 20
 DEAL_BATCHES_PER_RUN = 2
 DEFAULT_DEAL_MODELS = "openai/gpt-oss-120b,openai/gpt-oss-20b"
+# С ключом OpenRouter массовый разбор идёт через дешёвую модель без минутного
+# лимита Groq — так за день разбирается и история за полгода (~8 тыс.
+# заголовков, около $1,5 на gemini-3.1-flash-lite по ценам 2026-09-29).
+OR_BULK_MODEL = "google/gemini-3.1-flash-lite"
+OR_BATCHES_PER_RUN = 10
+OR_API = "https://openrouter.ai/api/v1/chat/completions"
+
+
+def openrouter_key():
+    return (os.environ.get("OPENROUTER_API_KEY") or "").strip()
+
+
+def _chat_or(model, system, user, max_tokens=4000, timeout=90):
+    """Запрос к OpenRouter в режиме JSON. (словарь, ошибка)."""
+    try:
+        r = requests.post(OR_API, timeout=timeout, json={
+            "model": model, "max_tokens": max_tokens, "temperature": 0.2,
+            "response_format": {"type": "json_object"},
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+            headers={"Authorization": "Bearer " + openrouter_key(), "Content-Type": "application/json",
+                     "HTTP-Referer": "https://github.com/clam83574-commits/launch-scout", "X-Title": "launch-scout"})
+    except requests.RequestException as e:
+        return None, "сеть: %s" % str(e)[:120]
+    if r.status_code != 200:
+        return None, "OpenRouter %d: %s" % (r.status_code, r.text[:160])
+    try:
+        payload = r.json()
+        content = payload["choices"][0]["message"]["content"] or ""
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None, "непонятный ответ OpenRouter"
+    used = (payload.get("usage") or {}).get("total_tokens") or 0
+    USAGE[model] = USAGE.get(model, 0) + int(used)
+    content = re.sub(r"^```(?:json)?|```$", "", content.strip()).strip()
+    try:
+        return json.loads(content[content.find("{"):content.rfind("}") + 1]), None
+    except ValueError:
+        return None, "ответ не JSON"
 
 
 def extract_deals(conn, now, items, sectors, known_niches):
@@ -639,14 +677,27 @@ def extract_deals(conn, now, items, sectors, known_niches):
     предел. Больше DEAL_BATCHES_PER_RUN пачек за прогон не берём — прогон
     раз в 10 минут, очередь разбирается постепенно, квота не выгорает залпом.
     """
+    system = DEAL_SYSTEM % ", ".join('"%s" (%s)' % s for s in sectors)
+    out, answered, last_err, spent = [], set(), None, set()
+    if openrouter_key():
+        model = os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL
+        for i in range(0, min(len(items), DEAL_BATCH * OR_BATCHES_PER_RUN), DEAL_BATCH):
+            chunk = items[i:i + DEAL_BATCH]
+            data, err = _chat_or(model, system, json.dumps({"known_niches": known_niches[:60], "items": chunk},
+                                                           ensure_ascii=False), max_tokens=6000)
+            if err:
+                last_err = err
+                break
+            if isinstance(data, dict) and isinstance(data.get("items"), list):
+                out += [e for e in data["items"] if isinstance(e, dict)]
+                answered |= {c["id"] for c in chunk}
+        return out, answered, last_err
     ok, why = available()
     if not ok:
         return [], set(), why
     models = [m.strip() for m in (os.environ.get("LS_DEAL_MODELS") or DEFAULT_DEAL_MODELS).split(",")
               if m.strip()]
     cap = _cap()
-    system = DEAL_SYSTEM % ", ".join('"%s" (%s)' % s for s in sectors)
-    out, answered, last_err, spent = [], set(), None, set()
     for i in range(0, min(len(items), DEAL_BATCH * DEAL_BATCHES_PER_RUN), DEAL_BATCH):
         chunk = items[i:i + DEAL_BATCH]
         user = json.dumps({"known_niches": known_niches[:60], "items": chunk}, ensure_ascii=False)
@@ -673,6 +724,79 @@ def extract_deals(conn, now, items, sectors, known_niches):
         if len(spent) >= len(models):
             break
     return out, answered, last_err
+
+
+# --- 🇰🇿 Свободна ли ниша в Казахстане и СНГ ---------------------------------
+
+GAP_SYSTEM = """You check whether a startup niche that is attracting venture rounds abroad is already served in Kazakhstan and in Russia/CIS (Uzbekistan, Kyrgyzstan, Belarus, Armenia, Georgia, Azerbaijan).
+Search the web in Russian and Kazakh as well as English (e.g. local product names, "<niche in Russian> сервис", "<niche> Казахстан").
+Count only real products or companies that serve this niche IN those markets (local companies, or global ones localized with local language, payments or presence). Ignore global products merely available everywhere.
+Reply with JSON only:
+{"kz": "free|partly|crowded", "cis": "free|partly|crowded", "analogs": [{"name": "...", "url": "https://...", "country": "KZ|RU|UZ|KG|BY|AM|GE|AZ"}], "note": {"ru": "...", "kk": "...", "en": "..."}}
+free = nothing found; partly = 1-2 small or partial players; crowded = several established players. analogs: at most 5, only ones you actually found with a real URL. note: one short sentence per language on what is missing locally or what a newcomer should do differently. Never invent companies."""
+
+
+def gap_check(niche, examples):
+    """
+    Проверка ниши на аналоги в Казахстане и СНГ с поиском в сети. (словарь, ошибка).
+    OpenRouter (:online — поиск в сети) при ключе, иначе Groq gpt-oss-120b
+    со встроенным browser_search. Дорого по сравнению с разметкой, поэтому
+    вызывается для нескольких ниш в неделю, результат хранится.
+    """
+    user = "Niche: %s\nFunded companies abroad in this niche: %s" % (niche, "; ".join(examples[:5]))
+    if openrouter_key():
+        model = (os.environ.get("LS_SMART_MODEL") or "google/gemini-3.8-flash") + ":online"
+        return _chat_or(model, GAP_SYSTEM, user, max_tokens=2500, timeout=120)
+    ok, why = available()
+    if not ok:
+        return None, why
+    body = {"model": DEFAULT_MODEL, "temperature": 0.2, "max_completion_tokens": 3000, "reasoning_effort": "low",
+            "tools": [{"type": "browser_search"}], "tool_choice": "auto",
+            "messages": [{"role": "system", "content": GAP_SYSTEM}, {"role": "user", "content": user}]}
+    for key in _keys():
+        try:
+            r = requests.post(API, json=body, timeout=120,
+                              headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
+        except requests.RequestException as e:
+            return None, "сеть: %s" % str(e)[:120]
+        if r.status_code == 429:
+            continue
+        if r.status_code != 200:
+            return None, "Groq %d: %s" % (r.status_code, r.text[:160])
+        try:
+            content = r.json()["choices"][0]["message"]["content"] or ""
+            return json.loads(content[content.find("{"):content.rfind("}") + 1]), None
+        except (ValueError, KeyError, IndexError):
+            return None, "ответ не JSON"
+    return None, "429 от Groq"
+
+
+# --- 🙋 «Боль» из X -> ниша ---------------------------------------------------
+
+DEMAND_SYSTEM = """You match posts where people ask for a product ("someone should build...", "I'd pay for...") to startup niches.
+For each post pick the ONE niche from KNOWN NICHES whose products would solve the request, or "" if none fits closely. Reply JSON only: {"items": [{"id": "...", "niche": "..."}]}."""
+
+
+def tag_demand(posts, niches):
+    """[(id, ниша)] для постов спроса. Дёшево: одна пачка до 30 постов."""
+    if not posts or not niches:
+        return [], None
+    user = json.dumps({"known_niches": niches[:60], "items": posts[:30]}, ensure_ascii=False)
+    if openrouter_key():
+        data, err = _chat_or(os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL, DEMAND_SYSTEM, user, max_tokens=2000)
+    else:
+        ok, why = available()
+        if not ok:
+            return [], why
+        try:
+            data, err = _chat("openai/gpt-oss-20b", DEMAND_SYSTEM, user, max_tokens=2000)
+        except RateLimited as e:
+            return [], "429 (%s)" % e
+    if err or not isinstance(data, dict):
+        return [], err or "не JSON"
+    allowed = set(niches)
+    return [(str(e.get("id")), e.get("niche")) for e in (data.get("items") or [])
+            if isinstance(e, dict) and e.get("niche") in allowed], None
 
 
 def write_market_story(stats_text, lang="ru"):

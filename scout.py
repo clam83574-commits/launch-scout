@@ -760,13 +760,30 @@ def market_step(conn, now, dry=False):
         fd = market.process_formd(conn, now)
     except Exception as e:              # SEC — надстройка: его сбой не роняет рынок
         print("  SEC Form D: ошибка %s" % e)
+    # История за полгода — понемногу каждый прогон, пока не наберётся.
+    try:
+        market.backfill_deals(conn, now)
+    except Exception as e:
+        print("  история: ошибка %s" % e)
     # Очередь разбора раундов — каждый прогон понемногу: ниши и стадии
     # появляются по мере разбора, и отчёт пересчитывается без сети.
-    if market.enrich_deals(conn, now) or fd:
+    enriched = market.enrich_deals(conn, now)
+    try:
+        market.tag_demand_step(conn, now)
+    except Exception as e:
+        print("  «боль»: ошибка %s" % e)
+    if enriched or fd:
         rep = market.update_report(conn, now)
     rep = rep or market.last_report(conn)
     if rep:
+        try:
+            if market.gap_step(conn, now, rep):
+                rep = market.update_report(conn, now)
+        except Exception as e:
+            print("  аналоги в СНГ: ошибка %s" % e)
         broadcast += market.niche_alerts(conn, rep, now)
+    niche_items, niche_keys = market.niche_round_payloads(conn, now)
+    broadcast += niche_items
         # Вывод модели — не чаще раза в 12 часов на язык (кэш в story).
         market.render_all(conn, rep, now)
     fund_keys = []
@@ -784,6 +801,8 @@ def market_step(conn, now, dry=False):
         return
     ok, err = notify.deliver(broadcast=broadcast)
     if ok or not err:
+        if niche_keys:
+            market.mark_niche_rounds(conn, niche_keys)
         if fund_keys:
             market.mark_deals_sent(conn, fund_keys)
             db.kv_set(conn, "last_funding", now)

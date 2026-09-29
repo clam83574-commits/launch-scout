@@ -314,6 +314,9 @@ const EXTRA = {
     niches_title: "💡 <b>Ниши, куда пошли деньги</b> — %d дн.\nНиша — где несколько компаний подняли раунды. Ранние раунды (pre-seed, seed, A) значат, что ниша только открывается.",
     niches_empty: "Ниш пока нет: раунды разбираются ИИ по мере сбора, первые появятся в течение суток.",
     niche_line: "раундов: %d, ранних %d, %s", sec_niches: "💡 <b>Ниши сектора</b>",
+    mega: "+ мегараунд: %s", investors: "💼 Инвесторы:", pain: "🙋 Просят:", gap_kz: "Казахстан", gap_cis: "СНГ",
+    gap_free: "свободно", gap_partly: "частично", gap_crowded: "занято",
+    follow_on: "🔔 Слежу: новые раунды в нише придут сообщением", follow_off: "Больше не слежу за нишей",
     voice_fail: "Не получилось распознать голосовое (до 3 минут). Попробуйте ещё раз или напишите текстом.",
     chat_limit: "Сегодня уже %d вопросов — это предел, завтра снова можно.", chat_reset: "Разговор и профиль очищены — начнём заново.",
     set_title: "⚙️ <b>Настройки</b>\nНажмите, чтобы включить или выключить.",
@@ -343,6 +346,9 @@ const EXTRA = {
     niches_title: "💡 <b>Ақша келген тауашалар</b> — %d күн\nТауаша — бірнеше компания раунд тартқан жер. Ерте раундтар (pre-seed, seed, A) тауашаның енді ашылып жатқанын білдіреді.",
     niches_empty: "Тауашалар әзірге жоқ: раундтарды ЖИ жинау барысында талдайды, алғашқылары бір тәулік ішінде шығады.",
     niche_line: "раунд: %d, ерте %d, %s", sec_niches: "💡 <b>Сала тауашалары</b>",
+    mega: "+ мега-раунд: %s", investors: "💼 Инвесторлар:", pain: "🙋 Сұрайды:", gap_kz: "Қазақстан", gap_cis: "ТМД",
+    gap_free: "бос", gap_partly: "ішінара", gap_crowded: "бос емес",
+    follow_on: "🔔 Бақылаймын: тауашадағы жаңа раундтар хабарламамен келеді", follow_off: "Тауашаны бақылау тоқтатылды",
     voice_fail: "Дауыстық хабарламаны тану мүмкін болмады (3 минутқа дейін). Қайталаңыз немесе мәтінмен жазыңыз.",
     chat_limit: "Бүгін %d сұрақ қойылды — бұл шек, ертең қайта болады.", chat_reset: "Әңгіме мен профиль тазартылды — қайта бастаймыз.",
     set_title: "⚙️ <b>Баптаулар</b>\nҚосу немесе өшіру үшін басыңыз.",
@@ -372,6 +378,9 @@ const EXTRA = {
     niches_title: "💡 <b>Niches the money went into</b> — %d days\nA niche is where several companies raised rounds. Early rounds (pre-seed, seed, A) mean the niche is only opening up.",
     niches_empty: "No niches yet: rounds are parsed by AI as they come in, the first ones appear within a day.",
     niche_line: "%d rounds, %d early, %s", sec_niches: "💡 <b>Sector niches</b>",
+    mega: "+ mega-round: %s", investors: "💼 Investors:", pain: "🙋 People ask:", gap_kz: "Kazakhstan", gap_cis: "CIS",
+    gap_free: "free", gap_partly: "partly taken", gap_crowded: "crowded",
+    follow_on: "🔔 Following: new rounds in this niche will arrive as a message", follow_off: "No longer following this niche",
     voice_fail: "Could not transcribe the voice message (up to 3 minutes). Try again or type it.",
     chat_limit: "You have asked %d questions today — that is the limit, try again tomorrow.", chat_reset: "Conversation and profile cleared — let's start over.",
     set_title: "⚙️ <b>Settings</b>\nTap to switch on or off.",
@@ -656,26 +665,54 @@ function nicheName(rep, n, lang) {
 }
 
 /** Ниши, куда за окно пришло несколько раундов, — главный ответ «что залетает». */
-async function nichesMsg(env, chatId, lang, sid = null) {
+const GAP_ICON = { free: "🟢", partly: "🟡", crowded: "🔴" };
+
+/** Строки ниши: цифры, мегараунд, инвесторы, «боль», свобода в КЗ/СНГ. */
+function nicheLines(rep, n, lang, s, snap) {
+  const emo = sectorMeta(snap, n.sector);
+  const out = [`${emo ? emo.emoji + " " : ""}<b>${esc(nicheName(rep, n, lang))}</b> — ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}`];
+  for (const r of (n.companies || []).filter((r) => !(r.usd >= 1e9)).slice(0, 3)) out.push("   • " + roundLine(r, lang, s));
+  for (const r of (n.mega || []).slice(0, 1)) out.push("   " + fmt(s.mega, roundLine(r, lang, s)));
+  if ((n.investors || []).length) out.push("   " + s.investors + " " + esc(n.investors.join(", ")));
+  const p = (n.pain || [])[0];
+  if (p) out.push(`   ${s.pain} <a href="${esc(p.url || "")}">«${esc(String(p.text || "").slice(0, 120))}»</a>${p.likes ? " · ♥ " + p.likes : ""}`);
+  const g = n.gap;
+  if (g && (g.kz || g.cis)) {
+    const note = (g.note || {})[lang] || (g.note || {}).ru || "";
+    out.push(`   ${GAP_ICON[g.kz] || "⚪"} ${s.gap_kz} ${s["gap_" + g.kz] || "?"} · ${GAP_ICON[g.cis] || "⚪"} ${s.gap_cis} ${s["gap_" + g.cis] || "?"}` +
+      ((g.analogs || []).length ? " — " + g.analogs.slice(0, 3).map((a) => `<a href="${esc(a.url)}">${esc(a.name)}</a>`).join(", ") : "") +
+      (note ? `\n   <i>${esc(note)}</i>` : ""));
+  }
+  return out;
+}
+
+/** Ниши, куда за окно пришло несколько раундов, — главный ответ «что залетает». */
+async function nichesMsg(env, chatId, lang, sid = null, prefs = null, editMsg = null) {
   const s = L(lang);
   const snap = await loadSnapshot(env);
   const m = marketOf(snap);
   const rep = m && m.report;
-  const list = ((rep && rep.niches) || []).filter((n) => n.n >= 3 && (!sid || n.sector === sid));
+  const list = ((rep && rep.niches) || []).filter((n) => n.n >= 3 && (!sid || n.sector === sid)).slice(0, 6);
   if (!list.length) {
     await tg(env, "sendMessage", { chat_id: chatId, text: s.niches_empty, reply_markup: keyboardFor(lang) });
     return;
   }
   const lines = [fmt(s.niches_title, rep.niche_days || 28)];
-  for (const n of list.slice(0, 8)) {
-    const emo = sectorMeta(snap, n.sector);
-    lines.push("", `${emo ? emo.emoji + " " : ""}<b>${esc(nicheName(rep, n, lang))}</b> — ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}`);
-    for (const r of (n.companies || []).slice(0, 3)) lines.push("   • " + roundLine(r, lang, s));
-  }
+  for (const n of list) lines.push("", ...nicheLines(rep, n, lang, s, snap));
   let text = lines.join("\n");
   while (text.length > 3900 && lines.length > 3) { lines.pop(); text = lines.join("\n"); }
-  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true,
-    reply_markup: { inline_keyboard: [[{ text: s.kb_market, callback_data: "market" }, { text: s.kb_sectors, callback_data: "sectors" }]] } });
+  // Кнопка «Следить» на каждую нишу: номер в списке отчёта, а не имя —
+  // callback_data у Telegram не длиннее 64 байт.
+  const mine = new Set((prefs && prefs.niches) || []);
+  const all = (rep.niches || []);
+  const kb = list.map((n) => [{ text: `${mine.has(n.niche) ? "✅" : "🔔"} ${nicheName(rep, n, lang)}`.slice(0, 60), callback_data: `nf:${all.indexOf(n)}` }]);
+  kb.push([{ text: s.kb_market, callback_data: "market" }, { text: s.kb_sectors, callback_data: "sectors" }]);
+  const payload = { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: { inline_keyboard: kb } };
+  if (editMsg) {
+    const r = await tg(env, "editMessageReplyMarkup", { chat_id: chatId, message_id: editMsg, reply_markup: payload.reply_markup });
+    if (r && r.ok) return;
+  }
+  await tg(env, "sendMessage", payload);
 }
 
 /** Кнопки секторов: по две в ряд, самые растущие первыми. */
@@ -1137,7 +1174,19 @@ async function handleUpdate(env, update) {
     return;
   }
   if (data === "niches" || text.startsWith("/niches")) {
-    await nichesMsg(env, chatId, lang);
+    await nichesMsg(env, chatId, lang, null, prefs);
+    return;
+  }
+  if (data.startsWith("nf:")) {
+    // Следить / не следить за нишей: раунды в ней придут отдельным сообщением.
+    const rep = (marketOf(await loadSnapshot(env)) || {}).report || {};
+    const n = (rep.niches || [])[Number(data.slice(3))];
+    if (n) {
+      const p = await setPrefs(env, chatId, { niches: toggle(prefs.niches, n.niche) });
+      const on = (p.niches || []).includes(n.niche);
+      await tg(env, "answerCallbackQuery", { callback_query_id: cb.id, text: on ? s.follow_on : s.follow_off });
+      await nichesMsg(env, chatId, lang, null, p, msgId);
+    }
     return;
   }
   if (data === "sectors" || text.startsWith("/sectors")) {
@@ -1378,12 +1427,37 @@ async function smartFetch(env, body, groqModels, { web = false, timeoutMs = 2700
 const VOICE_MAX_SECONDS = 180;
 
 async function transcribe(env, voice, lang) {
-  if (!voice || !groqKeys(env).length || (voice.duration || 0) > VOICE_MAX_SECONDS) return null;
+  if (!voice || (!groqKeys(env).length && !env.LS_OPENROUTER_KEY) || (voice.duration || 0) > VOICE_MAX_SECONDS) return null;
   const f = await tg(env, "getFile", { file_id: voice.file_id });
   if (!f || !f.ok || !f.result.file_path) return null;
   const audio = await fetch(`https://api.telegram.org/file/bot${env.LS_BOT_TOKEN}/${f.result.file_path}`);
   if (!audio.ok) return null;
   const blob = await audio.blob();
+  // OpenRouter первым, если есть ключ (решение владельца 2026-09-29): Gemini
+  // слушает ogg из Telegram напрямую, около $0,001 за минуту. Groq Whisper —
+  // запасной и бесплатный.
+  if (env.LS_OPENROUTER_KEY) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
+        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+      body: JSON.stringify({
+        model: env.LS_VOICE_MODEL || "google/gemini-3.1-flash-lite", temperature: 0,
+        messages: [{ role: "user", content: [
+          { type: "text", text: "Transcribe this voice message verbatim in its original language (Russian, Kazakh or English). Output only the transcript." },
+          { type: "input_audio", input_audio: { data: btoa(bin), format: "ogg" } },
+        ] }],
+      }),
+    }).catch(() => null);
+    if (r && r.ok) {
+      const j = await r.json().catch(() => null);
+      const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      if (t && String(t).trim()) return String(t).trim();
+    }
+  }
   for (const key of groqKeys(env)) {
     const form = new FormData();
     form.append("file", blob, "voice.ogg");
@@ -1563,7 +1637,11 @@ function chatData(snap, question, profile) {
   const rev = (c.revenue || []).slice(0, 20).map((r) => `- ${day(r.ts)} (${ago(r.ts)}) | ${r.kind.toUpperCase()} ${r.usd ? "$" + Math.round(r.usd).toLocaleString("en-US") : ""} | ${r.who || ""} | ${String(r.text || "").slice(0, 220)} | ${r.source || ""} ${r.url || ""}`);
   if (rev.length) out.push("", "REVENUE FACTS (last 7 days):", ...rev);
   const niches = (rep.niches || []).filter((n) => n.n >= 2).slice(0, 10).map((n) => `- ${n.niche} (${n.sector}): ${n.n} rounds in ${rep.niche_days || 28}d, ${n.early} early, $${Math.round(n.usd / 1e6)}M — ` +
-    (n.companies || []).slice(0, 3).map((r) => `${r.company} ${day(r.ts)}${r.usd ? " $" + (r.usd / 1e6).toFixed(1) + "M" : ""}`).join(", "));
+    (n.companies || []).slice(0, 4).map((r) => `${r.company} ${day(r.ts)}${r.usd ? " $" + (r.usd / 1e6).toFixed(1) + "M" : ""}${r.stage ? " " + r.stage : ""}${(r.what || {}).en ? " (" + r.what.en + ")" : ""}`).join(", ") +
+    ((n.investors || []).length ? ` | investors: ${n.investors.join(", ")}` : "") +
+    (n.gap ? ` | Kazakhstan: ${n.gap.kz || "?"}, CIS: ${n.gap.cis || "?"}${(n.gap.analogs || []).length ? " (local analogs: " + n.gap.analogs.map((a) => a.name + " " + a.country).join(", ") + ")" : ""}` : "") +
+    ((n.pain || []).length ? ` | people ask: "${String(n.pain[0].text).slice(0, 140)}" ${n.pain[0].url}` : "") +
+    ` | weekly rounds over 26 weeks: ${(n.weekly || []).join(",")}`);
   if (niches.length) out.push("", "NICHES WITH SEVERAL ROUNDS:", ...niches);
   const secs = (rep.sectors || []).filter((s) => s.signals).slice(0, 16).map((s) => `${s.id} ${s.trend} (${(s.money || {}).cur_n || 0} rounds/${rep.window_days || 14}d, ${(s.money || {}).cur_early || 0} early)`);
   if (secs.length) out.push("", "SECTOR TRENDS: " + secs.join("; "));
@@ -1654,7 +1732,7 @@ async function ensureTables(env) {
   ]);
   // Таблица prefs создавалась раньше без языка и фильтров — дополняем на
   // месте. Повторное добавление колонки D1 отклоняет, это ожидаемо.
-  for (const col of ["lang", "audience", "notify", "sectors", "sources", "sens"]) {
+  for (const col of ["lang", "audience", "notify", "sectors", "sources", "sens", "niches"]) {
     await env.DB.prepare(`ALTER TABLE prefs ADD COLUMN ${col} TEXT`).run().catch(() => null);
   }
   tablesReady = true;
@@ -1725,6 +1803,7 @@ async function getPrefs(env, uid) {
     topics: arr(j(row && row.topics, null)),
     audience: arr(j(row && row.audience, null)),
     sectors: arr(j(row && row.sectors, null)),
+    niches: arr(j(row && row.niches, null)),
     sources: arr(j(row && row.sources, null)),
     sens: row && SENS[row.sens] ? row.sens : "normal",
     notify: { ...NOTIFY_DEFAULT, ...n },
@@ -1736,11 +1815,12 @@ async function setPrefs(env, uid, patch) {
   const cur = await getPrefs(env, uid);
   const next = { ...cur, ...patch };
   await env.DB.prepare(
-    "INSERT OR REPLACE INTO prefs (user_id, topics, ts, lang, audience, notify, sectors, sources, sens) " +
-      "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)"
+    "INSERT OR REPLACE INTO prefs (user_id, topics, ts, lang, audience, notify, sectors, sources, sens, niches) " +
+      "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)"
   ).bind(String(uid), JSON.stringify(next.topics || []), Math.floor(Date.now() / 1000), next.lang || null,
     JSON.stringify(next.audience || []), JSON.stringify(next.notify || NOTIFY_DEFAULT),
-    JSON.stringify(next.sectors || []), JSON.stringify(next.sources || []), next.sens || "normal").run();
+    JSON.stringify(next.sectors || []), JSON.stringify(next.sources || []), next.sens || "normal",
+    JSON.stringify(next.niches || [])).run();
   return next;
 }
 
@@ -1821,6 +1901,13 @@ async function notifyAll(env, body) {
     // человека: первая рассылка 2026-09-29 прислала по сообщению на сектор.
     const funding = [];
     for (const b of body.broadcast || []) {
+      // Раунд в нише — только тем, кто сам нажал «Следить» на этой нише.
+      if (typeof b !== "string" && b.kind === "niche") {
+        if (!(p.niches || []).includes(b.niche)) continue;
+        const r = await tg(env, "sendMessage", { chat_id: uid, text: (b.texts && b.texts[lang]) || b.text, parse_mode: "HTML", disable_web_page_preview: true });
+        if (r && r.ok) sent++;
+        continue;
+      }
       if (typeof b !== "string") {
         const kind = b.kind === "trends" ? "market" : b.kind;
         if (NOTIFY_KEYS.includes(kind) && p.notify[kind] === false) continue;
@@ -1978,8 +2065,9 @@ export default {
           const known = (list, ok) => (Array.isArray(list) ? list.map(String).filter(ok).slice(0, 30) : undefined);
           if (Array.isArray(body.sectors)) patch.sectors = known(body.sectors, (x) => /^[a-z_]{2,20}$/.test(x));
           if (Array.isArray(body.sources)) patch.sources = known(body.sources, (x) => SOURCES.includes(x));
+          if (Array.isArray(body.niches)) patch.niches = body.niches.map((x) => String(x).slice(0, 60)).slice(0, 30);
           if (SENS[body.sens]) patch.sens = body.sens;
-          for (const k of ["sectors", "sources"]) if (patch[k] && !patch[k].length) patch[k] = null;
+          for (const k of ["sectors", "sources", "niches"]) if (patch[k] && !patch[k].length) patch[k] = null;
           const next = await setPrefs(env, user.id, patch);
           return json({ ok: true, prefs: next });
         }
