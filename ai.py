@@ -637,13 +637,37 @@ def openrouter_key():
     return (os.environ.get("OPENROUTER_API_KEY") or "").strip()
 
 
+def _loose_json(text):
+    """
+    JSON из ответа модели, даже если вокруг него текст, ```-обёртка, ссылки
+    веб-поиска или висячие запятые. None, если достать не удалось.
+    """
+    t = re.sub(r"```(?:json)?", "", text or "").strip()
+    for cand in (t, t[t.find("{"):t.rfind("}") + 1]):
+        if not cand:
+            continue
+        for fix in (cand, re.sub(r",\s*([}\]])", r"\1", cand)):
+            try:
+                return json.loads(fix)
+            except ValueError:
+                continue
+    return None
+
+
 def _chat_or(model, system, user, max_tokens=4000, timeout=90):
-    """Запрос к OpenRouter в режиме JSON. (словарь, ошибка)."""
+    """
+    Запрос к OpenRouter, ответ — JSON. (словарь, ошибка).
+
+    Режим json_object — только без веб-поиска: с плагином :online модель
+    отвечает текстом со ссылками, и строгий режим на проде (2026-09-29)
+    возвращал «не JSON». Там JSON просим словами и достаём из текста.
+    """
+    body = {"model": model, "max_tokens": max_tokens, "temperature": 0.2,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+    if not model.endswith(":online"):
+        body["response_format"] = {"type": "json_object"}
     try:
-        r = requests.post(OR_API, timeout=timeout, json={
-            "model": model, "max_tokens": max_tokens, "temperature": 0.2,
-            "response_format": {"type": "json_object"},
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+        r = requests.post(OR_API, timeout=timeout, json=body,
             headers={"Authorization": "Bearer " + openrouter_key(), "Content-Type": "application/json",
                      "HTTP-Referer": "https://github.com/clam83574-commits/launch-scout", "X-Title": "launch-scout"})
     except requests.RequestException as e:
@@ -657,11 +681,11 @@ def _chat_or(model, system, user, max_tokens=4000, timeout=90):
         return None, "непонятный ответ OpenRouter"
     used = (payload.get("usage") or {}).get("total_tokens") or 0
     USAGE[model] = USAGE.get(model, 0) + int(used)
-    content = re.sub(r"^```(?:json)?|```$", "", content.strip()).strip()
-    try:
-        return json.loads(content[content.find("{"):content.rfind("}") + 1]), None
-    except ValueError:
-        return None, "ответ не JSON"
+    data = _loose_json(content)
+    if data is None:
+        finish = ((payload.get("choices") or [{}])[0] or {}).get("finish_reason")
+        return None, "ответ не JSON (%s, %d симв.): %s" % (finish, len(content), content[:120].replace("\n", " "))
+    return data, None
 
 
 def extract_deals(conn, now, items, sectors, known_niches):
