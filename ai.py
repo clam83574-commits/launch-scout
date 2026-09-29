@@ -707,11 +707,19 @@ def extract_deals(conn, now, items, sectors, known_niches):
         model = os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL
         for i in range(0, min(len(items), DEAL_BATCH * OR_BATCHES_PER_RUN), DEAL_BATCH):
             chunk = items[i:i + DEAL_BATCH]
-            data, err = _chat_or(model, system, json.dumps({"known_niches": known_niches[:60], "items": chunk},
-                                                           ensure_ascii=False), max_tokens=6000)
+            payload = json.dumps({"known_niches": known_niches[:60], "items": chunk}, ensure_ascii=False)
+            # Провайдер иногда обрывает ответ посреди JSON (finish_reason
+            # «error», 2026-09-29) — пачку повторяем один раз, а сбой одной
+            # пачки не останавливает остальные. Стоп — только ключ и оплата.
+            for _attempt in range(2):
+                data, err = _chat_or(model, system, payload, max_tokens=6000)
+                if not err:
+                    break
             if err:
                 last_err = err
-                break
+                if re.match(r"OpenRouter (401|402|403)", err):
+                    break
+                continue
             if isinstance(data, dict) and isinstance(data.get("items"), list):
                 out += [e for e in data["items"] if isinstance(e, dict)]
                 answered |= {c["id"] for c in chunk}
