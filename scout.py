@@ -782,10 +782,10 @@ def market_step(conn, now, dry=False):
         except Exception as e:
             print("  аналоги в СНГ: ошибка %s" % e)
         broadcast += market.niche_alerts(conn, rep, now)
-    niche_items, niche_keys = market.niche_round_payloads(conn, now)
-    broadcast += niche_items
         # Вывод модели — не чаще раза в 12 часов на язык (кэш в story).
         market.render_all(conn, rep, now)
+    niche_items, niche_keys = market.niche_round_payloads(conn, now)
+    broadcast += niche_items
     fund_keys = []
     if _due(conn, "last_funding", now, 20):
         items, fund_keys = market.funding_digest(conn, now)

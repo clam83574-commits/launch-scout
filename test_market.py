@@ -167,7 +167,21 @@ def niche_extras():
     check("раунд 60 дней назад — в кривой, но не в окне", n["n"] == 3 and sum(n["weekly"]) == 4, str(n["weekly"]))
 
 
+def imports():
+    """Модули прогона импортируются: 2026-09-29 сломанный отступ в scout.py
+    прошёл мимо тестов (они его не импортировали) и уронил прогон в Actions."""
+    print("\n--- модули прогона ---")
+    import importlib
+    for name in ("scout", "brief", "export_d1", "trends"):
+        try:
+            importlib.import_module(name)
+            check("импортируется " + name, True, "")
+        except Exception as e:           # noqa: BLE001
+            check("импортируется " + name, False, str(e)[:80])
+
+
 def main():
+    imports()
     deals()
     classify()
     momentum()
