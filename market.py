@@ -1630,7 +1630,7 @@ def refresh_formd(conn, now, days=5, verbose=True):
     conn.commit()
     if verbose and (added or errs):
         print("  SEC Form D: в очередь +%d%s" % (added, (" — " + "; ".join(errs[:2])) if errs else ""))
-    return added
+    return added, errs
 
 
 def process_formd(conn, now, verbose=True):

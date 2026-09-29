@@ -747,9 +747,16 @@ def market_step(conn, now, dry=False):
     # прогон (их сотни в день, SEC пускает не больше 10 запросов в секунду).
     fd = 0
     try:
-        if now - int(db.kv_get(conn, "formd_ts", 0) or 0) >= 86400:
-            market.refresh_formd(conn, now)
-            db.kv_set(conn, "formd_ts", now)
+        # Отметка — только при успехе: после 403 от SEC (2026-09-29) она
+        # стояла на сутки, и исправленный контакт не проверялся до завтра.
+        # Неудача — повтор не чаще раза в час.
+        key = "formd_ok_ts"
+        last_try = int(db.kv_get(conn, "formd_try_ts", 0) or 0)
+        if now - int(db.kv_get(conn, key, 0) or 0) >= 86400 and now - last_try >= 3600:
+            db.kv_set(conn, "formd_try_ts", now)
+            _added, errs = market.refresh_formd(conn, now)
+            if not errs:
+                db.kv_set(conn, key, now)
         fd = market.process_formd(conn, now)
     except Exception as e:              # SEC — надстройка: его сбой не роняет рынок
         print("  SEC Form D: ошибка %s" % e)

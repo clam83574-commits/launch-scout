@@ -121,7 +121,7 @@ Rules:
   - summary: 2-3 plain sentences: what the product does and who it is for. No hype, no marketing tone. If the post is too vague to tell, say so.
   - monetization: how it makes money if visible; otherwise exactly "не видно" (ru), "көрінбейді" (kk), "not visible" (en).
   - clone_note: one line naming the hardest part to replicate.
-- is_product_launch: true only if a product, company or tool is being launched or shipped. Opinions, news reports, fundraising announcements without a product, memes, art commissions, game content updates and personal milestones are false.
+- is_product_launch: true only if a startup product, company or software/hardware tool is being launched or shipped. False for: opinions, news reports, fundraising announcements without a product, memes, art commissions, game patches and content updates, music/album/vinyl/merch releases, concerts and tickets, celebrity or fan content, courses and ebooks by influencers, people joining a company, personal milestones.
 - clone_effort: rough time for a small team to build a comparable first version: days, weeks, months, or unclear.
 - business_potential: could this become a business someone pays for? "none" for jokes, art, fan projects and pure entertainment; "low" for hobby tools and demos with no clear buyer; "medium" when a clear user group would plausibly pay; "high" when it solves a costly problem for businesses or has visible traction or revenue.
 - audience: who pays: businesses (b2b), consumers (b2c), government (b2g); one or two values.
