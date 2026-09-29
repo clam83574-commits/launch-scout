@@ -112,10 +112,32 @@ def fetch_feed(now, window_hours=48):
     return out, None
 
 
+def client_token():
+    """
+    Токен по паре API Key + API Secret (grant_type=client_credentials): так
+    Product Hunt выдаёт доступ к публичным данным без входа пользователя.
+    Нужен, когда вместо Developer Token есть только пара ключей приложения.
+    """
+    cid = (os.environ.get("PH_CLIENT_ID") or "").strip()
+    secret = (os.environ.get("PH_CLIENT_SECRET") or "").strip()
+    if not (cid and secret):
+        return None
+    try:
+        r = requests.post("https://api.producthunt.com/v2/oauth/token", timeout=30,
+                          json={"client_id": cid, "client_secret": secret, "grant_type": "client_credentials"},
+                          headers={"User-Agent": UA, "Accept": "application/json"})
+        return (r.json() or {}).get("access_token") if r.status_code == 200 else None
+    except (requests.RequestException, ValueError):
+        return None
+
+
 def fetch():
-    """[(кандидат, метрики)], ошибка. С PH_TOKEN — API с голосами, без — лента."""
+    """
+    [(кандидат, метрики)], ошибка. С PH_TOKEN (или парой PH_CLIENT_ID +
+    PH_CLIENT_SECRET) — API с голосами, без — лента.
+    """
     now = int(time.time())
-    token = (os.environ.get("PH_TOKEN") or "").strip()
+    token = (os.environ.get("PH_TOKEN") or "").strip() or client_token()
     if token:
         got, err = fetch_api(token, now)
         if not err:

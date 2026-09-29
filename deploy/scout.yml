@@ -75,6 +75,9 @@ jobs:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
       # Product Hunt: developer token даёт голоса; без него — лента без голосов.
       PH_TOKEN: ${{ secrets.PH_TOKEN }}
+      # Либо пара ключей приложения — токен бот получит сам.
+      PH_CLIENT_ID: ${{ secrets.PH_CLIENT_ID }}
+      PH_CLIENT_SECRET: ${{ secrets.PH_CLIENT_SECRET }}
       LS_LANG: ru
       WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
 
