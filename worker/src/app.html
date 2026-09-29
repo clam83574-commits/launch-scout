@@ -113,7 +113,9 @@
   .niche { background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
   .niche .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
   .niche .top b { font-size: 14px; }
-  .niche .top em { font-style: normal; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .niche .top em { font-style: normal; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .niche .top em small { font-size: 12px; font-weight: 400; color: var(--hint); }
+  .niche .who b { color: var(--text); font-weight: 600; }
   .niche .who { color: var(--hint); font-size: 12px; margin-top: 4px; }
   .niche .who a { color: var(--link); text-decoration: none; }
   ul.plain { list-style: none; padding: 0; margin: 0; }
@@ -749,21 +751,24 @@
     ru: { rounds: "раундов за %d дн.", money: "привлекли", early: "ранних раундов", sec: "заявок Form D (США)",
       phys: "физпродукт в YC", by_day: "Раунды по дням", by_day_s: "28 дней · одна компания = один раунд",
       sectors: "Секторы", sectors_s: "раундов: сейчас ● и прошлые %d дн. ○", stages: "Стадии раундов",
-      stages_s: "ранние — ниша только открывается", niches: "💡 Ниши, куда пошли деньги", niches_s: "за %d дн. · ранних / всего",
+      stages_s: "ранние — ниша только открывается", niches: "💡 Ниши, куда пошли деньги", niches_s: "за %d дн. · синим — ранние раунды (pre-seed, seed, A): ниша только открывается",
+      n_rounds: "раундов", n_early: "ранних",
       phys_t: "Физический продукт в батчах YC", phys_s: "железо, роботы, оборона, энергетика, логистика",
       now: "сейчас", before: "было", empty: "Данных о рынке пока нет — первый сбор раундов идёт.", unknown: "стадия не указана",
       rounds_w: "раундов", early_w: "ранних" },
     kk: { rounds: "раунд (%d күн)", money: "тартылды", early: "ерте раундтар", sec: "Form D өтінімдері (АҚШ)",
       phys: "YC-дегі физ. өнім", by_day: "Күн бойынша раундтар", by_day_s: "28 күн · бір компания = бір раунд",
       sectors: "Салалар", sectors_s: "раундтар: қазір ● және өткен %d күн ○", stages: "Раунд кезеңдері",
-      stages_s: "ерте — тауаша енді ашылып жатыр", niches: "💡 Ақша келген тауашалар", niches_s: "%d күн · ерте / барлығы",
+      stages_s: "ерте — тауаша енді ашылып жатыр", niches: "💡 Ақша келген тауашалар", niches_s: "%d күн · көкпен — ерте раундтар (pre-seed, seed, A): тауаша енді ашылып жатыр",
+      n_rounds: "раунд", n_early: "ерте",
       phys_t: "YC батчтарындағы физикалық өнім", phys_s: "құрылғылар, роботтар, қорғаныс, энергетика, логистика",
       now: "қазір", before: "бұрын", empty: "Нарық деректері әзірге жоқ — алғашқы жинау жүріп жатыр.", unknown: "кезең көрсетілмеген",
       rounds_w: "раунд", early_w: "ерте" },
     en: { rounds: "rounds in %d days", money: "raised", early: "early rounds", sec: "Form D filings (US)",
       phys: "physical in YC", by_day: "Rounds per day", by_day_s: "28 days · one company = one round",
       sectors: "Sectors", sectors_s: "rounds: now ● vs previous %d days ○", stages: "Round stages",
-      stages_s: "early ones mean the niche is just opening", niches: "💡 Niches the money went into", niches_s: "%d days · early / all",
+      stages_s: "early ones mean the niche is just opening", niches: "💡 Niches the money went into", niches_s: "%d days · blue = early rounds (pre-seed, seed, A): the niche is just opening",
+      n_rounds: "rounds", n_early: "early",
       phys_t: "Physical products in YC batches", phys_s: "hardware, robotics, defense, energy, logistics",
       now: "now", before: "before", empty: "No market data yet — the first pass over rounds is running.", unknown: "stage not stated",
       rounds_w: "rounds", early_w: "early" },
@@ -864,6 +869,14 @@
     return svg + "</svg>";
   }
 
+  // «1 раунд, 2 раунда, 5 раундов»: число без правильного слова читалось криво.
+  function roundsWord(n) {
+    if (state.lang === "en") return n === 1 ? "round" : "rounds";
+    if (state.lang === "kk") return "раунд";
+    const d = n % 10, h = n % 100;
+    return d === 1 && h !== 11 ? "раунд" : d >= 2 && d <= 4 && (h < 12 || h > 14) ? "раунда" : "раундов";
+  }
+
   function renderTrends() {
     const m = marketData(), rep = m && m.report, box = $("#marketBlock");
     if (!rep || !rep.sectors) { box.innerHTML = `<div class="empty">${esc(mk("empty"))}</div>`; return; }
@@ -884,9 +897,9 @@
       const meta = sectorList().find((z) => z.id === n.sector) || { emoji: "" };
       const who = (n.companies || []).slice(0, 3).map((r) => `<a href="${esc(r.url || "")}" data-ext>${esc(r.company)}</a>${r.usd ? " " + usdS(r.usd) : ""}`).join(" · ");
       return `<div class="niche"><div class="top"><b>${meta.emoji} ${esc(state.lang === "en" ? n.niche : names[n.niche] || n.niche)}</b>
-        <em title="${esc(mk("niches_s", rep.niche_days || 28))}">${n.early}/${n.n}</em></div>
-        <div class="stack" style="height:8px"><i style="flex:${n.early};background:var(--s1)"></i><i style="flex:${n.n - n.early};background:var(--s-other)"></i></div>
-        <div class="who">${usdS(n.usd)} · ${who}</div></div>`;
+        <em>${n.n} <small>${esc(roundsWord(n.n))}</small></em></div>
+        <div class="stack" style="height:8px" data-tip="${esc(`${mk("n_early")}: ${n.early} / ${n.n}`)}"><i style="flex:${n.early};background:var(--s1)"></i><i style="flex:${n.n - n.early};background:var(--s-other)"></i></div>
+        <div class="who"><b>${esc(mk("n_early"))}: ${n.early} (${Math.round(n.early / n.n * 100)}%)</b> · ${usdS(n.usd)} · ${who}</div></div>`;
     }).join("");
     const daily = am.daily || [];
     box.innerHTML = `<div class="mk">
