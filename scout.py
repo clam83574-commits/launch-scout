@@ -417,8 +417,15 @@ def dispatch(conn, evaluated, now, dry=False, digest=False, verbose=True):
     категории, поэтому к каждой находке прикладываются её темы. Без Worker
     всё уходит владельцу напрямую, как раньше.
     """
+    # Пост из X или HN уходит в пуш только после ИИ-проверки «запуск ли это
+    # вообще»: первый же прогон с широкими запросами X (2026-09-29) разослал
+    # патч игры, пост «к нам присоединился такой-то» и цитату-мнение — у всех
+    # по сотне лайков, но разбор до них ещё не дошёл. Непроверенное ждёт
+    # следующего прогона, разбор идёт по горячим первыми.
+    ai_on = ai.available()[0]
     hot = [e for e in evaluated if _pushable(e)
-           and not db.already_sent(conn, e[0]["item_id"], scoring.HOT)]
+           and not db.already_sent(conn, e[0]["item_id"], scoring.HOT)
+           and not (ai_on and e[0]["source"] in ("x", "hn") and ai.get_note(conn, e[0]["item_id"]) is None)]
     hot_payload, ids = [], []
     for item, metrics, total, tier, breakdown in hot:
         topics, audience, gist = _meta_of(conn, item["item_id"])
@@ -785,8 +792,9 @@ def apply_ai(conn, evaluated, now):
     ok, why = ai.available()
     if not ok:
         return evaluated
-    cands = [e[0] for e in evaluated if e[3] == scoring.HOT]
-    cands += [e[0] for e in evaluated if e[3] == scoring.DIGEST]
+    # Первыми — то, что уйдёт в пуш: без разбора оно не отправится.
+    cands = [e[0] for e in evaluated if _pushable(e)]
+    cands += [e[0] for e in evaluated if e[3] in (scoring.HOT, scoring.DIGEST)]
     ai.annotate(conn, cands, now, lang=lang)
     ai.tag_items(conn, now)
     out = []

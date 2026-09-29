@@ -47,6 +47,12 @@ crons = ["*/10 * * * *"]
 #   LS_INGEST_SECRET   - подпись среза, который присылает GitHub Actions
 #   LS_GH_TOKEN        - fine-grained токен GitHub ТОЛЬКО на этот репозиторий,
 #                        право Actions: Read and write — чтобы запускать прогоны
+#   LS_GROQ_KEY        - ключ Groq (можно несколько через запятую); запасные —
+#                        LS_GROQ_KEY_2, LS_GROQ_KEY_3: на 429 берётся следующий.
+#                        Groq: карточки без OpenRouter и распознавание голоса.
+#   LS_OPENROUTER_KEY  - необязательно: чат и карточка идеи идут через
+#                        OpenRouter (модель — LS_CHAT_MODEL, по умолчанию
+#                        google/gemini-3.8-flash); без него — через Groq.
 
 # Страница мини-приложения лежит отдельным файлом src/app.html и
 # встраивается в Worker как текст (import APP_HTML from "./app.html").

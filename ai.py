@@ -44,7 +44,10 @@ DEFAULT_MODEL = "openai/gpt-oss-120b"
 # выводы трендов и карточки идей Worker'а. Суточный предел запросов ниже
 # квоты — запас на ручные запуски и повторы.
 DEFAULT_DAILY_MAX = 900
-NOTES_PER_RUN = 4          # разбор теперь сразу на трёх языках — втрое длиннее ответ
+# Разбор сразу на трёх языках — втрое длиннее ответ. 10 за прогон: без
+# разбора пост из X не уходит в пуш (scout.dispatch), и очередь из 4 в
+# прогон не успевала за потоком X (2026-09-29).
+NOTES_PER_RUN = 10
 TAGS_PER_RUN = 40
 
 # Языки пользователей: Казахстан первым (решение владельца 2026-09-26),
@@ -419,13 +422,19 @@ def annotate(conn, candidates, now, lang="ru", verbose=True):
     model = os.environ.get("LS_AI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
     cap = _cap()
     done, last_err = 0, None
-    for item in candidates[:NOTES_PER_RUN]:
+    # Сначала отбросить уже разобранных, потом брать первые N: наоборот
+    # очередь вставала, как только первые N кандидатов были разобраны.
+    todo, seen = [], set()
+    for item in candidates:
+        existing = get_note(conn, item["item_id"])
+        if item["item_id"] in seen or (existing is not None and "i18n" in existing):
+            continue
+        seen.add(item["item_id"])
+        todo.append(item)
+    for item in todo[:NOTES_PER_RUN]:
         if _calls_today(conn, now, model) >= cap:
             last_err = "дневной предел ИИ-запросов исчерпан (%d)" % cap
             break
-        existing = get_note(conn, item["item_id"])
-        if existing is not None and "i18n" in existing:
-            continue
         try:
             note, err = _chat(model, SYSTEM, _item_prompt(item, lang), schema=NOTE_SCHEMA)
         except RateLimited as e:

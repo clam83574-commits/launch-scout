@@ -314,6 +314,7 @@ const EXTRA = {
     niches_title: "💡 <b>Ниши, куда пошли деньги</b> — %d дн.\nНиша — где несколько компаний подняли раунды. Ранние раунды (pre-seed, seed, A) значат, что ниша только открывается.",
     niches_empty: "Ниш пока нет: раунды разбираются ИИ по мере сбора, первые появятся в течение суток.",
     niche_line: "раундов: %d, ранних %d, %s", sec_niches: "💡 <b>Ниши сектора</b>",
+    voice_fail: "Не получилось распознать голосовое (до 3 минут). Попробуйте ещё раз или напишите текстом.",
     chat_limit: "Сегодня уже %d вопросов — это предел, завтра снова можно.", chat_reset: "Разговор и профиль очищены — начнём заново.",
     set_title: "⚙️ <b>Настройки</b>\nНажмите, чтобы включить или выключить.",
     n_hot: "🔥 Горячие находки — сразу", n_digest: "📋 Сводка — 2 раза в день", n_market: "🧭 Рынок недели — по понедельникам",
@@ -342,6 +343,7 @@ const EXTRA = {
     niches_title: "💡 <b>Ақша келген тауашалар</b> — %d күн\nТауаша — бірнеше компания раунд тартқан жер. Ерте раундтар (pre-seed, seed, A) тауашаның енді ашылып жатқанын білдіреді.",
     niches_empty: "Тауашалар әзірге жоқ: раундтарды ЖИ жинау барысында талдайды, алғашқылары бір тәулік ішінде шығады.",
     niche_line: "раунд: %d, ерте %d, %s", sec_niches: "💡 <b>Сала тауашалары</b>",
+    voice_fail: "Дауыстық хабарламаны тану мүмкін болмады (3 минутқа дейін). Қайталаңыз немесе мәтінмен жазыңыз.",
     chat_limit: "Бүгін %d сұрақ қойылды — бұл шек, ертең қайта болады.", chat_reset: "Әңгіме мен профиль тазартылды — қайта бастаймыз.",
     set_title: "⚙️ <b>Баптаулар</b>\nҚосу немесе өшіру үшін басыңыз.",
     n_hot: "🔥 Ыстық табылымдар — бірден", n_digest: "📋 Шолу — күніне 2 рет", n_market: "🧭 Апта нарығы — дүйсенбі сайын",
@@ -370,6 +372,7 @@ const EXTRA = {
     niches_title: "💡 <b>Niches the money went into</b> — %d days\nA niche is where several companies raised rounds. Early rounds (pre-seed, seed, A) mean the niche is only opening up.",
     niches_empty: "No niches yet: rounds are parsed by AI as they come in, the first ones appear within a day.",
     niche_line: "%d rounds, %d early, %s", sec_niches: "💡 <b>Sector niches</b>",
+    voice_fail: "Could not transcribe the voice message (up to 3 minutes). Try again or type it.",
     chat_limit: "You have asked %d questions today — that is the limit, try again tomorrow.", chat_reset: "Conversation and profile cleared — let's start over.",
     set_title: "⚙️ <b>Settings</b>\nTap to switch on or off.",
     n_hot: "🔥 Hot findings — right away", n_digest: "📋 Digest — twice a day", n_market: "🧭 Weekly market — Mondays",
@@ -1210,6 +1213,15 @@ async function handleUpdate(env, update) {
       env.DB.prepare("DELETE FROM chat_profile WHERE user_id = ?1").bind(String(chatId)),
     ]);
     await tg(env, "sendMessage", { chat_id: chatId, text: s.chat_reset });
+  } else if (msg && msg.voice) {
+    // Голос: распознать и ответить как на текст, показав, что услышали.
+    const heard = await transcribe(env, msg.voice, lang);
+    if (!heard) {
+      await tg(env, "sendMessage", { chat_id: chatId, text: s.voice_fail });
+    } else {
+      await tg(env, "sendMessage", { chat_id: chatId, text: "🎙 " + esc(heard.slice(0, 1000)), parse_mode: "HTML" });
+      await chatReply(env, chatId, heard, lang);
+    }
   } else if (raw && !raw.startsWith("/")) {
     await chatReply(env, chatId, raw, lang);
   } else if (text) {
@@ -1325,6 +1337,70 @@ async function groqFetch(env, body, models, timeoutMs = 27000) {
   return last;
 }
 
+/**
+ * «Умная» модель для диалога и карточки идеи — через OpenRouter, если задан
+ * секрет LS_OPENROUTER_KEY; иначе Groq. Разделение владельца (2026-09-29):
+ * массовый разбор постов — бесплатный Groq, разговор и советы — модель
+ * сильнее. Модель меняется секретом/переменной без правки кода.
+ */
+const OR_CHAT_MODEL = "google/gemini-3.8-flash";
+
+async function smartFetch(env, body, groqModels, { web = false, timeoutMs = 27000 } = {}) {
+  if (env.LS_OPENROUTER_KEY) {
+    let model = env.LS_CHAT_MODEL || OR_CHAT_MODEL;
+    // Поиск в сети у OpenRouter — суффикс :online (плагин web, платный
+    // сверх модели: около $0.02 за карточку при 5 результатах).
+    if (web && !model.endsWith(":online")) model += ":online";
+    const { tools, tool_choice, reasoning_effort, ...rest } = body;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST", signal: ctrl.signal,
+        headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
+          "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+        body: JSON.stringify({ ...rest, model }),
+      });
+      if (r.ok || !groqKeys(env).length) return r;
+    } catch (e) {
+      if (!groqKeys(env).length) return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return groqFetch(env, body, groqModels, timeoutMs);
+}
+
+/**
+ * Голосовое сообщение -> текст. Groq Whisper: бесплатный тариф, русский и
+ * казахский распознаёт. Возвращает текст или null.
+ */
+const VOICE_MAX_SECONDS = 180;
+
+async function transcribe(env, voice, lang) {
+  if (!voice || !groqKeys(env).length || (voice.duration || 0) > VOICE_MAX_SECONDS) return null;
+  const f = await tg(env, "getFile", { file_id: voice.file_id });
+  if (!f || !f.ok || !f.result.file_path) return null;
+  const audio = await fetch(`https://api.telegram.org/file/bot${env.LS_BOT_TOKEN}/${f.result.file_path}`);
+  if (!audio.ok) return null;
+  const blob = await audio.blob();
+  for (const key of groqKeys(env)) {
+    const form = new FormData();
+    form.append("file", blob, "voice.ogg");
+    form.append("model", "whisper-large-v3-turbo");
+    form.append("language", lang === "en" ? "en" : lang === "kk" ? "kk" : "ru");
+    form.append("response_format", "json");
+    const r = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+      method: "POST", headers: { authorization: `Bearer ${key}` }, body: form,
+    }).catch(() => null);
+    if (!r || r.status === 429) continue;
+    if (!r.ok) return null;
+    const j = await r.json().catch(() => null);
+    return j && j.text ? String(j.text).trim() : null;
+  }
+  return null;
+}
+
 /** «Please try again in 11m7.44s» из ответа 429 — в минутах, вверх. */
 function waitMinutes(text) {
   const m = /try again in (?:(\d+)h)?(?:(\d+)m)?(?:([\d.]+)s)?/.exec(text || "");
@@ -1371,7 +1447,7 @@ async function ideaCard(env, f, uid, lang = "ru") {
   const mine = Number((await meta(env, `idea_user_${uid}_${day}`)) || 0);
   if (total >= IDEA_MAX_PER_DAY) return { error: s.e_day };
   if (mine >= IDEA_MAX_PER_USER) return { error: fmt(s.e_user, mine) };
-  if (!groqKeys(env).length) return { error: s.e_noai };
+  if (!groqKeys(env).length && !env.LS_OPENROUTER_KEY) return { error: s.e_noai };
 
   const ai = f.ai || {};
   const tx = ai.i18n ? ai.i18n.en || ai.i18n.ru : ai;
@@ -1384,14 +1460,14 @@ async function ideaCard(env, f, uid, lang = "ru") {
   ].filter(Boolean).join("\n");
 
   // Только 120b: поиск аналогов (browser_search) есть не у всех моделей.
-  const r = await groqFetch(env, {
+  const r = await smartFetch(env, {
     messages: [{ role: "system", content: IDEA_SYSTEM }, { role: "user", content: user }],
     tools: [{ type: "browser_search" }],
     tool_choice: "auto",
     reasoning_effort: "low",
     max_completion_tokens: 4000,
     temperature: 0.2,
-  }, ["openai/gpt-oss-120b"], 28000);
+  }, ["openai/gpt-oss-120b"], { web: true, timeoutMs: 28000 });
   if (!r) return { error: s.e_time };
   await setMeta(env, "idea_calls_" + day, total + 1);
   await setMeta(env, `idea_user_${uid}_${day}`, mine + 1);
@@ -1512,7 +1588,7 @@ async function chatReply(env, chatId, question, lang) {
   const today = new Date().toISOString().slice(0, 10);
   const total = Number((await meta(env, "chat_calls_" + today)) || 0);
   const mine = Number((await meta(env, `chat_user_${chatId}_${today}`)) || 0);
-  if (!groqKeys(env).length) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_noai });
+  if (!groqKeys(env).length && !env.LS_OPENROUTER_KEY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_noai });
   if (total >= CHAT_MAX_PER_DAY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_day });
   if (mine >= CHAT_MAX_PER_USER) return tg(env, "sendMessage", { chat_id: chatId, text: fmt(s.chat_limit, mine) });
   await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
@@ -1527,7 +1603,7 @@ async function chatReply(env, chatId, question, lang) {
     ...hist.map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, 1500) })),
     { role: "user", content: question.slice(0, 1500) },
   ];
-  const r = await groqFetch(env, { messages, reasoning_effort: "low", max_completion_tokens: 2000, temperature: 0.3,
+  const r = await smartFetch(env, { messages, reasoning_effort: "low", max_completion_tokens: 2000, temperature: 0.3,
     response_format: { type: "json_object" } }, ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]);
   await setMeta(env, "chat_calls_" + today, total + 1);
   await setMeta(env, `chat_user_${chatId}_${today}`, mine + 1);
@@ -1735,6 +1811,9 @@ async function notifyAll(env, body) {
         if (r && r.ok) sent++;
       }
     }
+    // Раунды за сутки приходят по сектору на блок — одним сообщением на
+    // человека: первая рассылка 2026-09-29 прислала по сообщению на сектор.
+    const funding = [];
     for (const b of body.broadcast || []) {
       if (typeof b !== "string") {
         const kind = b.kind === "trends" ? "market" : b.kind;
@@ -1745,8 +1824,22 @@ async function notifyAll(env, body) {
       }
       const text = typeof b === "string" ? b : (b.texts && b.texts[lang]) || b.text;
       if (!text) continue;
+      if (typeof b !== "string" && b.kind === "funding") {
+        funding.push(text);
+        continue;
+      }
       const r = await tg(env, "sendMessage", { chat_id: uid, text, parse_mode: "HTML", disable_web_page_preview: true });
       if (r && r.ok) sent++;
+    }
+    // Склейка по блокам, а не по символам: разрез посреди тега ломает HTML.
+    let chunk = "";
+    for (const t of [...funding, null]) {
+      if (t !== null && (chunk + "\n\n" + t).length <= 3900) { chunk = chunk ? chunk + "\n\n" + t : t; continue; }
+      if (chunk) {
+        const r = await tg(env, "sendMessage", { chat_id: uid, text: chunk, parse_mode: "HTML", disable_web_page_preview: true });
+        if (r && r.ok) sent++;
+      }
+      chunk = t ? t.slice(0, 3900) : "";
     }
   }
   return { subscribers: subs.length, sent };
