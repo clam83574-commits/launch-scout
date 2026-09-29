@@ -295,6 +295,9 @@ PCT_STEPS = {
 }
 PCT_WORD = {"hn": "постов HN", "gh": "репозиториев GitHub", "x": "запусков в X", "ph": "запусков Product Hunt"}
 PCT_MIN_SAMPLE = 30
+# У Product Hunt в выборке только лучшие ~20–40 продуктов суток: 30 записей
+# набирается лишь на вторые сутки, и первый день голоса не сравнивались.
+PCT_MIN_SAMPLE_BY = {"ph": 15}
 
 
 def niche_flags(text):
@@ -390,7 +393,7 @@ def score_item(conn, item, now=None):
     if src in PCT_STEPS and last and item["posted_at"] and enough:
         r = rate_of(src, last["likes"], item["posted_at"], last["ts"])
         dist = source_rates(conn, src, now)
-        if r is not None and len(dist) >= PCT_MIN_SAMPLE:
+        if r is not None and len(dist) >= PCT_MIN_SAMPLE_BY.get(src, PCT_MIN_SAMPLE):
             p = percentile(dist, r)
             for edge, pts in PCT_STEPS[src]:
                 if p >= edge:
