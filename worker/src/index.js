@@ -317,6 +317,7 @@ const EXTRA = {
     mega: "+ мегараунд: %s", investors: "💼 Инвесторы:", pain: "🙋 Просят:", gap_kz: "Казахстан", gap_cis: "СНГ",
     gap_free: "свободно", gap_partly: "частично", gap_crowded: "занято",
     follow_on: "🔔 Слежу: новые раунды в нише придут сообщением", follow_off: "Больше не слежу за нишей",
+    e_busy: "ИИ сейчас не ответил — попробуйте через минуту.",
     voice_fail: "Не получилось распознать голосовое (до 3 минут). Попробуйте ещё раз или напишите текстом.",
     chat_limit: "Сегодня уже %d вопросов — это предел, завтра снова можно.", chat_reset: "Разговор и профиль очищены — начнём заново.",
     set_title: "⚙️ <b>Настройки</b>\nНажмите, чтобы включить или выключить.",
@@ -349,6 +350,7 @@ const EXTRA = {
     mega: "+ мега-раунд: %s", investors: "💼 Инвесторлар:", pain: "🙋 Сұрайды:", gap_kz: "Қазақстан", gap_cis: "ТМД",
     gap_free: "бос", gap_partly: "ішінара", gap_crowded: "бос емес",
     follow_on: "🔔 Бақылаймын: тауашадағы жаңа раундтар хабарламамен келеді", follow_off: "Тауашаны бақылау тоқтатылды",
+    e_busy: "ЖИ қазір жауап бермеді — бір минуттан кейін көріңіз.",
     voice_fail: "Дауыстық хабарламаны тану мүмкін болмады (3 минутқа дейін). Қайталаңыз немесе мәтінмен жазыңыз.",
     chat_limit: "Бүгін %d сұрақ қойылды — бұл шек, ертең қайта болады.", chat_reset: "Әңгіме мен профиль тазартылды — қайта бастаймыз.",
     set_title: "⚙️ <b>Баптаулар</b>\nҚосу немесе өшіру үшін басыңыз.",
@@ -381,6 +383,7 @@ const EXTRA = {
     mega: "+ mega-round: %s", investors: "💼 Investors:", pain: "🙋 People ask:", gap_kz: "Kazakhstan", gap_cis: "CIS",
     gap_free: "free", gap_partly: "partly taken", gap_crowded: "crowded",
     follow_on: "🔔 Following: new rounds in this niche will arrive as a message", follow_off: "No longer following this niche",
+    e_busy: "The AI did not answer just now — try again in a minute.",
     voice_fail: "Could not transcribe the voice message (up to 3 minutes). Try again or type it.",
     chat_limit: "You have asked %d questions today — that is the limit, try again tomorrow.", chat_reset: "Conversation and profile cleared — let's start over.",
     set_title: "⚙️ <b>Settings</b>\nTap to switch on or off.",
@@ -1264,11 +1267,12 @@ async function handleUpdate(env, update) {
     await tg(env, "sendMessage", { chat_id: chatId, text: s.chat_reset });
   } else if (msg && msg.voice) {
     // Голос: распознать и ответить как на текст, показав, что услышали.
+    await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
     const heard = await transcribe(env, msg.voice, lang);
     if (!heard) {
       await tg(env, "sendMessage", { chat_id: chatId, text: s.voice_fail });
     } else {
-      await tg(env, "sendMessage", { chat_id: chatId, text: "🎙 " + esc(heard.slice(0, 1000)), parse_mode: "HTML" });
+      // Расшифровку не показываем — сразу ответ (просьба владельца 2026-09-29).
       await chatReply(env, chatId, heard, lang);
     }
   } else if (raw && !raw.startsWith("/")) {
@@ -1394,30 +1398,60 @@ async function groqFetch(env, body, models, timeoutMs = 27000) {
  */
 const OR_CHAT_MODEL = "google/gemini-3.8-flash";
 
+/**
+ * Ошибка ИИ-провайдера — в лог Worker'а и в базу (последние 10): без этого
+ * «ИИ ответил 403» (2026-09-29) нельзя было понять, кто именно отказал.
+ */
+async function noteAiError(env, provider, status, text) {
+  const e = { ts: Math.floor(Date.now() / 1000), provider, status, text: String(text || "").slice(0, 300) };
+  console.log("ai error", JSON.stringify(e));
+  try {
+    const cur = JSON.parse((await meta(env, "ai_errors")) || "[]");
+    await setMeta(env, "ai_errors", JSON.stringify([e, ...cur].slice(0, 10)));
+  } catch { /* лог — не повод ронять ответ */ }
+}
+
+const OR_FALLBACK_MODEL = "openai/gpt-6-luna";
+
 async function smartFetch(env, body, groqModels, { web = false, timeoutMs = 27000 } = {}) {
+  const started = Date.now();
   if (env.LS_OPENROUTER_KEY) {
-    let model = env.LS_CHAT_MODEL || OR_CHAT_MODEL;
-    // Поиск в сети у OpenRouter — суффикс :online (плагин web, платный
-    // сверх модели: около $0.02 за карточку при 5 результатах).
-    if (web && !model.endsWith(":online")) model += ":online";
-    const { tools, tool_choice, reasoning_effort, ...rest } = body;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    try {
-      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST", signal: ctrl.signal,
-        headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-          "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
-        body: JSON.stringify({ ...rest, model }),
-      });
-      if (r.ok || !groqKeys(env).length) return r;
-    } catch (e) {
-      if (!groqKeys(env).length) return null;
-    } finally {
-      clearTimeout(timer);
+    const { tools, tool_choice, reasoning_effort, max_completion_tokens, ...rest } = body;
+    const models = [env.LS_CHAT_MODEL || OR_CHAT_MODEL, OR_FALLBACK_MODEL];
+    for (let model of models) {
+      // Поиск в сети у OpenRouter — суффикс :online (плагин web, платный
+      // сверх модели: около $0.02 за карточку при 5 результатах).
+      if (web && !model.endsWith(":online")) model += ":online";
+      const left = timeoutMs - (Date.now() - started);
+      if (left < 4000) break;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), left);
+      try {
+        const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST", signal: ctrl.signal,
+          headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
+            "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+          body: JSON.stringify({ ...rest, max_tokens: max_completion_tokens || 2000, model }),
+        });
+        if (r.ok) return r;
+        await noteAiError(env, "openrouter " + model, r.status, await r.text().catch(() => ""));
+        // Ключ или оплата — другая модель не поможет.
+        if (r.status === 401 || r.status === 402) break;
+      } catch (e) {
+        await noteAiError(env, "openrouter " + model, 0, String(e));
+      } finally {
+        clearTimeout(timer);
+      }
     }
   }
-  return groqFetch(env, body, groqModels, timeoutMs);
+  if (!groqKeys(env).length) return null;
+  const left = Math.max(timeoutMs - (Date.now() - started), 8000);
+  const r = await groqFetch(env, body, groqModels, left);
+  if (r && !r.ok) {
+    const t = await r.clone().text().catch(() => "");
+    await noteAiError(env, "groq", r.status, t);
+  }
+  return r;
 }
 
 /**
@@ -1690,7 +1724,7 @@ async function chatReply(env, chatId, question, lang) {
     const mins = waitMinutes(await r.text().catch(() => ""));
     return tg(env, "sendMessage", { chat_id: chatId, text: mins ? fmt(s.e_quota_in, mins) : s.e_quota });
   }
-  if (!r.ok) return tg(env, "sendMessage", { chat_id: chatId, text: fmt(s.e_http, r.status) });
+  if (!r.ok) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_busy });
   let data;
   try {
     const content = ((await r.json()).choices[0].message.content || "").trim();
