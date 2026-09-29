@@ -31,8 +31,8 @@ on:
   workflow_dispatch:
     inputs:
       sources:
-        description: "Источники через запятую (x,hn,yc,gh)"
-        default: "x,hn,yc,gh"
+        description: "Источники через запятую (x,hn,yc,gh,ph)"
+        default: "x,hn,yc,gh,ph"
       digest:
         description: "Сводка: auto — если пришло время, yes — сейчас, no — не слать"
         default: "auto"
@@ -73,6 +73,8 @@ jobs:
       # SEC EDGAR требует User-Agent с контактом («Имя email@домен»). Без
       # секрета — ссылка на репозиторий; если SEC ответит 403, завести его.
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      # Product Hunt: developer token даёт голоса; без него — лента без голосов.
+      PH_TOKEN: ${{ secrets.PH_TOKEN }}
       LS_LANG: ru
       WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
 
@@ -117,7 +119,7 @@ jobs:
 
       - name: Прогон
         env:
-          SOURCES: ${{ github.event.inputs.sources || 'x,hn,yc,gh' }}
+          SOURCES: ${{ github.event.inputs.sources || 'x,hn,yc,gh,ph' }}
           DIGEST: ${{ github.event.inputs.digest || 'auto' }}
         run: |
           ARGS="--sources $SOURCES"

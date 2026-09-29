@@ -971,6 +971,20 @@ def compute(conn, now):
     arts = analysis_articles(conn, now)
     seen = {a["title"].lower()[:60] for a in arts}
     heads = arts + [h for h in heads if h["title"].lower()[:60] not in seen]
+    # Для графиков мини-приложения: раунды по дням за 28 дней и по стадиям
+    # за текущее окно — одна компания = один раунд.
+    daily, stages = {}, {}
+    for r in rounds(conn, now - 28 * 86400):
+        d = time.strftime("%Y-%m-%d", time.gmtime(r["ts"]))
+        cell = daily.setdefault(d, [0, 0.0])
+        cell[0] += 1
+        cell[1] += r["usd"] or 0
+        if r["ts"] >= now - WINDOW_DAYS * 86400:
+            st = r["stage"] or "unknown"
+            stages[st] = stages.get(st, 0) + 1
+    days = [time.strftime("%Y-%m-%d", time.gmtime(now - (27 - i) * 86400)) for i in range(28)]
+    all_money["daily"] = [{"d": d, "n": daily.get(d, [0, 0])[0], "usd": round(daily.get(d, [0, 0])[1])} for d in days]
+    all_money["stages"] = stages
     return {"generated": now, "formd": formd_stats(conn, now), "window_days": WINDOW_DAYS, "sectors": sectors,
             "physical": physical, "physical_money": phys_money, "all_money": all_money,
             "yc_batches": [{"name": x["name"], "n": x["n"]} for x in yc],
@@ -1420,7 +1434,7 @@ def _names_of(item):
     """
     names = []
     title = item["title"] or ""
-    if item["source"] == "yc":
+    if item["source"] in ("yc", "ph"):
         names.append((title.split(" — ")[0].split(":")[0], 4))
     m = re.match(r"^(?:Launch|Show) HN:\s*([^(–—\-:]{2,40})", title)
     if m:

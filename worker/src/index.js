@@ -317,7 +317,7 @@ const EXTRA = {
     voice_fail: "Не получилось распознать голосовое (до 3 минут). Попробуйте ещё раз или напишите текстом.",
     chat_limit: "Сегодня уже %d вопросов — это предел, завтра снова можно.", chat_reset: "Разговор и профиль очищены — начнём заново.",
     set_title: "⚙️ <b>Настройки</b>\nНажмите, чтобы включить или выключить.",
-    n_hot: "🔥 Горячие находки — сразу", n_digest: "📋 Сводка — 2 раза в день", n_market: "🧭 Рынок недели — по понедельникам",
+    n_brief: "☀️ Сводка дня — одно короткое сообщение", n_hot: "🔥 Горячие находки — сразу", n_digest: "📋 Сводка — 2 раза в день", n_market: "🧭 Рынок недели — по понедельникам",
     n_funding: "💰 Раунды за сутки в моих секторах", n_alerts: "🚀 Сдвиги рынка — сектор пошёл в рост",
     sens: "🎚 Порог находок:", sens_strict: "только сильные", sens_normal: "обычный", sens_wide: "всё заметное",
     my_sectors: "🗂 Секторы: %s", my_sources: "📡 Источники: %s", my_aud: "👥 Кто платит: %s", all: "все",
@@ -346,7 +346,7 @@ const EXTRA = {
     voice_fail: "Дауыстық хабарламаны тану мүмкін болмады (3 минутқа дейін). Қайталаңыз немесе мәтінмен жазыңыз.",
     chat_limit: "Бүгін %d сұрақ қойылды — бұл шек, ертең қайта болады.", chat_reset: "Әңгіме мен профиль тазартылды — қайта бастаймыз.",
     set_title: "⚙️ <b>Баптаулар</b>\nҚосу немесе өшіру үшін басыңыз.",
-    n_hot: "🔥 Ыстық табылымдар — бірден", n_digest: "📋 Шолу — күніне 2 рет", n_market: "🧭 Апта нарығы — дүйсенбі сайын",
+    n_brief: "☀️ Күн шолуы — бір қысқа хабарлама", n_hot: "🔥 Ыстық табылымдар — бірден", n_digest: "📋 Шолу — күніне 2 рет", n_market: "🧭 Апта нарығы — дүйсенбі сайын",
     n_funding: "💰 Менің салаларымдағы тәуліктік раундтар", n_alerts: "🚀 Нарықтағы өзгерістер — сала өсуге көшті",
     sens: "🎚 Табылымдар шегі:", sens_strict: "тек күштілер", sens_normal: "қалыпты", sens_wide: "бәрі елеулі",
     my_sectors: "🗂 Салалар: %s", my_sources: "📡 Көздер: %s", my_aud: "👥 Кім төлейді: %s", all: "бәрі",
@@ -375,7 +375,7 @@ const EXTRA = {
     voice_fail: "Could not transcribe the voice message (up to 3 minutes). Try again or type it.",
     chat_limit: "You have asked %d questions today — that is the limit, try again tomorrow.", chat_reset: "Conversation and profile cleared — let's start over.",
     set_title: "⚙️ <b>Settings</b>\nTap to switch on or off.",
-    n_hot: "🔥 Hot findings — right away", n_digest: "📋 Digest — twice a day", n_market: "🧭 Weekly market — Mondays",
+    n_brief: "☀️ Daily brief — one short message", n_hot: "🔥 Hot findings — right away", n_digest: "📋 Digest — twice a day", n_market: "🧭 Weekly market — Mondays",
     n_funding: "💰 Daily funding rounds in my sectors", n_alerts: "🚀 Market shifts — a sector turns upward",
     sens: "🎚 Findings threshold:", sens_strict: "strong only", sens_normal: "normal", sens_wide: "everything notable",
     my_sectors: "🗂 Sectors: %s", my_sources: "📡 Sources: %s", my_aud: "👥 Who pays: %s", all: "all",
@@ -1700,9 +1700,12 @@ async function saveFav(env, uid, f) {
 // --- личные настройки и рассылка ----------------------------------------------
 // Виды уведомлений. «market» — прежний «trends»: еженедельный отчёт теперь
 // про рынок, а не про темы наших находок; старое значение переносится.
-const NOTIFY_KEYS = ["hot", "digest", "market", "funding", "alerts"];
-const NOTIFY_DEFAULT = { hot: true, digest: true, market: true, funding: true, alerts: true };
-const SOURCES = ["x", "hn", "yc", "gh"];
+// Минимум сообщений (решение владельца 2026-09-29): по умолчанию приходит
+// ОДНА короткая сводка в день — новые стартапы и ниши, куда пошли деньги.
+// Остальное — по желанию в настройках; вопросы — в чат, бот отвечает сам.
+const NOTIFY_KEYS = ["brief", "hot", "digest", "market", "funding", "alerts"];
+const NOTIFY_DEFAULT = { brief: true, hot: false, digest: false, market: false, funding: false, alerts: false };
+const SOURCES = ["x", "hn", "yc", "gh", "ph"];
 // Порог находок: «только сильные» / «обычный» (горячие) / «всё заметное».
 const SENS = { strict: 70, normal: 58, wide: 48 };
 
@@ -1711,9 +1714,12 @@ async function getPrefs(env, uid) {
     .bind(String(uid)).first().catch(() => null);
   const j = (v, d) => { try { return v ? JSON.parse(v) : d; } catch { return d; } };
   const arr = (v) => (Array.isArray(v) && v.length ? v : null);
-  const n = j(row && row.notify, {});
+  let n = j(row && row.notify, {});
   if (n.trends === false && n.market === undefined) n.market = false;
   delete n.trends;
+  // Настройки до 2026-09-29 (без brief) хранили «всё включено» — это и был
+  // поток сообщений, на который жаловался владелец. Переводим на новую схему.
+  if (n.brief === undefined) n = {};
   return {
     lang: row && LANGS.includes(row.lang) ? row.lang : null,
     topics: arr(j(row && row.topics, null)),
@@ -1830,6 +1836,12 @@ async function notifyAll(env, body) {
       }
       const r = await tg(env, "sendMessage", { chat_id: uid, text, parse_mode: "HTML", disable_web_page_preview: true });
       if (r && r.ok) sent++;
+      // Сводка дня — ещё и реплика в разговоре: на «расскажи подробнее про
+      // эту нишу» чат должен понимать, о какой нише речь.
+      if (r && r.ok && typeof b !== "string" && b.kind === "brief") {
+        await env.DB.prepare("INSERT INTO chat_log (user_id, ts, role, text) VALUES (?1, ?2, 'assistant', ?3)")
+          .bind(String(uid), Math.floor(Date.now() / 1000), text.replace(/<[^>]+>/g, "").slice(0, 3000)).run().catch(() => null);
+      }
     }
     // Склейка по блокам, а не по символам: разрез посреди тега ломает HTML.
     let chunk = "";

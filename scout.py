@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 import ai                      # noqa: E402
+import brief                   # noqa: E402
 import db                      # noqa: E402
 import market                  # noqa: E402
 import notify                  # noqa: E402
@@ -35,6 +36,7 @@ import score as scoring        # noqa: E402
 from common import domain_age_days, load_env, setup_logging  # noqa: E402
 from sources import github as gh_src          # noqa: E402
 from sources import hn as hn_src              # noqa: E402
+from sources import ph as ph_src              # noqa: E402
 from sources import x as x_src                # noqa: E402
 from sources import yc as yc_src              # noqa: E402
 
@@ -44,7 +46,7 @@ for _s in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-ALL_SOURCES = ("x", "hn", "yc", "gh")
+ALL_SOURCES = ("x", "hn", "yc", "gh", "ph")
 ACCOUNTS_FILE = ROOT / "accounts.txt"
 QUERIES_FILE = ROOT / "queries.txt"
 # В корне, а не в data/: файл лежит в репозитории, иначе облачный прогон
@@ -128,6 +130,15 @@ def collect(conn, sources, now, verbose=True):
         total, new, _ = _store(conn, pairs, now, bootstrap=seeds["gh"])
         db.log_run(conn, now, "gh", total, new, not err, err or "")
         report["gh"] = (total, new, err)
+
+    if "ph" in sources:
+        # Голоса Product Hunt приходят свежими при каждом сборе (с PH_TOKEN) —
+        # это и есть замер; отдельного доизмерения не нужно.
+        seeds["ph"] = not db.source_seeded(conn, "ph")
+        pairs, err = ph_src.fetch()
+        total, new, _ = _store(conn, pairs, now, bootstrap=seeds["ph"])
+        db.log_run(conn, now, "ph", total, new, not err, err or "")
+        report["ph"] = (total, new, err)
 
     if "x" in sources:
         session, err = x_src.session_from_env()
@@ -699,6 +710,10 @@ def run(sources, dry=False, digest=False, digest_auto=False):
         market_step(conn, now, dry=dry)
     except Exception as e:          # рынок — надстройка: его сбой не должен ронять прогон
         print("  рынок: ошибка %s" % e)
+    try:
+        brief.maybe_send(conn, now, dry=dry)
+    except Exception as e:          # сводка — тоже надстройка
+        print("  сводка дня: ошибка %s" % e)
     conn.close()
     return 0
 

@@ -95,6 +95,27 @@
   .bars .track { height: 10px; background: color-mix(in srgb, var(--hint) 12%, transparent); border-radius: 0 4px 4px 0; }
   .bars .fill { height: 100%; background: var(--s1); border-radius: 0 4px 4px 0; }
   .bars .val { color: var(--hint); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  /* 🧭 Рынок: плитки, графики, ниши — минимум текста */
+  .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 6px 0 4px; }
+  .kpi { background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
+  .kpi b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .kpi span { color: var(--hint); font-size: 12px; }
+  .kpi small { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--hint); }
+  .mk h2 { font-size: 15px; margin: 18px 0 2px; }
+  .mk .sub { color: var(--hint); font-size: 12px; margin-bottom: 6px; }
+  .mk svg { display: block; width: 100%; overflow: visible; }
+  .mk svg text { fill: var(--hint); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .mk svg .lbl { fill: var(--text); font-size: 12px; }
+  .mk svg .hit { fill: transparent; cursor: pointer; }
+  .stack { display: flex; gap: 2px; height: 14px; border-radius: 4px; overflow: hidden; margin: 6px 0; }
+  .stack i { display: block; height: 100%; }
+  .niches { display: grid; gap: 8px; }
+  .niche { background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
+  .niche .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .niche .top b { font-size: 14px; }
+  .niche .top em { font-style: normal; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .niche .who { color: var(--hint); font-size: 12px; margin-top: 4px; }
+  .niche .who a { color: var(--link); text-decoration: none; }
   ul.plain { list-style: none; padding: 0; margin: 0; }
   ul.plain li { padding: 7px 0; border-bottom: 1px solid var(--line); }
   .story { white-space: pre-wrap; background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
@@ -268,6 +289,7 @@
       rising: "Растут", prelim: " (предварительно)", history_note: "История {d} дн. — надёжно после 14.", was: "было",
       new_topics: "Новое, чего нет в привычных темах", story: "🧠 Выводы", other: "прочее", day_col: "День", total_col: "Всего",
       s_lang: "Язык", s_notify: "Уведомления в чате",
+      n_brief: "☀️ Сводка дня", n_brief_d: "Одно короткое сообщение: новые стартапы и ниши, куда пошли деньги",
       n_hot: "🔥 Горячие находки — сразу", n_hot_d: "Запуск быстро набирает внимание",
       n_digest: "📋 Сводка — дважды в день", n_digest_d: "До 12 заметных находок за полдня",
       n_trends: "📈 Тренды недели — по понедельникам", n_trends_d: "Какие темы растут и что появилось нового",
@@ -305,6 +327,7 @@
       rising: "Өсіп жатқандар", prelim: " (алдын ала)", history_note: "Тарих {d} күн — 14 күннен кейін сенімді.", was: "бұрын",
       new_topics: "Әдеттегі тақырыптарда жоқ жаңалар", story: "🧠 Қорытынды", other: "басқа", day_col: "Күн", total_col: "Барлығы",
       s_lang: "Тіл", s_notify: "Чаттағы хабарламалар",
+      n_brief: "☀️ Күн шолуы", n_brief_d: "Бір қысқа хабарлама: жаңа стартаптар және ақша келген тауашалар",
       n_hot: "🔥 Ыстық табылымдар — бірден", n_hot_d: "Іске қосылым тез назар жинап жатыр",
       n_digest: "📋 Шолу — күніне екі рет", n_digest_d: "Жарты күндегі 12-ге дейін байқалған табылым",
       n_trends: "📈 Апта трендтері — дүйсенбі сайын", n_trends_d: "Қай тақырыптар өсіп жатыр, не жаңа пайда болды",
@@ -342,6 +365,7 @@
       rising: "Rising", prelim: " (preliminary)", history_note: "{d} days of history — reliable after 14.", was: "was",
       new_topics: "New, outside the usual topics", story: "🧠 Takeaways", other: "other", day_col: "Day", total_col: "Total",
       s_lang: "Language", s_notify: "Chat notifications",
+      n_brief: "☀️ Daily brief", n_brief_d: "One short message: new startups and the niches money went into",
       n_hot: "🔥 Hot findings — instantly", n_hot_d: "A launch is gaining attention fast",
       n_digest: "📋 Digest — twice a day", n_digest_d: "Up to 12 notable findings per half-day",
       n_trends: "📈 Weekly trends — on Mondays", n_trends_d: "Which topics are rising and what is new",
@@ -383,7 +407,7 @@
 
   const state = { data: null, cat: null, aud: "", sort: "score", win: 168, tab: "feed", fav: new Map(), lang: "ru",
     prefs: { lang: null, topics: [], audience: [], sectors: [], sources: [], sens: "normal",
-      notify: { hot: true, digest: true, market: true, funding: true, alerts: true } } };
+      notify: { brief: true, hot: false, digest: false, market: false, funding: false, alerts: false } } };
 
   function setLang(l) {
     state.lang = LANGS.includes(l) ? l : "ru";
@@ -410,7 +434,7 @@
     }
     if (path.startsWith("/api/prefs")) {
       state.demoPrefs = state.demoPrefs || { lang: null, topics: [], audience: [], sectors: [], sources: [], sens: "normal",
-      notify: { hot: true, digest: true, market: true, funding: true, alerts: true } };
+      notify: { brief: true, hot: false, digest: false, market: false, funding: false, alerts: false } };
       if (opts.method === "POST") state.demoPrefs = { ...state.demoPrefs, ...JSON.parse(opts.body) };
       return opts.method === "POST" ? { ok: true, prefs: state.demoPrefs } : state.demoPrefs;
     }
@@ -563,7 +587,7 @@
   // --- настройки -----------------------------------------------------------
   // Сохраняются сразу при каждом изменении: кнопка «Сохранить» в конце
   // длинного списка категорий легко забывается.
-  const NOTIFY = ["hot", "digest", "market", "funding", "alerts"];
+  const NOTIFY = ["brief", "hot", "digest", "market", "funding", "alerts"];
   const normPrefs = (p) => {
     const n = { ...((p && p.notify) || {}) };
     if (n.trends === false && n.market === undefined) n.market = false;
@@ -575,7 +599,7 @@
       sectors: (p && Array.isArray(p.sectors) && p.sectors) || [],
       sources: (p && Array.isArray(p.sources) && p.sources) || [],
       sens: (p && ["strict", "normal", "wide"].includes(p.sens) && p.sens) || "normal",
-      notify: { hot: true, digest: true, market: true, funding: true, alerts: true, ...n },
+      notify: { brief: true, hot: false, digest: false, market: false, funding: false, alerts: false, ...n },
     };
   };
 
@@ -718,22 +742,162 @@
   }
 
   // --- графики -------------------------------------------------------------
+  // --- 🧭 Рынок: графики вместо текста (решение владельца 2026-09-29) -----
+  // Всё — по внешним данным из среза: раунды инвесторов, стадии, ниши,
+  // отбор YC. Минимум слов, у каждого графика — подсказка по нажатию.
+  const MK = {
+    ru: { rounds: "раундов за %d дн.", money: "привлекли", early: "ранних раундов", sec: "заявок Form D (США)",
+      phys: "физпродукт в YC", by_day: "Раунды по дням", by_day_s: "28 дней · одна компания = один раунд",
+      sectors: "Секторы", sectors_s: "раундов: сейчас ● и прошлые %d дн. ○", stages: "Стадии раундов",
+      stages_s: "ранние — ниша только открывается", niches: "💡 Ниши, куда пошли деньги", niches_s: "за %d дн. · ранних / всего",
+      phys_t: "Физический продукт в батчах YC", phys_s: "железо, роботы, оборона, энергетика, логистика",
+      now: "сейчас", before: "было", empty: "Данных о рынке пока нет — первый сбор раундов идёт.", unknown: "стадия не указана",
+      rounds_w: "раундов", early_w: "ранних" },
+    kk: { rounds: "раунд (%d күн)", money: "тартылды", early: "ерте раундтар", sec: "Form D өтінімдері (АҚШ)",
+      phys: "YC-дегі физ. өнім", by_day: "Күн бойынша раундтар", by_day_s: "28 күн · бір компания = бір раунд",
+      sectors: "Салалар", sectors_s: "раундтар: қазір ● және өткен %d күн ○", stages: "Раунд кезеңдері",
+      stages_s: "ерте — тауаша енді ашылып жатыр", niches: "💡 Ақша келген тауашалар", niches_s: "%d күн · ерте / барлығы",
+      phys_t: "YC батчтарындағы физикалық өнім", phys_s: "құрылғылар, роботтар, қорғаныс, энергетика, логистика",
+      now: "қазір", before: "бұрын", empty: "Нарық деректері әзірге жоқ — алғашқы жинау жүріп жатыр.", unknown: "кезең көрсетілмеген",
+      rounds_w: "раунд", early_w: "ерте" },
+    en: { rounds: "rounds in %d days", money: "raised", early: "early rounds", sec: "Form D filings (US)",
+      phys: "physical in YC", by_day: "Rounds per day", by_day_s: "28 days · one company = one round",
+      sectors: "Sectors", sectors_s: "rounds: now ● vs previous %d days ○", stages: "Round stages",
+      stages_s: "early ones mean the niche is just opening", niches: "💡 Niches the money went into", niches_s: "%d days · early / all",
+      phys_t: "Physical products in YC batches", phys_s: "hardware, robotics, defense, energy, logistics",
+      now: "now", before: "before", empty: "No market data yet — the first pass over rounds is running.", unknown: "stage not stated",
+      rounds_w: "rounds", early_w: "early" },
+  };
+  const mk = (k, n) => { const v = (MK[state.lang] || MK.ru)[k]; return n === undefined ? v : v.replace("%d", n); };
+  const usdS = (v) => !v ? "—" : v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e7 ? `$${Math.round(v / 1e6)}M` : `$${(v / 1e6).toFixed(1)}M`;
+  const STAGES = [["pre-seed", "pre-seed"], ["seed", "seed"], ["a", "A"], ["b", "B"], ["c+", "C+"], ["growth", "growth"]];
+  // Стадии упорядочены, а главное в них — ранние против поздних: ранние
+  // (pre-seed, seed, A) — ступени основного цвета, поздние — ступени серого.
+  const STAGE_FILL = ["45%", "72%", "100%"].map((p) => `color-mix(in srgb, var(--s1) ${p}, var(--bg2))`)
+    .concat(["45%", "72%", "100%"].map((p) => `color-mix(in srgb, var(--s-other) ${p}, var(--bg2))`));
+  // «Summer 2026» -> «Su26»: у YC весной и летом одна буква, S26 путались.
+  const batchShort = (b) => {
+    const m = /^(\w+) \d\d(\d\d)$/.exec(String(b));
+    if (!m) return String(b);
+    return ({ Winter: "W", Spring: "Sp", Summer: "Su", Fall: "F" }[m[1]] || m[1][0]) + m[2];
+  };
+
+  /** Подсказка по наведению и нажатию: любой элемент с data-tip внутри обёртки. */
+  function withTip(wrap) {
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    wrap.appendChild(tip);
+    const show = (ev) => {
+      const t = ev.target.closest("[data-tip]");
+      if (!t) { tip.style.display = "none"; return; }
+      const r = wrap.getBoundingClientRect(), p = ev.touches ? ev.touches[0] : ev;
+      tip.textContent = t.dataset.tip;
+      tip.style.display = "block";
+      tip.style.left = Math.min(Math.max(p.clientX - r.left, 70), r.width - 70) + "px";
+      tip.style.top = (p.clientY - r.top - 8) + "px";
+    };
+    wrap.addEventListener("pointermove", show);
+    wrap.addEventListener("click", show);
+    wrap.addEventListener("pointerleave", () => { tip.style.display = "none"; });
+  }
+
+  function dailyChart(daily, W) {
+    const H = 110, max = Math.max(1, ...daily.map((d) => d.n)), bw = W / daily.length;
+    let svg = `<svg viewBox="0 0 ${W} ${H + 16}" height="${H + 16}" role="img" aria-label="${esc(mk("by_day"))}">`;
+    svg += `<line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/>`;
+    daily.forEach((d, i) => {
+      const h = Math.max(d.n ? 2 : 0, (d.n / max) * (H - 14)), x = i * bw;
+      const label = `${d.d.slice(5)}: ${d.n} ${mk("rounds_w")}, ${usdS(d.usd)}`;
+      if (h) svg += `<rect x="${x + 1}" y="${H - h}" width="${Math.max(bw - 2, 1)}" height="${h}" rx="2" fill="var(--s1)"/>`;
+      svg += `<rect class="hit" x="${x}" y="0" width="${bw}" height="${H}" data-tip="${esc(label)}"/>`;
+    });
+    svg += `<text x="0" y="${H + 13}">${esc(daily[0].d.slice(5))}</text><text x="${W}" y="${H + 13}" text-anchor="end">${esc(daily[daily.length - 1].d.slice(5))}</text>`;
+    svg += `<text x="${W}" y="10" text-anchor="end">max ${max}</text>`;
+    return svg + "</svg>";
+  }
+
+  /** Гантели: раунды сектора сейчас (●) против прошлого окна (○). */
+  function sectorChart(rep, W) {
+    const rows = (rep.sectors || []).filter((s) => (s.money || {}).cur_n || (s.money || {}).prev_n)
+      .sort((a, b) => b.money.cur_n - a.money.cur_n).slice(0, 10);
+    const max = Math.max(1, ...rows.map((s) => Math.max(s.money.cur_n, s.money.prev_n)));
+    const L = Math.min(150, W * 0.42), R = 34, rowH = 26, H = rows.length * rowH;
+    const x = (v) => L + (v / max) * (W - L - R);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(mk("sectors"))}">`;
+    rows.forEach((s, i) => {
+      const y = i * rowH + rowH / 2, m = s.money, meta = sectorList().find((z) => z.id === s.id) || { emoji: "", names: {} };
+      const name = `${meta.emoji} ${(meta.names || {})[state.lang] || meta.names.ru || s.id}`;
+      const arrow = s.trend === "up" ? " ▲" : s.trend === "down" ? " ▼" : "";
+      const tip = `${name}: ${mk("now")} ${m.cur_n} (${mk("early_w")} ${m.cur_early || 0}), ${usdS(m.cur_usd)} · ${mk("before")} ${m.prev_n}, ${usdS(m.prev_usd)}` +
+        (s.yc && s.yc.share != null ? ` · YC ${s.yc.share}% (${s.yc.prev}%)` : "");
+      svg += `<text class="lbl" x="0" y="${y + 4}">${esc(name.length > 22 ? name.slice(0, 21) + "…" : name)}${arrow}</text>`;
+      svg += `<line x1="${x(m.prev_n)}" x2="${x(m.cur_n)}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="2"/>`;
+      svg += `<circle cx="${x(m.prev_n)}" cy="${y}" r="4.5" fill="var(--bg)" stroke="var(--s-other)" stroke-width="2"/>`;
+      svg += `<circle cx="${x(m.cur_n)}" cy="${y}" r="5" fill="var(--s1)" stroke="var(--bg)" stroke-width="2"/>`;
+      svg += `<text x="${W}" y="${y + 4}" text-anchor="end">${m.cur_n}</text>`;
+      svg += `<rect class="hit" x="0" y="${i * rowH}" width="${W}" height="${rowH}" data-tip="${esc(tip)}"/>`;
+    });
+    return svg + "</svg>";
+  }
+
+  function stageBar(stages) {
+    const total = STAGES.reduce((a, [k]) => a + (stages[k] || 0), 0);
+    if (!total) return "";
+    const parts = STAGES.map(([k, label], i) => ({ k, label, n: stages[k] || 0, fill: STAGE_FILL[i] })).filter((p) => p.n);
+    return `<div class="stack" role="img" aria-label="${esc(mk("stages"))}">${parts.map((p) =>
+      `<i style="flex:${p.n};background:${p.fill}" data-tip="${esc(`${p.label}: ${p.n} (${Math.round(p.n / total * 100)}%)`)}"></i>`).join("")}</div>
+      <div class="legend">${parts.map((p) => `<span><i style="background:${p.fill}"></i>${esc(p.label)} ${Math.round(p.n / total * 100)}%</span>`).join("")}</div>`;
+  }
+
+  function physChart(hist, W) {
+    if (!hist || hist.length < 2) return "";
+    const H = 90, max = Math.max(10, ...hist.map((h) => h.share)) * 1.15, n = hist.length;
+    const x = (i) => 24 + i * ((W - 48) / (n - 1)), y = (v) => H - (v / max) * (H - 10);
+    let svg = `<svg viewBox="0 0 ${W} ${H + 18}" height="${H + 18}" role="img" aria-label="${esc(mk("phys_t"))}">`;
+    svg += `<polyline fill="none" stroke="var(--s1)" stroke-width="2" points="${hist.map((h, i) => `${x(i)},${y(h.share)}`).join(" ")}"/>`;
+    hist.forEach((h, i) => {
+      svg += `<circle cx="${x(i)}" cy="${y(h.share)}" r="4" fill="var(--s1)" stroke="var(--bg)" stroke-width="2"/>`;
+      if (i === n - 1 || i === 0) svg += `<text class="lbl" x="${x(i)}" y="${y(h.share) - 9}" text-anchor="middle">${h.share}%</text>`;
+      svg += `<text x="${x(i)}" y="${H + 14}" text-anchor="middle">${esc(batchShort(h.batch))}</text>`;
+      svg += `<rect class="hit" x="${x(i) - 20}" y="0" width="40" height="${H}" data-tip="${esc(`${h.batch}: ${h.share}%`)}"/>`;
+    });
+    return svg + "</svg>";
+  }
+
   function renderTrends() {
-    // Рынок — по внешним данным: раунды инвесторов, отбор YC, запросы
-    // людей. Текст собран на сервере из цифр (теги b, i, a) и экранирован
-    // при сборке; последняя строка — подсказка про кнопки чата, её убираем.
-    const m = marketData();
-    const mt = m && m.texts ? m.texts[state.lang] || m.texts.ru : "";
-    const body = mt.replace(/\n+<i>[^<]*<\/i>\s*$/, "");
-    const rep = m && m.report;
-    const names = (rep && rep.niche_names) || {};
-    const stage = { "pre-seed": "pre-seed", seed: "seed", a: "Series A", b: "Series B", "c+": "Series C+", growth: "growth" };
-    const money = (v) => !v ? "" : v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${(v / 1e6).toFixed(v < 1e7 ? 1 : 0)}M`;
-    const niches = ((rep && rep.niches) || []).filter((n) => n.n >= 3);
-    const nicheHtml = niches.length ? `<h2>💡 ${esc(state.lang === "en" ? "Niches the money went into" : state.lang === "kk" ? "Ақша келген тауашалар" : "Ниши, куда пошли деньги")}</h2>
-      <ul class="plain">${niches.map((n) => `<li><b>${esc(state.lang === "en" ? n.niche : names[n.niche] || n.niche)}</b> — ${n.n} · ${n.early} early · ${esc(money(n.usd))}<br>${
-        (n.companies || []).slice(0, 4).map((r) => `<a href="${esc(r.url || "")}" data-ext>${esc(r.company || "")}</a> ${esc([money(r.usd), stage[r.stage] || ""].filter(Boolean).join(", "))}${(r.what || {})[state.lang === "en" ? "en" : "ru"] ? " — " + esc(r.what[state.lang === "en" ? "en" : "ru"]) : ""}`).join("<br>")}</li>`).join("")}</ul>` : "";
-    $("#marketBlock").innerHTML = (mt ? `<div class="story market">${body.replace(/\n/g, "<br>")}</div>` : "") + nicheHtml;
+    const m = marketData(), rep = m && m.report, box = $("#marketBlock");
+    if (!rep || !rep.sectors) { box.innerHTML = `<div class="empty">${esc(mk("empty"))}</div>`; return; }
+    const W = Math.max(280, Math.min(box.clientWidth || 340, 640));
+    const am = rep.all_money || {}, fd = rep.formd, win = rep.window_days || 14;
+    const d = (a, b) => (b ? `<small>${a >= b ? "▲" : "▼"} ${Math.abs(Math.round((a - b) / b * 100))}%</small>` : "");
+    const early = am.cur_n ? Math.round((am.cur_early || 0) / am.cur_n * 100) : 0;
+    const kpis = [
+      `<div class="kpi"><b>${am.cur_n || 0} ${d(am.cur_n, am.prev_n)}</b><span>${esc(mk("rounds", win))}</span></div>`,
+      `<div class="kpi"><b>${usdS(am.cur_usd)} ${d(am.cur_usd, am.prev_usd)}</b><span>${esc(mk("money"))}</span></div>`,
+      `<div class="kpi"><b>${early}%</b><span>${esc(mk("early"))}</span></div>`,
+      fd && fd.cur_n ? `<div class="kpi"><b>${fd.cur_n} ${d(fd.cur_n, fd.prev_n)}</b><span>${esc(mk("sec"))}</span></div>`
+        : rep.physical ? `<div class="kpi"><b>${rep.physical.share}%</b><span>${esc(mk("phys"))} ${esc(rep.physical.batch)}</span></div>` : "",
+    ].join("");
+    const names = rep.niche_names || {};
+    const niches = (rep.niches || []).filter((n) => n.n >= 2).slice(0, 6);
+    const nicheCards = niches.map((n) => {
+      const meta = sectorList().find((z) => z.id === n.sector) || { emoji: "" };
+      const who = (n.companies || []).slice(0, 3).map((r) => `<a href="${esc(r.url || "")}" data-ext>${esc(r.company)}</a>${r.usd ? " " + usdS(r.usd) : ""}`).join(" · ");
+      return `<div class="niche"><div class="top"><b>${meta.emoji} ${esc(state.lang === "en" ? n.niche : names[n.niche] || n.niche)}</b>
+        <em title="${esc(mk("niches_s", rep.niche_days || 28))}">${n.early}/${n.n}</em></div>
+        <div class="stack" style="height:8px"><i style="flex:${n.early};background:var(--s1)"></i><i style="flex:${n.n - n.early};background:var(--s-other)"></i></div>
+        <div class="who">${usdS(n.usd)} · ${who}</div></div>`;
+    }).join("");
+    const daily = am.daily || [];
+    box.innerHTML = `<div class="mk">
+      <div class="kpis">${kpis}</div>
+      ${nicheCards ? `<h2>${esc(mk("niches"))}</h2><div class="sub">${esc(mk("niches_s", rep.niche_days || 28))}</div><div class="niches">${nicheCards}</div>` : ""}
+      ${daily.length ? `<h2>${esc(mk("by_day"))}</h2><div class="sub">${esc(mk("by_day_s"))}</div><div class="chart" id="mkDaily">${dailyChart(daily, W)}</div>` : ""}
+      <h2>${esc(mk("sectors"))}</h2><div class="sub">${esc(mk("sectors_s", win))}</div><div class="chart" id="mkSec">${sectorChart(rep, W)}</div>
+      ${am.stages ? `<h2>${esc(mk("stages"))}</h2><div class="sub">${esc(mk("stages_s"))}</div><div class="chart" id="mkStage">${stageBar(am.stages)}</div>` : ""}
+      ${rep.physical ? `<h2>${esc(mk("phys_t"))}</h2><div class="sub">${esc(mk("phys_s"))}</div><div class="chart" id="mkPhys">${physChart(rep.physical.history, W)}</div>` : ""}
+    </div>`;
+    for (const id of ["mkDaily", "mkSec", "mkStage", "mkPhys"]) { const el = document.getElementById(id); if (el) withTip(el); }
   }
 
   function drawDaily(daily) {
