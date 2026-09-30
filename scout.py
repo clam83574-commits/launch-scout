@@ -781,6 +781,11 @@ def market_step(conn, now, dry=False):
         market.tag_demand_step(conn, now)
     except Exception as e:
         print("  «боль»: ошибка %s" % e)
+    try:
+        if market.trends_step(conn, now):
+            enriched = True
+    except Exception as e:          # Google Trends — надстройка
+        print("  Google Trends: ошибка %s" % e)
     if enriched or fd:
         rep = market.update_report(conn, now)
     rep = rep or market.last_report(conn)

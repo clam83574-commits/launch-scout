@@ -864,6 +864,10 @@ def niches(conn, now, days=NICHE_DAYS, limit=12, window_min=2):
         web = json.loads(db.kv_get(conn, "niche_web", "{}") or "{}")
     except ValueError:
         web = {}
+    try:
+        gtr = json.loads(db.kv_get(conn, "niche_gtrends", "{}") or "{}")
+    except ValueError:
+        gtr = {}
     _ensure_intel(conn)
     tasks_by, hire_by = {}, {}
     for t in conn.execute("SELECT url, title, company, bids, niche, first_seen FROM local_tasks "
@@ -915,7 +919,11 @@ def niches(conn, now, days=NICHE_DAYS, limit=12, window_min=2):
             "local_tasks_n": len(tasks_by.get(niche, [])),
             # Деньги превращаются в найм: компании ниши в последнем треде HN.
             "hiring": hire_by.get(niche, [])[:5], "hiring_n": len(hire_by.get(niche, [])),
+            # Интерес поиска в Google относительно всех ниш (trends_step).
+            "search": search_signal(gtr, niche),
         })
+        if out[-1]["search"] and out[-1]["search"].get("weekly"):
+            out[-1]["search"]["weekly"] = out[-1]["search"]["weekly"][-26:]
         if window_min == 0:
             # Поля матрицы (niche_matrix): полгода целиком, а не окно 28 дней.
             monthly, stages = {}, {}
@@ -971,6 +979,12 @@ def opportunity(n):
     hire = min(8, n.get("hiring_n", 0) * 4)
     if hire:
         parts.append(("hiring", hire, {"companies_hiring": n.get("hiring_n", 0)}))
+    # Поиск в Google: интерес к нише растёт быстрее или медленнее, чем у
+    # остальных ниш (относительно медианы — общий сдвиг Google вычитается).
+    sr = n.get("search") or {}
+    if sr.get("rel"):
+        spts = 8 if sr["rel"] >= 1.3 else 4 if sr["rel"] >= 1.1 else -5 if sr["rel"] <= 0.75 else 0
+        parts.append(("search", spts, {"term": sr["term"], "vs_median": sr["rel"], "percentile": sr["pct"]}))
     # Конкуренция: сколько разных компаний подняли деньги за полгода.
     comp = 0 if crowd <= 5 else -5 if crowd <= 12 else -12 if crowd <= 25 else -20
     if mega:
@@ -2406,6 +2420,82 @@ def web_step(conn, now, rep, verbose=True):
         db.kv_set(conn, "niche_web", json.dumps(web, ensure_ascii=False))
         conn.commit()
     return done
+
+
+# ---------------------------------------------------------------------------
+# 🔎 Google Trends: интерес поиска к нише
+# ---------------------------------------------------------------------------
+# Спрос людей в цифрах, независимый от инвесторов (просьба владельца
+# 2026-10-01). Раз в час до GT_PER_RUN ниш, каждая раз в неделю; на 429
+# прогон останавливается. Из Cloudflare Google отвечает 429, поэтому только тут.
+GT_PER_RUN = 12
+GT_EVERY = 3600
+GT_MAX_AGE = 7 * 86400
+
+
+def trends_step(conn, now, verbose=True):
+    import ai
+    from sources import gtrends
+    if now - int(db.kv_get(conn, "gt_ts", 0) or 0) < GT_EVERY:
+        return 0
+    db.kv_set(conn, "gt_ts", now)
+    try:
+        gt = json.loads(db.kv_get(conn, "niche_gtrends", "{}") or "{}")
+        terms = json.loads(db.kv_get(conn, "niche_gt_terms", "{}") or "{}")
+    except ValueError:
+        gt, terms = {}, {}
+    known = [x for x in known_niches(conn, now, days=HISTORY_WEEKS * 7, limit=800)
+             if x not in JUNK_NICHES and len(x) >= 4]
+    # Поисковые фразы — пачкой через ИИ, один раз на нишу.
+    need = [x for x in known if x not in terms][:60]
+    if need:
+        got, err = ai.gt_terms(need)
+        if err and verbose:
+            print("  Google Trends: фразы — %s" % err)
+        for x in need:
+            if x in got:
+                terms[x] = got[x]
+        db.kv_set(conn, "niche_gt_terms", json.dumps(terms, ensure_ascii=False))
+    todo = [x for x in known if terms.get(x) and now - int((gt.get(x) or {}).get("ts", 0)) > GT_MAX_AGE]
+    t, done, err = gtrends.Trends(), 0, None
+    for niche in todo[:GT_PER_RUN]:
+        term = terms[niche]
+        try:
+            summ = gtrends.summarize(t.weekly(term))
+        except gtrends.Blocked:
+            err = "429"
+            break
+        except Exception as e:          # сеть, формат ответа
+            err = str(e)[:80]
+            continue
+        gt[niche] = dict(summ or {"low": True}, term=term, ts=now)
+        done += 1
+    if done:
+        db.kv_set(conn, "niche_gtrends", json.dumps(gt, ensure_ascii=False))
+    conn.commit()
+    if verbose and (done or err):
+        print("  Google Trends: ниш %d, всего с данными %d, в очереди %d%s"
+              % (done, len(gt), max(0, len(todo) - done), (" (" + err + ")") if err else ""))
+    return done
+
+
+def search_signal(gt, niche):
+    """
+    Интерес поиска к нише относительно всех ниш: рост ряда за 3 месяца,
+    делённый на медиану по нишам. Google в 2026 году меняет учёт запросов
+    (ступенька у многих ИИ-терминов в июле), и абсолютный рост врёт у всех
+    сразу; относительно медианы общий сдвиг вычитается.
+    """
+    g = gt.get(niche)
+    if not g or g.get("low") or "g3m" not in g:
+        return None
+    base = sorted(x["g3m"] for x in gt.values() if not x.get("low") and "g3m" in x)
+    if len(base) < 10:
+        return None
+    med = base[len(base) // 2]
+    rel = round(g["g3m"] / med, 2) if med else None
+    pct = round(100 * sum(1 for b in base if b < g["g3m"]) / len(base))
+    return {"term": g["term"], "rel": rel, "pct": pct, "g1y": g.get("g1y"), "weekly": g.get("weekly"), "ts": g["ts"]}
 
 
 # ---------------------------------------------------------------------------

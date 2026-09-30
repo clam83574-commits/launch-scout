@@ -766,7 +766,7 @@
       now: "сейчас", before: "было", empty: "Данных о рынке пока нет — первый сбор раундов идёт.", unknown: "стадия не указана",
       rounds_w: "раундов", early_w: "ранних", by_week: "Раунды по неделям · полгода", by_week_s: "синим — ранние раунды",
       o_window: "🔥 Окно", o_forming: "🧭 Формируется", o_overheated: "⚠️ Перегрев", o_local_gap: "🕳 Пусто в КЗ", o_watch: "👀 Наблюдать",
-      p_money: "деньги", p_momentum: "динамика", p_demand: "спрос", p_competition: "конкуренция", p_local: "КЗ/СНГ",
+      p_money: "деньги", p_momentum: "динамика", p_demand: "спрос", p_competition: "конкуренция", p_local: "КЗ/СНГ", p_search: "Google", p_hiring: "найм", s_fast: "быстрее %d% ниш", s_slow: "медленнее %d% ниш",
       investors: "Инвесторы", pain: "Просят", kz: "Казахстан", cis: "СНГ", free: "свободно", partly: "частично", crowded: "занято",
       follow: "🔔 Следить", following: "✅ Слежу", mega: "мегараунд", trend6: "за полгода" },
     kk: { rounds: "раунд (%d күн)", money: "тартылды", early: "ерте раундтар", sec: "Form D өтінімдері (АҚШ)",
@@ -778,7 +778,7 @@
       now: "қазір", before: "бұрын", empty: "Нарық деректері әзірге жоқ — алғашқы жинау жүріп жатыр.", unknown: "кезең көрсетілмеген",
       rounds_w: "раунд", early_w: "ерте", by_week: "Апта бойынша раундтар · жарты жыл", by_week_s: "көкпен — ерте раундтар",
       o_window: "🔥 Терезе", o_forming: "🧭 Қалыптасуда", o_overheated: "⚠️ Қызып кеткен", o_local_gap: "🕳 ҚЗ-да бос", o_watch: "👀 Бақылау",
-      p_money: "ақша", p_momentum: "динамика", p_demand: "сұраныс", p_competition: "бәсеке", p_local: "ҚЗ/ТМД",
+      p_money: "ақша", p_momentum: "динамика", p_demand: "сұраныс", p_competition: "бәсеке", p_local: "ҚЗ/ТМД", p_search: "Google", p_hiring: "жалдау", s_fast: "%d% тауашадан жылдам", s_slow: "%d% тауашадан баяу",
       investors: "Инвесторлар", pain: "Сұрайды", kz: "Қазақстан", cis: "ТМД", free: "бос", partly: "ішінара", crowded: "бос емес",
       follow: "🔔 Бақылау", following: "✅ Бақылаймын", mega: "мега-раунд", trend6: "жарты жылда" },
     en: { rounds: "rounds in %d days", money: "raised", early: "early rounds", sec: "Form D filings (US)",
@@ -790,7 +790,7 @@
       now: "now", before: "before", empty: "No market data yet — the first pass over rounds is running.", unknown: "stage not stated",
       rounds_w: "rounds", early_w: "early", by_week: "Rounds per week · six months", by_week_s: "blue = early rounds",
       o_window: "🔥 Window", o_forming: "🧭 Forming", o_overheated: "⚠️ Overheated", o_local_gap: "🕳 Empty in KZ", o_watch: "👀 Watch",
-      p_money: "money", p_momentum: "momentum", p_demand: "demand", p_competition: "competition", p_local: "KZ/CIS",
+      p_money: "money", p_momentum: "momentum", p_demand: "demand", p_competition: "competition", p_local: "KZ/CIS", p_search: "Google", p_hiring: "hiring", s_fast: "faster than %d% of niches", s_slow: "slower than %d% of niches",
       investors: "Investors", pain: "People ask", kz: "Kazakhstan", cis: "CIS", free: "free", partly: "partly taken", crowded: "crowded",
       follow: "🔔 Follow", following: "✅ Following", mega: "mega-round", trend6: "over six months" },
   };
@@ -957,6 +957,7 @@
         <div class="stack" style="height:8px" data-tip="${esc(`${mk("n_early")}: ${n.early} / ${n.n}`)}"><i style="flex:${n.early};background:var(--s1)"></i><i style="flex:${n.n - n.early};background:var(--s-other)"></i></div>
         <div class="who"><b>${esc(mk("n_early"))}: ${n.early} (${Math.round(n.early / n.n * 100)}%)</b> · ${usdS(n.usd)} · ${who}${mega ? ` · ${esc(mk("mega"))} <a href="${esc(mega.url || "")}" data-ext>${esc(mega.company)}</a> ${usdS(mega.usd)}` : ""}</div>
         ${(n.weekly || []).some((x) => x) ? `<div class="spark" data-tip="${esc(mk("trend6"))}: ${esc(n.weekly.join(" · "))}">${spark(n.weekly)}</div>` : ""}
+        ${n.search && n.search.rel ? `<div class="row" data-tip="${esc((n.search.weekly || []).join(" · "))}">🔎 Google «${esc(n.search.term)}»: ${esc(mk(n.search.pct >= 50 ? "s_fast" : "s_slow", n.search.pct >= 50 ? n.search.pct : 100 - n.search.pct))}</div>` : ""}
         ${(n.investors || []).length ? `<div class="row">💼 ${esc(mk("investors"))}: ${esc(n.investors.join(", "))}</div>` : ""}
         ${p0 ? `<div class="row">🙋 ${esc(mk("pain"))}: <a href="${esc(p0.url || "")}" data-ext>«${esc(String(p0.text || "").slice(0, 110))}»</a></div>` : ""}
         ${gap}

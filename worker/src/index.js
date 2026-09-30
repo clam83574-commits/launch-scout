@@ -329,7 +329,7 @@ const EXTRA = {
     fq_models: "🧩 Модель", fa_models_saas: "SaaS", fa_models_marketplace: "маркетплейс", fa_models_agent: "ИИ-агент", fa_models_fintech: "финтех", fa_models_hardware: "железо",
     fq_horizon: "⏱ Срок до запуска", fa_horizon_1m: "1 месяц", fa_horizon_3m: "3 месяца", fa_horizon_1y: "год",
     why_fit_model: "ваша модель", why_heavy: "капиталоёмко для бюджета", why_overheated: "перегрев", why_kz_free: "в КЗ свободно",
-    why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают",
+    why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
     opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
@@ -380,7 +380,7 @@ const EXTRA = {
     fq_models: "🧩 Модель", fa_models_saas: "SaaS", fa_models_marketplace: "маркетплейс", fa_models_agent: "ЖИ-агент", fa_models_fintech: "финтех", fa_models_hardware: "құрылғы",
     fq_horizon: "⏱ Іске қосу мерзімі", fa_horizon_1m: "1 ай", fa_horizon_3m: "3 ай", fa_horizon_1y: "жыл",
     why_fit_model: "сіздің модель", why_heavy: "бюджетке ауыр", why_overheated: "қызып кеткен", why_kz_free: "ҚЗ-да бос",
-    why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр",
+    why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
     opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
@@ -431,7 +431,7 @@ const EXTRA = {
     fq_models: "🧩 Model", fa_models_saas: "SaaS", fa_models_marketplace: "marketplace", fa_models_agent: "AI agent", fa_models_fintech: "fintech", fa_models_hardware: "hardware",
     fq_horizon: "⏱ Time to launch", fa_horizon_1m: "1 month", fa_horizon_3m: "3 months", fa_horizon_1y: "a year",
     why_fit_model: "your model", why_heavy: "capital-heavy for the budget", why_overheated: "overheated", why_kz_free: "free in KZ",
-    why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring",
+    why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
     opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
@@ -734,6 +734,8 @@ function nicheLines(rep, n, lang, s, snap) {
   for (const r of (n.companies || []).filter((r) => !(r.usd >= 1e9)).slice(0, 3)) out.push("   • " + roundLine(r, lang, s));
   for (const r of (n.mega || []).slice(0, 1)) out.push("   " + fmt(s.mega, roundLine(r, lang, s)));
   if ((n.investors || []).length) out.push("   " + s.investors + " " + esc(n.investors.join(", ")));
+  const sr = n.search;
+  if (sr && sr.rel) out.push("   " + (sr.pct >= 50 ? fmt(s.search_fast, esc(sr.term), sr.pct) : fmt(s.search_slow, esc(sr.term), 100 - sr.pct)));
   const p = (n.pain || [])[0];
   if (p) out.push(`   ${s.pain} <a href="${esc(p.url || "")}">«${esc(String(p.text || "").slice(0, 120))}»</a>${p.likes ? " · ♥ " + p.likes : ""}`);
   const g = n.gap;
@@ -2350,6 +2352,7 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
     }
     for (const t of (d.local_tasks || []).slice(0, 3)) add(`KAZAKHSTAN COMPANY TASK in "${d.niche}" (Astana Hub, ${t.bids ?? "?"} team bids): ${t.company || "?"} needs: ${t.title}`, t.url);
     if ((d.hiring || []).length) add(`HIRING in "${d.niche}": ${d.hiring_n} funded companies posted jobs in the latest HN "Who is hiring": ${d.hiring.map((h) => h.company).join(", ")}`, d.hiring[0].url);
+    if (d.search && d.search.rel) add(`GOOGLE SEARCH INTEREST in "${d.niche}" (Google Trends, query "${d.search.term}", worldwide): over the last 3 months it grew ${d.search.rel}x relative to the median niche, faster than ${d.search.pct}% of niches; weekly index for 26 weeks (0-100, relative) ${JSON.stringify(d.search.weekly || [])}. Google changed how it counts searches in mid-2026, so compare niches, not absolute values.`, `https://trends.google.com/trends/explore?q=${encodeURIComponent(d.search.term)}`);
     for (const p of (d.pain || []).slice(0, 2)) add(`PEOPLE ASK (${new Date(p.ts * 1000).toISOString().slice(0, 10)}, ${p.likes || 0} likes) about "${d.niche}": ${p.text}`, p.url);
     const w = d.web;
     if (w) {

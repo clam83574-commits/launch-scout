@@ -180,6 +180,16 @@ def niche_extras():
     check("сумма из формы D главнее", market.plausible_usd({"usd": 9e9, "usd_sec": 4e6, "stage": "seed"}) == (4e6, "sec"), "")
     check("дубли ниш склеиваются", market._stems("ai insurance broker automation") == market._stems("insurance brokerage automation"), "")
     check("разные ниши не склеиваются", market._stems("insurance claims automation") != market._stems("insurance brokerage automation"), "")
+    # Google Trends: рост считается относительно медианы ниш, а не сам по себе.
+    gt = {"n%d" % i: {"term": "t%d" % i, "g3m": 0.6, "ts": 1} for i in range(12)}
+    gt["hot"] = {"term": "hot", "g3m": 0.9, "ts": 1}
+    gt["rare"] = {"term": "rare", "low": True, "ts": 1}
+    hot = market.search_signal(gt, "hot")
+    check("поиск: рост выше медианы ниш", hot and hot["rel"] == 1.5 and hot["pct"] > 90, hot)
+    check("поиск: пустой ряд не считается", market.search_signal(gt, "rare") is None, "")
+    from sources import gtrends
+    flat = gtrends.summarize([(i, 50) for i in range(52)])
+    check("поиск: ровный ряд — рост ×1", flat["g3m"] == 1.0 and not flat["low"], flat)
 
 
 def imports():

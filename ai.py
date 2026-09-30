@@ -875,6 +875,35 @@ def tag_demand(posts, niches):
             if isinstance(e, dict) and e.get("niche") in allowed], None
 
 
+# --- 🔎 Поисковый запрос ниши для Google Trends --------------------------------
+
+GT_TERMS_SYSTEM = """For each startup niche give the ONE short search phrase (1-3 lowercase English words) that buyers or users of such products actually type into Google, so its search interest over time reflects demand for the niche (e.g. "ai agents for customer support" -> "ai customer service", "employee mental health benefits" -> "employee mental health", "clinical trial recruitment" -> "clinical trial recruitment").
+Prefer the common everyday wording over startup jargon. If no phrase would measure this niche without mixing in unrelated searches, give "".
+Reply JSON only: {"items": [{"niche": "...", "term": "..."}]}"""
+
+
+def gt_terms(niches):
+    """{ниша: поисковая фраза} для пачки ниш (до 60). (словарь, ошибка)."""
+    if not niches:
+        return {}, None
+    user = json.dumps({"niches": niches[:60]}, ensure_ascii=False)
+    if openrouter_key():
+        data, err = _chat_or(os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL, GT_TERMS_SYSTEM, user, max_tokens=3000)
+    else:
+        ok, why = available()
+        if not ok:
+            return {}, why
+        try:
+            data, err = _chat("openai/gpt-oss-20b", GT_TERMS_SYSTEM, user, max_tokens=3000)
+        except RateLimited as e:
+            return {}, "429 (%s)" % e
+    if err or not isinstance(data, dict):
+        return {}, err or "не JSON"
+    allowed = set(niches)
+    return {e["niche"]: re.sub(r"\s+", " ", str(e.get("term") or "").lower()).strip()[:40]
+            for e in (data.get("items") or []) if isinstance(e, dict) and e.get("niche") in allowed}, None
+
+
 def write_market_story(stats_text, lang="ru"):
     """
     Вывод «куда движется рынок» по готовой таблице цифр. (текст, ошибка).
