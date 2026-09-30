@@ -1,12 +1,14 @@
-import requests, json, time
-UA={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"}
-s=requests.Session(); s.headers.update(UA)
-r=s.get("https://trends.google.com/trending/rss?geo=US",timeout=20); print("rss",r.status_code,len(r.text))
-r=s.get("https://trends.google.com/?geo=US",timeout=20); print("home",r.status_code, list(s.cookies.keys()))
-req={"comparisonItem":[{"keyword":"ai agents","geo":"","time":"today 12-m"}],"category":0,"property":""}
-r=s.get("https://trends.google.com/trends/api/explore",params={"hl":"en-US","tz":"0","req":json.dumps(req)},timeout=20)
-print("explore",r.status_code,r.text[:200])
-if r.status_code==200:
-    w=json.loads(r.text[5:])["widgets"][0]
-    r2=s.get("https://trends.google.com/trends/api/widgetdata/multiline",params={"hl":"en-US","tz":"0","req":json.dumps(w["request"]),"token":w["token"]},timeout=20)
-    print("multiline",r2.status_code,r2.text[:300])
+import time, sys
+sys.path.insert(0, ".")
+from sources.gtrends import Trends, summarize, Blocked
+terms = ["ai agents","humanoid robot","ai sdr","vertical saas","clinical trial recruitment","remote patient monitoring","ai code review","vibe coding","voice ai","ai tutor","carbon accounting","defense drones","stablecoin payments","ai legal assistant","construction software","ev charging","insurtech","wealthtech","creator economy","ai video generation","llm observability","synthetic data","robotic surgery","longevity clinic","ai recruiting","expense management","cybersecurity ai","quantum computing","nuclear fusion","agentic commerce","mcp server","ai customer support","edtech","femtech","pet tech"]
+t = Trends(pause=float(sys.argv[1]) if len(sys.argv) > 1 else 3)
+t0 = time.time()
+for i, term in enumerate(terms):
+    try:
+        s = summarize(t.weekly(term))
+        print(i, term, "ok", {k: v for k, v in (s or {}).items() if k != "weekly"}, round(time.time()-t0))
+    except Blocked as e:
+        print(i, term, "BLOCKED", round(time.time()-t0)); break
+    except Exception as e:
+        print(i, term, "ERR", e)
