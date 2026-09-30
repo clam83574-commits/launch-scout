@@ -2269,6 +2269,8 @@ def split_step(conn, now, verbose=True):
                       "what": (json.loads(r["what"]).get("en") if r["what"] else "") or r["title"][:160]}
                      for r in chunk]
             got, err = ai.split_niche(niche, items)
+            if err:                       # провайдер иногда обрывает ответ — один повтор
+                got, err = ai.split_niche(niche, items)
             if err:
                 if verbose:
                     print("  дробление «%s»: %s" % (niche, err))
@@ -2278,7 +2280,10 @@ def split_step(conn, now, verbose=True):
                 if ru:
                     names.setdefault(narrow, ru)
                 moved += 1
-        done_map[niche] = now
+        # Отметка «сделано» — только если что-то переразмечено: сорвавшаяся
+        # попытка (2026-10-01) иначе откладывала нишу на неделю.
+        if moved:
+            done_map[niche] = now
         if verbose:
             print("  дробление «%s»: %d компаний переразмечено" % (niche, moved))
     db.kv_set(conn, "split_done", json.dumps(done_map))
