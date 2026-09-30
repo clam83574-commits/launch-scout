@@ -864,6 +864,16 @@ def niches(conn, now, days=NICHE_DAYS, limit=12, window_min=2):
         web = json.loads(db.kv_get(conn, "niche_web", "{}") or "{}")
     except ValueError:
         web = {}
+    _ensure_intel(conn)
+    tasks_by, hire_by = {}, {}
+    for t in conn.execute("SELECT url, title, company, bids, niche, first_seen FROM local_tasks "
+                          "WHERE niche IS NOT NULL AND niche != '' AND first_seen >= ?", (now - 120 * 86400,)).fetchall():
+        tasks_by.setdefault(t["niche"], []).append(dict(t))
+    last_month = conn.execute("SELECT month FROM hiring ORDER BY ts DESC LIMIT 1").fetchone()
+    if last_month:
+        for h in conn.execute("SELECT company, url, niche FROM hiring WHERE month = ? AND niche IS NOT NULL",
+                              (last_month["month"],)).fetchall():
+            hire_by.setdefault(h["niche"], []).append({"company": h["company"], "url": h["url"]})
     for niche, allr in hist.items():
         if niche in JUNK_NICHES or len(niche) < 4:
             continue
@@ -900,6 +910,11 @@ def niches(conn, now, days=NICHE_DAYS, limit=12, window_min=2):
             "companies": [_round_brief(r) for r in sorted(lst, key=lambda r: -(r["usd"] or 0))[:5]],
             "companies_6m": len(allr),
             "late": sum(1 for r in lst if r["stage"] in ("b", "c+", "growth")),
+            # Местный спрос: компании Казахстана просят сделать такое (Astana Hub).
+            "local_tasks": sorted(tasks_by.get(niche, []), key=lambda t: -(t["bids"] or 0))[:3],
+            "local_tasks_n": len(tasks_by.get(niche, [])),
+            # Деньги превращаются в найм: компании ниши в последнем треде HN.
+            "hiring": hire_by.get(niche, [])[:5], "hiring_n": len(hire_by.get(niche, [])),
         })
         if window_min == 0:
             # Поля матрицы (niche_matrix): полгода целиком, а не окно 28 дней.
@@ -949,8 +964,13 @@ def opportunity(n):
     mom = 0 if recent < 3 else 20 if momentum >= 2 else 12 if momentum >= 1.3 else 5 if momentum >= 0.9 else 0
     parts.append(("momentum", mom, {"recent": recent, "before": before}))
     # Спрос людей: посты «сделайте кто-нибудь…» по этой нише.
-    dem = min(15, pain * 8)
-    parts.append(("demand", dem, {"posts": pain}))
+    tasks_kz = n.get("local_tasks_n", 0)
+    dem = min(15, pain * 8) + min(16, tasks_kz * 8)
+    parts.append(("demand", min(dem, 25), {"posts": pain, "kz_company_tasks": tasks_kz}))
+    # Найм: компании ниши, поднявшие раунды, открыли вакансии — деньги идут в работу.
+    hire = min(8, n.get("hiring_n", 0) * 4)
+    if hire:
+        parts.append(("hiring", hire, {"companies_hiring": n.get("hiring_n", 0)}))
     # Конкуренция: сколько разных компаний подняли деньги за полгода.
     comp = 0 if crowd <= 5 else -5 if crowd <= 12 else -12 if crowd <= 25 else -20
     if mega:
@@ -1750,6 +1770,16 @@ def _ensure_intel(conn):
         " acc TEXT PRIMARY KEY, cik TEXT, company TEXT, filed INTEGER, industry TEXT, sector TEXT,"
         " sold REAL, state TEXT, year_inc INTEGER, url TEXT, done INTEGER DEFAULT 0, keep INTEGER DEFAULT 0)")
     conn.execute("CREATE INDEX IF NOT EXISTS formd_filed ON formd (filed)")
+    # Задачи компаний Казахстана (Astana Hub), найм (HN), хакатоны (Devpost).
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS local_tasks (url TEXT PRIMARY KEY, first_seen INTEGER, title TEXT, descr TEXT,"
+        " company TEXT, area TEXT, deadline TEXT, bids INTEGER, niche TEXT)")
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS hiring (id TEXT PRIMARY KEY, month TEXT, company TEXT, text TEXT, url TEXT,"
+        " niche TEXT, ts INTEGER)")
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS hackathons (url TEXT PRIMARY KEY, first_seen INTEGER, title TEXT, org TEXT,"
+        " themes TEXT, prize TEXT, dates TEXT, location TEXT)")
 
 
 # «1. Island , $400M, cybersecurity: Island, a developer of …» — строка
@@ -2014,6 +2044,10 @@ def chat_facts(conn, now):
         "revenue": [{"ts": r["ts"], "kind": r["kind"], "who": r["company"], "usd": r["value_usd"],
                      "text": r["text"], "url": r["url"], "source": r["source"]} for r in rev],
         "articles": analysis_articles(conn, now, days=10, limit=6),
+        "local_tasks": [dict(t) for t in conn.execute(
+            "SELECT title, company, area, bids, deadline, url, niche FROM local_tasks ORDER BY first_seen DESC LIMIT 40").fetchall()],
+        "hackathons": [dict(h) for h in conn.execute(
+            "SELECT title, org, themes, prize, dates, location, url FROM hackathons ORDER BY first_seen DESC LIMIT 40").fetchall()],
         # «Боль» за 60 дней — для инструмента search_pain в чате.
         "pain": [{"ts": p["ts"], "likes": p["likes"], "niche": p["niche"] or "", "text": (p["text"] or "")[:220],
                   "url": p["url"]} for p in conn.execute(
@@ -2142,6 +2176,62 @@ def gap_step(conn, now, rep, verbose=True):
         db.kv_set(conn, "niche_gaps", json.dumps(gaps, ensure_ascii=False))
         conn.commit()
     return done
+
+
+# ---------------------------------------------------------------------------
+# 🏢 Задачи компаний КЗ, найм, хакатоны — раз в сутки
+# ---------------------------------------------------------------------------
+def signals_step(conn, now, verbose=True):
+    """
+    Раз в сутки: задачи Astana Hub (к нишам их привязывает ИИ), тред HN «Who
+    is hiring» (совпадения с компаниями, поднявшими раунды), хакатоны Devpost.
+    """
+    import ai
+    from sources import signals as sg
+    _ensure_intel(conn)
+    if now - int(db.kv_get(conn, "signals_ts", 0) or 0) < 20 * 3600:
+        return 0
+    db.kv_set(conn, "signals_ts", now)
+    notes = []
+    tasks, err = sg.astanahub_tasks(pages=5)
+    for t in tasks:
+        conn.execute("INSERT OR IGNORE INTO local_tasks (url, first_seen, title, descr, company, area, deadline, bids) "
+                     "VALUES (?,?,?,?,?,?,?,?)", (t["url"], now, t["title"], t["desc"], t["company"], t["area"],
+                                                  t["deadline"], t["bids"]))
+        conn.execute("UPDATE local_tasks SET bids = ?, deadline = ? WHERE url = ?", (t["bids"], t["deadline"], t["url"]))
+    notes.append("задачи КЗ %d%s" % (len(tasks), (" (" + err + ")") if err else ""))
+    todo = conn.execute("SELECT url, title, descr FROM local_tasks WHERE niche IS NULL LIMIT 30").fetchall()
+    known = known_niches(conn, now, days=HISTORY_WEEKS * 7)
+    if todo and known:
+        got, _e = ai.tag_demand([{"id": r["url"], "text": "%s. %s" % (r["title"], (r["descr"] or "")[:300])} for r in todo],
+                                known)
+        found = dict(got)
+        for r in todo:
+            conn.execute("UPDATE local_tasks SET niche = ? WHERE url = ?", (found.get(r["url"], ""), r["url"]))
+    month, jobs, err = sg.hn_hiring()
+    idx = {}
+    for r in rounds(conn, now - HISTORY_WEEKS * 7 * 86400):
+        k = company_norm(r["company"])
+        if len(k) >= 4:
+            idx[k] = r["niche"]
+    matched = 0
+    for j in jobs:
+        k = company_norm(j["company"])
+        niche = idx.get(k)
+        matched += 1 if niche is not None else 0
+        conn.execute("INSERT OR REPLACE INTO hiring (id, month, company, text, url, niche, ts) VALUES (?,?,?,?,?,?,?)",
+                     (j["id"], month, j["company"], j["text"], j["url"], niche, now))
+    notes.append("вакансии HN %d, из них у компаний с раундами %d%s" % (len(jobs), matched, (" (" + err + ")") if err else ""))
+    hacks, err = sg.devpost_hackathons()
+    for h in hacks:
+        conn.execute("INSERT OR IGNORE INTO hackathons (url, first_seen, title, org, themes, prize, dates, location) "
+                     "VALUES (?,?,?,?,?,?,?,?)", (h["url"], now, h["title"], h["org"], json.dumps(h["themes"]),
+                                                  h["prize"], h["dates"], h["location"]))
+    notes.append("хакатоны %d%s" % (len(hacks), (" (" + err + ")") if err else ""))
+    conn.commit()
+    if verbose:
+        print("  сигналы: " + "; ".join(notes))
+    return len(tasks) + len(jobs) + len(hacks)
 
 
 # ---------------------------------------------------------------------------

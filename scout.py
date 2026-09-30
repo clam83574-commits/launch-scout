@@ -767,6 +767,10 @@ def market_step(conn, now, dry=False):
         print("  история: ошибка %s" % e)
     # Очередь разбора раундов — каждый прогон понемногу: ниши и стадии
     # появляются по мере разбора, и отчёт пересчитывается без сети.
+    try:
+        market.signals_step(conn, now)
+    except Exception as e:          # сигналы — надстройка
+        print("  сигналы: ошибка %s" % e)
     enriched = market.enrich_deals(conn, now)
     try:
         if market.split_step(conn, now):

@@ -320,6 +320,16 @@ const EXTRA = {
     e_busy: "ИИ сейчас не ответил — попробуйте через минуту.",
     digging: "🔍 Копаю: раунды за полгода, конкуренты, жалобы, аналоги в СНГ — до минуты.",
     dig_btn: "🔍 Глубже",
+    radar_title: "🎯 <b>Возможности под вас</b>", radar_fit: "совпадение", radar_why: "почему:", radar_show: "🎯 Показать радар",
+    founder_title: "🎯 <b>Ваш профиль</b>\nОтметьте ответы — по ним бот подбирает возможности и отвечает в чате.",
+    founder_edit: "✏️ Профиль",
+    fq_budget: "💰 Бюджет", fa_budget_5k: "до $5k", fa_budget_20k: "до $20k", fa_budget_100k: "$100k+",
+    fq_skills: "🧠 Навыки", fa_skills_dev: "разработка", fa_skills_sales: "продажи", fa_skills_marketing: "маркетинг", fa_skills_industry: "опыт в отрасли",
+    fq_markets: "🌍 Рынки", fa_markets_kz: "Казахстан", fa_markets_cis: "СНГ", fa_markets_mena: "MENA", fa_markets_us: "США", fa_markets_global: "весь мир",
+    fq_models: "🧩 Модель", fa_models_saas: "SaaS", fa_models_marketplace: "маркетплейс", fa_models_agent: "ИИ-агент", fa_models_fintech: "финтех", fa_models_hardware: "железо",
+    fq_horizon: "⏱ Срок до запуска", fa_horizon_1m: "1 месяц", fa_horizon_3m: "3 месяца", fa_horizon_1y: "год",
+    why_fit_model: "ваша модель", why_heavy: "капиталоёмко для бюджета", why_overheated: "перегрев", why_kz_free: "в КЗ свободно",
+    why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
     opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
@@ -361,6 +371,16 @@ const EXTRA = {
     e_busy: "ЖИ қазір жауап бермеді — бір минуттан кейін көріңіз.",
     digging: "🔍 Зерттеп жатырмын: жарты жылдағы раундтар, бәсекелестер, шағымдар, ТМД-дағы аналогтар — бір минутқа дейін.",
     dig_btn: "🔍 Тереңірек",
+    radar_title: "🎯 <b>Сізге арналған мүмкіндіктер</b>", radar_fit: "сәйкестік", radar_why: "неге:", radar_show: "🎯 Радарды көрсету",
+    founder_title: "🎯 <b>Сіздің профиліңіз</b>\nЖауаптарды белгілеңіз — бот соған қарай мүмкіндіктер іріктейді.",
+    founder_edit: "✏️ Профиль",
+    fq_budget: "💰 Бюджет", fa_budget_5k: "$5k дейін", fa_budget_20k: "$20k дейін", fa_budget_100k: "$100k+",
+    fq_skills: "🧠 Дағдылар", fa_skills_dev: "әзірлеу", fa_skills_sales: "сату", fa_skills_marketing: "маркетинг", fa_skills_industry: "сала тәжірибесі",
+    fq_markets: "🌍 Нарықтар", fa_markets_kz: "Қазақстан", fa_markets_cis: "ТМД", fa_markets_mena: "MENA", fa_markets_us: "АҚШ", fa_markets_global: "бүкіл әлем",
+    fq_models: "🧩 Модель", fa_models_saas: "SaaS", fa_models_marketplace: "маркетплейс", fa_models_agent: "ЖИ-агент", fa_models_fintech: "финтех", fa_models_hardware: "құрылғы",
+    fq_horizon: "⏱ Іске қосу мерзімі", fa_horizon_1m: "1 ай", fa_horizon_3m: "3 ай", fa_horizon_1y: "жыл",
+    why_fit_model: "сіздің модель", why_heavy: "бюджетке ауыр", why_overheated: "қызып кеткен", why_kz_free: "ҚЗ-да бос",
+    why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
     opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
@@ -402,6 +422,16 @@ const EXTRA = {
     e_busy: "The AI did not answer just now — try again in a minute.",
     digging: "🔍 Digging: six months of rounds, competitors, complaints, CIS analogs — up to a minute.",
     dig_btn: "🔍 Deeper",
+    radar_title: "🎯 <b>Opportunities for you</b>", radar_fit: "fit", radar_why: "why:", radar_show: "🎯 Show radar",
+    founder_title: "🎯 <b>Your profile</b>\nTick your answers — the bot picks opportunities and answers in chat accordingly.",
+    founder_edit: "✏️ Profile",
+    fq_budget: "💰 Budget", fa_budget_5k: "up to $5k", fa_budget_20k: "up to $20k", fa_budget_100k: "$100k+",
+    fq_skills: "🧠 Skills", fa_skills_dev: "engineering", fa_skills_sales: "sales", fa_skills_marketing: "marketing", fa_skills_industry: "industry know-how",
+    fq_markets: "🌍 Markets", fa_markets_kz: "Kazakhstan", fa_markets_cis: "CIS", fa_markets_mena: "MENA", fa_markets_us: "US", fa_markets_global: "global",
+    fq_models: "🧩 Model", fa_models_saas: "SaaS", fa_models_marketplace: "marketplace", fa_models_agent: "AI agent", fa_models_fintech: "fintech", fa_models_hardware: "hardware",
+    fq_horizon: "⏱ Time to launch", fa_horizon_1m: "1 month", fa_horizon_3m: "3 months", fa_horizon_1y: "a year",
+    why_fit_model: "your model", why_heavy: "capital-heavy for the budget", why_overheated: "overheated", why_kz_free: "free in KZ",
+    why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
     opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
@@ -465,7 +495,8 @@ function keyboardFor(lang) {
   return {
     inline_keyboard: [
       [{ text: s.kb_market, callback_data: "market" }, { text: s.kb_niches, callback_data: "niches" }],
-      [{ text: s.kb_sectors, callback_data: "sectors" }, { text: s.kb_top, callback_data: "top:0" }],
+      [{ text: s.radar_show, callback_data: "radar" }, { text: s.kb_sectors, callback_data: "sectors" }],
+      [{ text: s.kb_top, callback_data: "top:0" }],
       [{ text: s.kb_settings, callback_data: "set" }, { text: s.kb_app, web_app: { url: APP_URL } }],
     ],
   };
@@ -975,15 +1006,15 @@ async function settingsAction(env, chatId, msgId, data, prefs, lang) {
  * Меню команд в Telegram — один раз на версию (помечается в kv). Раньше
  * команд в меню не было вовсе: /trends, /lang знали только те, кому сказали.
  */
-const COMMANDS_VERSION = "2026-09-30";
+const COMMANDS_VERSION = "2026-10-01";
 async function setupCommands(env) {
   if ((await meta(env, "commands_version")) === COMMANDS_VERSION) return;
   const list = {
-    ru: [["market", "🧭 Куда движется рынок"], ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"],  ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
+    ru: [["market", "🧭 Куда движется рынок"], ["radar", "🎯 Возможности под меня"], ["profile", "✏️ Мой профиль"],  ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"],  ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
       ["sectors", "🗂 Секторы"], ["settings", "⚙️ Настройки уведомлений"], ["lang", "🌐 Язык"]],
-    en: [["market", "🧭 Where the market is heading"], ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"],  ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
+    en: [["market", "🧭 Where the market is heading"], ["radar", "🎯 Opportunities for me"], ["profile", "✏️ My profile"],  ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"],  ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
       ["sectors", "🗂 Sectors"], ["settings", "⚙️ Notification settings"], ["lang", "🌐 Language"]],
-    kk: [["market", "🧭 Нарық қайда бет алды"], ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"],  ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
+    kk: [["market", "🧭 Нарық қайда бет алды"], ["radar", "🎯 Маған арналған мүмкіндіктер"], ["profile", "✏️ Профилім"],  ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"],  ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
       ["sectors", "🗂 Салалар"], ["settings", "⚙️ Хабарлама баптаулары"], ["lang", "🌐 Тіл"]],
   };
   const cmd = (arr) => arr.map(([command, description]) => ({ command, description }));
@@ -1207,6 +1238,32 @@ async function handleUpdate(env, update) {
   }
   if (data === "niches" || text.startsWith("/niches")) {
     await nichesMsg(env, chatId, lang, null, prefs);
+    return;
+  }
+  if (data === "radar" || text.startsWith("/radar")) {
+    await radarMsg(env, chatId, lang, prefs);
+    return;
+  }
+  if (data === "fprof" || text.startsWith("/profile")) {
+    await show(env, chatId, data ? msgId : null, founderView(prefs, lang));
+    return;
+  }
+  if (data.startsWith("fp:")) {
+    const [, k, v] = data.split(":");
+    if (FOUNDER_Q[k] && FOUNDER_Q[k].includes(v)) {
+      const f = { ...(prefs.founder || {}) };
+      if (FOUNDER_MULTI.has(k)) {
+        const set = new Set(f[k] || []);
+        if (set.has(v)) set.delete(v); else set.add(v);
+        f[k] = [...set];
+      } else f[k] = f[k] === v ? null : v;
+      const p = await setPrefs(env, chatId, { founder: f });
+      // Профиль видит и ИИ-собеседник: подбирает ответы под человека.
+      const sum = founderSummary(f);
+      if (sum) await env.DB.prepare("INSERT OR REPLACE INTO chat_profile (user_id, about, ts) VALUES (?1, ?2, ?3)")
+        .bind(String(chatId), sum, Math.floor(Date.now() / 1000)).run().catch(() => null);
+      await show(env, chatId, msgId, founderView(p, lang));
+    }
     return;
   }
   if (data.startsWith("dd:")) {
@@ -2291,6 +2348,8 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
     for (const r of (d.top_6m || []).slice(0, 5)) {
       add(`ROUND ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${d.niche}"${(r.investors || []).length ? ", investors " + r.investors.join(", ") : ""}: ${(r.what || {}).en || ""}`, r.url);
     }
+    for (const t of (d.local_tasks || []).slice(0, 3)) add(`KAZAKHSTAN COMPANY TASK in "${d.niche}" (Astana Hub, ${t.bids ?? "?"} team bids): ${t.company || "?"} needs: ${t.title}`, t.url);
+    if ((d.hiring || []).length) add(`HIRING in "${d.niche}": ${d.hiring_n} funded companies posted jobs in the latest HN "Who is hiring": ${d.hiring.map((h) => h.company).join(", ")}`, d.hiring[0].url);
     for (const p of (d.pain || []).slice(0, 2)) add(`PEOPLE ASK (${new Date(p.ts * 1000).toISOString().slice(0, 10)}, ${p.likes || 0} likes) about "${d.niche}": ${p.text}`, p.url);
     const w = d.web;
     if (w) {
@@ -2310,6 +2369,13 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
     const { results } = await env.DB.prepare("SELECT * FROM rounds WHERE country IN ('KZ','UZ','KG','TJ','AM','GE','AZ','BY','RU') ORDER BY ts DESC LIMIT 15")
       .all().catch(() => ({ results: [] }));
     for (const r of results || []) add(`ROUND IN THE REGION (${r.country}) ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${r.niche}"${r.investors ? ", investors " + r.investors : ""}: ${r.what_en || r.what_ru || ""}`, r.url);
+  }
+  const chatSnap = ((snap && marketOf(snap)) || {}).chat || {};
+  if (/казах|kazakh|\bkz\b|снг|\bcis\b|заказчик|задач\p{L}* компан|astana ?hub/iu.test(question)) {
+    for (const t of (chatSnap.local_tasks || []).slice(0, 10)) add(`KAZAKHSTAN COMPANY TASK (Astana Hub, area "${t.area}", ${t.bids ?? "?"} team bids, deadline ${t.deadline}): ${t.company || "?"} needs: ${t.title}`, t.url);
+  }
+  if (/хакатон|hackathon|devpost/iu.test(question)) {
+    for (const h of (chatSnap.hackathons || []).slice(0, 12)) add(`HACKATHON (Devpost, ${h.dates}, ${h.location}): ${h.title} by ${h.org}, prize ${h.prize}, themes ${h.themes}`, h.url);
   }
   // Общий вопрос («куда идти?») или мало совпадений — верхние возможности.
   const rep = ((snap && marketOf(snap)) || {}).report || {};
@@ -2550,6 +2616,113 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// 🎯 Персональный радар: анкета из 5 вопросов -> возможности под человека
+//
+// «Вот 100 новых стартапов» — информационный продукт; «вот 3 возможности,
+// которые подходят именно тебе, и почему» — инструмент решения (разбор
+// концепции 2026-09-30). Подбор — прозрачные правила над матрицей ниш, без
+// ИИ: у каждой поправки видна причина.
+// ---------------------------------------------------------------------------
+const FOUNDER_Q = {
+  budget: ["5k", "20k", "100k"],
+  skills: ["dev", "sales", "marketing", "industry"],
+  markets: ["kz", "cis", "mena", "us", "global"],
+  models: ["saas", "marketplace", "agent", "fintech", "hardware"],
+  horizon: ["1m", "3m", "1y"],
+};
+const FOUNDER_MULTI = new Set(["skills", "markets", "models"]);
+const MODEL_SECTORS = {
+  saas: ["b2b_saas", "devtools", "security", "health", "edu", "proptech"],
+  marketplace: ["commerce", "consumer", "mobility", "proptech"],
+  agent: ["ai_agents", "ai_infra", "devtools", "b2b_saas"],
+  fintech: ["fintech", "crypto"],
+  hardware: ["hardware", "energy", "defense_space", "mobility"],
+};
+const HEAVY = new Set(["hardware", "defense_space", "energy", "ai_infra"]);
+
+/** Возможности под профиль: [{n, score, reasons}] — лучшие первыми. */
+function radarFor(rep, f) {
+  const out = [];
+  for (const n of (rep.niches || [])) {
+    const o = n.opp || {};
+    let score = o.score || 0;
+    const why = [];
+    const sectors = (f.models || []).flatMap((m) => MODEL_SECTORS[m] || []);
+    if (sectors.length && sectors.includes(n.sector)) { score += 15; why.push("fit_model"); }
+    if (sectors.length && !sectors.includes(n.sector)) score -= 10;
+    if (f.budget === "5k" && HEAVY.has(n.sector)) { score -= 25; why.push("heavy"); }
+    if (f.budget !== "100k" && o.type === "overheated") { score -= 20; why.push("overheated"); }
+    const local = (f.markets || []).some((m) => m === "kz" || m === "cis");
+    if (local && n.gap) {
+      if (n.gap.kz === "free") { score += 15; why.push("kz_free"); }
+      if (n.gap.kz === "crowded") { score -= 10; why.push("kz_crowded"); }
+    }
+    if (local && (n.local_tasks_n || 0) > 0) { score += 10; why.push("kz_tasks"); }
+    if (f.horizon === "1m" && (o.type === "window" || o.type === "local_gap")) { score += 10; why.push("fast"); }
+    if ((f.skills || []).includes("dev") && ["devtools", "ai_agents", "ai_infra"].includes(n.sector)) score += 5;
+    if ((f.skills || []).includes("sales") && ["b2b_saas", "fintech", "health"].includes(n.sector)) score += 5;
+    if ((n.hiring_n || 0) > 0) why.push("hiring");
+    out.push({ n, score: Math.max(0, Math.min(100, Math.round(score))), why });
+  }
+  return out.sort((a, b) => b.score - a.score);
+}
+
+function radarText(rep, f, lang, limit = 3) {
+  const s = L(lang);
+  const items = radarFor(rep, f).slice(0, limit);
+  if (!items.length) return "";
+  const lines = [s.radar_title];
+  items.forEach(({ n, score, why }, i) => {
+    const o = n.opp || {};
+    lines.push("", `${i + 1}. <b>${esc(nicheName(rep, n, lang))}</b> — ${s.radar_fit} ${score}/100`);
+    lines.push(`   ${s["opp_" + o.type] || o.type || ""}`);
+    lines.push(`   ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}`);
+    const reasons = why.map((w) => s["why_" + w]).filter(Boolean);
+    if (reasons.length) lines.push(`   ${s.radar_why} ${reasons.join(", ")}`);
+    const t = (n.local_tasks || [])[0];
+    if (t) lines.push(`   🏢 <a href="${esc(t.url)}">${esc(String(t.title).slice(0, 90))}</a> — ${esc(t.company || "")}`);
+  });
+  return lines.join("\n");
+}
+
+function founderView(p, lang, step = null) {
+  const s = L(lang);
+  const f = p.founder || {};
+  const on = (k, v) => (FOUNDER_MULTI.has(k) ? (f[k] || []).includes(v) : f[k] === v);
+  const rows = [];
+  for (const k of Object.keys(FOUNDER_Q)) {
+    rows.push([{ text: s["fq_" + k], callback_data: "noop" }]);
+    const opts = FOUNDER_Q[k].map((v) => ({ text: (on(k, v) ? "✅ " : "") + s["fa_" + k + "_" + v], callback_data: `fp:${k}:${v}` }));
+    for (let i = 0; i < opts.length; i += 3) rows.push(opts.slice(i, i + 3));
+  }
+  rows.push([{ text: s.radar_show, callback_data: "radar" }, { text: s.done, callback_data: "home" }]);
+  return { text: s.founder_title, reply_markup: { inline_keyboard: rows } };
+}
+
+async function radarMsg(env, chatId, lang, prefs) {
+  const s = L(lang);
+  if (!prefs.founder || !Object.keys(prefs.founder).length) {
+    await show(env, chatId, null, founderView(prefs, lang));
+    return;
+  }
+  const rep = ((marketOf(await loadSnapshot(env))) || {}).report || {};
+  const text = radarText(rep, prefs.founder, lang, 5) || s.niches_empty;
+  await tg(env, "sendMessage", { chat_id: chatId, text: text.slice(0, 3900), parse_mode: "HTML", disable_web_page_preview: true,
+    reply_markup: { inline_keyboard: [[{ text: s.founder_edit, callback_data: "fprof" }, { text: s.kb_niches, callback_data: "niches" }]] } });
+}
+
+/** Профиль основателя — и для чата: коротко, по-английски, в chat_profile. */
+function founderSummary(f) {
+  const bits = [];
+  if (f.budget) bits.push(`budget ~$${f.budget}`);
+  if ((f.skills || []).length) bits.push(`skills: ${f.skills.join(", ")}`);
+  if ((f.markets || []).length) bits.push(`markets: ${f.markets.join(", ")}`);
+  if ((f.models || []).length) bits.push(`business models: ${f.models.join(", ")}`);
+  if (f.horizon) bits.push(`time to launch: ${f.horizon}`);
+  return bits.length ? "Founder: " + bits.join("; ") + "." : "";
+}
+
 // Один раз на экземпляр Worker: иначе каждое нажатие кнопки стоило бы
 // пяти лишних запросов к D1.
 let tablesReady = false;
@@ -2571,7 +2744,7 @@ async function ensureTables(env) {
   ]);
   // Таблица prefs создавалась раньше без языка и фильтров — дополняем на
   // месте. Повторное добавление колонки D1 отклоняет, это ожидаемо.
-  for (const col of ["lang", "audience", "notify", "sectors", "sources", "sens", "niches"]) {
+  for (const col of ["lang", "audience", "notify", "sectors", "sources", "sens", "niches", "founder"]) {
     await env.DB.prepare(`ALTER TABLE prefs ADD COLUMN ${col} TEXT`).run().catch(() => null);
   }
   tablesReady = true;
@@ -2643,6 +2816,7 @@ async function getPrefs(env, uid) {
     audience: arr(j(row && row.audience, null)),
     sectors: arr(j(row && row.sectors, null)),
     niches: arr(j(row && row.niches, null)),
+    founder: j(row && row.founder, null),
     sources: arr(j(row && row.sources, null)),
     sens: row && SENS[row.sens] ? row.sens : "normal",
     notify: { ...NOTIFY_DEFAULT, ...n },
@@ -2654,12 +2828,12 @@ async function setPrefs(env, uid, patch) {
   const cur = await getPrefs(env, uid);
   const next = { ...cur, ...patch };
   await env.DB.prepare(
-    "INSERT OR REPLACE INTO prefs (user_id, topics, ts, lang, audience, notify, sectors, sources, sens, niches) " +
-      "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)"
+    "INSERT OR REPLACE INTO prefs (user_id, topics, ts, lang, audience, notify, sectors, sources, sens, niches, founder) " +
+      "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"
   ).bind(String(uid), JSON.stringify(next.topics || []), Math.floor(Date.now() / 1000), next.lang || null,
     JSON.stringify(next.audience || []), JSON.stringify(next.notify || NOTIFY_DEFAULT),
     JSON.stringify(next.sectors || []), JSON.stringify(next.sources || []), next.sens || "normal",
-    JSON.stringify(next.niches || [])).run();
+    JSON.stringify(next.niches || []), next.founder ? JSON.stringify(next.founder) : null).run();
   return next;
 }
 
@@ -2760,13 +2934,19 @@ async function notifyAll(env, body) {
         funding.push(text);
         continue;
       }
-      const r = await tg(env, "sendMessage", { chat_id: uid, text, parse_mode: "HTML", disable_web_page_preview: true });
+      let body = text;
+      if (typeof b !== "string" && b.kind === "brief" && p.founder && Object.keys(p.founder).length) {
+        const rep = ((marketOf(await loadSnapshot(env))) || {}).report || {};
+        const extra = radarText(rep, p.founder, lang, 3);
+        if (extra && (body + "\n\n" + extra).length < 3900) body += "\n\n" + extra;
+      }
+      const r = await tg(env, "sendMessage", { chat_id: uid, text: body, parse_mode: "HTML", disable_web_page_preview: true });
       if (r && r.ok) sent++;
       // Сводка дня — ещё и реплика в разговоре: на «расскажи подробнее про
       // эту нишу» чат должен понимать, о какой нише речь.
       if (r && r.ok && typeof b !== "string" && b.kind === "brief") {
         await env.DB.prepare("INSERT INTO chat_log (user_id, ts, role, text) VALUES (?1, ?2, 'assistant', ?3)")
-          .bind(String(uid), Math.floor(Date.now() / 1000), text.replace(/<[^>]+>/g, "").slice(0, 3000)).run().catch(() => null);
+          .bind(String(uid), Math.floor(Date.now() / 1000), body.replace(/<[^>]+>/g, "").slice(0, 3000)).run().catch(() => null);
       }
     }
     // Склейка по блокам, а не по символам: разрез посреди тега ломает HTML.
