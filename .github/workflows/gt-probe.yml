@@ -1,0 +1,8 @@
+name: gt-probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install requests && python gt_probe.py && sleep 20 && python gt_probe.py
