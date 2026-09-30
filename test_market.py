@@ -155,9 +155,9 @@ def niche_extras():
             ("Gamma", 3e6, 5, "seed", '["YC"]'), ("Delta", 2e6, 60, "seed", None)]
     for name, usd, days, stage, inv in rows:
         conn.execute("INSERT INTO deals (key, ts, seen, title, url, outlet, company, amount_usd, sectors, stage, "
-                     "niche, ai, investors) VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?)",
+                     "niche, ai, investors, src) VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?)",
                      (name, now - days * 86400, now, name + " raises", "u", "o", name, usd, '["ai_agents"]',
-                      stage, "ai agents for sales", inv))
+                      stage, "ai agents for sales", inv, "crunchbase"))
     conn.commit()
     n = market.niches(conn, now)[0]
     check("мегараунд не в сумме ниши", n["usd"] == 8e6, str(n["usd"]))
@@ -172,6 +172,14 @@ def niche_extras():
     win = market.opportunity({"n": 4, "early": 3, "usd": 9e6, "weekly": [0] * 16 + [0] * 6 + [1, 1, 1, 1],
                               "companies_6m": 5, "pain": [{"text": "x"}]})
     check("ранние раунды, мало игроков, рост — окно", win["type"] == "window", win["type"])
+    print("\n--- правдоподобие сумм и дубли ниш ---")
+    check("seed на $3 млрд отброшен", market.plausible_usd({"usd": 3e9, "stage": "seed", "outlets": 3})[0] is None, "")
+    check("seed на $5 млн оставлен", market.plausible_usd({"usd": 5e6, "stage": "seed", "outlets": 1})[0] == 5e6, "")
+    check("мегараунд из одной заметки отброшен", market.plausible_usd({"usd": 2e9, "stage": None, "outlets": 1})[1] == "single", "")
+    check("мегараунд из трёх изданий оставлен", market.plausible_usd({"usd": 2e9, "stage": None, "outlets": 3})[0] == 2e9, "")
+    check("сумма из формы D главнее", market.plausible_usd({"usd": 9e9, "usd_sec": 4e6, "stage": "seed"}) == (4e6, "sec"), "")
+    check("дубли ниш склеиваются", market._stems("ai insurance broker automation") == market._stems("insurance brokerage automation"), "")
+    check("разные ниши не склеиваются", market._stems("insurance claims automation") != market._stems("insurance brokerage automation"), "")
 
 
 def imports():

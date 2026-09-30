@@ -651,7 +651,7 @@ def rounds(conn, since, until=None):
         k = company_norm(r["company"]) or r["key"]
         g = groups.get(k)
         if g is None:
-            g = groups[k] = {"company": r["company"], "usd": None, "stage": None, "niche": None, "what": {},
+            g = groups[k] = {"company": r["company"], "usd": None, "stage": None, "niche": None, "what": {}, "src": r["src"],
                              "sectors": [], "ts": r["ts"], "url": r["url"], "title": r["title"],
                              "outlets": set(), "keys": [], "sent": False, "ai": False, "country": "", "investors": []}
         g["keys"].append(r["key"])
@@ -680,11 +680,111 @@ def rounds(conn, since, until=None):
         if r["ai"] or not g["ai"]:
             g["sectors"] += [s for s in secs if s in SECTOR and s not in g["sectors"]]
     out = []
+    alias = niche_aliases(conn)
+    sec = _formd_amounts(conn)
     for g in groups.values():
         g["outlets"] = len(g["outlets"])
         g["sectors"] = g["sectors"][:2]
+        if g["niche"]:
+            g["niche"] = alias.get(g["niche"], g["niche"])
+        # Официальная сумма из формы D главнее заголовка.
+        fd = sec.get(company_norm(g["company"]))
+        if fd and abs(fd["ts"] - g["ts"]) <= 90 * 86400:
+            g["usd_sec"] = fd["usd"]
+        g["usd"], g["usd_flag"] = plausible_usd(g)
         out.append(g)
     return out
+
+
+# Потолки сумм по стадиям: выше — почти наверняка оценка компании или
+# чужая сумма в заголовке. На замере 2026-09-30 «Vertical Insure — $3,0 млрд,
+# раунд A» попал в ответ ИИ как факт.
+STAGE_CAP = {"pre-seed": 15e6, "seed": 60e6, "a": 300e6, "b": 800e6}
+
+
+def plausible_usd(g):
+    """
+    (сумма, пометка). Пометка: None — сумма правдоподобна; "sec" — взята из
+    формы D; "stage" — не бьётся со стадией, отброшена; "single" — мегараунд
+    от $1 млрд лишь в одной заметке, отброшен.
+    """
+    usd = g.get("usd")
+    if g.get("usd_sec"):
+        return g["usd_sec"], "sec"
+    if not usd:
+        return usd, None
+    cap = STAGE_CAP.get(g.get("stage"))
+    if cap and usd > cap:
+        return None, "stage"
+    if usd >= MEGA_USD and g.get("outlets", 1) < 2 and g.get("src") not in ("crunchbase",):
+        return None, "single"
+    return usd, None
+
+
+_FD_CACHE = {}
+
+
+def _formd_amounts(conn):
+    """{нормализованное имя: {usd, ts}} из формы D — кэш на процесс."""
+    if "v" in _FD_CACHE:
+        return _FD_CACHE["v"]
+    out = {}
+    try:
+        _ensure_intel(conn)
+        for r in conn.execute("SELECT company, sold, filed FROM formd WHERE keep = 1").fetchall():
+            k = company_norm(r["company"])
+            if len(k) >= 4 and r["sold"]:
+                out[k] = {"usd": r["sold"], "ts": r["filed"]}
+    except Exception:
+        out = {}
+    _FD_CACHE["v"] = out
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Склейка дублей ниш
+# ---------------------------------------------------------------------------
+# «insurance brokerage automation» и «ai insurance broker automation» — одна
+# ниша, посчитанная дважды (замер 2026-09-30). Сравниваем по основам слов без
+# общих ярлыков; одинаковый набор основ — одна ниша, имя — самое частое.
+_GENERIC = {"ai", "ai-powered", "platform", "platforms", "software", "solution", "solutions", "tool", "tools",
+            "for", "the", "and", "of", "with", "based", "powered", "app", "apps", "service", "services",
+            "tech", "technology", "digital", "smart", "new", "next-gen", "generative", "genai", "llm"}
+
+
+def _stems(niche):
+    words = re.findall(r"[a-z0-9]+", (niche or "").lower().replace("-", " "))
+    return frozenset(w[:6] for w in words if w not in _GENERIC and len(w) > 1)
+
+
+def niche_aliases(conn):
+    """{ниша: каноническое имя} — кэш на процесс (строится один раз за прогон)."""
+    if "v" in _ALIAS_CACHE:
+        return _ALIAS_CACHE["v"]
+    rows = conn.execute("SELECT niche, COUNT(*) n FROM deals WHERE niche IS NOT NULL AND niche != '' "
+                        "AND is_round = 1 GROUP BY niche").fetchall()
+    groups = {}
+    for r in rows:
+        st = _stems(r["niche"])
+        if len(st) >= 2:
+            groups.setdefault(st, []).append((r["n"], r["niche"]))
+    alias = {}
+    for items in groups.values():
+        if len(items) < 2:
+            continue
+        canon = sorted(items, key=lambda x: (-x[0], len(x[1])))[0][1]
+        for _n, name in items:
+            if name != canon:
+                alias[name] = canon
+    try:
+        alias.update(json.loads(db.kv_get(conn, "niche_split_alias", "{}") or "{}"))
+    except ValueError:
+        pass
+    _ALIAS_CACHE["v"] = alias
+    return alias
+
+
+_ALIAS_CACHE = {}
 
 
 def money(conn, now):
