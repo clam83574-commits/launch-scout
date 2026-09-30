@@ -2304,6 +2304,13 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
   for (const res of companyRes) {
     for (const r of res.results || []) add(`ROUND ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${r.niche}": ${r.what_en || r.what_ru || ""}`, r.url);
   }
+  // Вопрос про регион — раунды компаний из Казахстана и СНГ (страна из
+  // разбора ИИ; русскоязычные источники добавлены 2026-09-30).
+  if (/казах|kazakh|\bkz\b|снг|\bcis\b|центральн\p{L}* ази|узбек|кыргыз|армен|грузи|азербайдж|алмат|астан/iu.test(question)) {
+    const { results } = await env.DB.prepare("SELECT * FROM rounds WHERE country IN ('KZ','UZ','KG','TJ','AM','GE','AZ','BY','RU') ORDER BY ts DESC LIMIT 15")
+      .all().catch(() => ({ results: [] }));
+    for (const r of results || []) add(`ROUND IN THE REGION (${r.country}) ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${r.niche}"${r.investors ? ", investors " + r.investors : ""}: ${r.what_en || r.what_ru || ""}`, r.url);
+  }
   // Общий вопрос («куда идти?») или мало совпадений — верхние возможности.
   const rep = ((snap && marketOf(snap)) || {}).report || {};
   if (rows.length < 2) {

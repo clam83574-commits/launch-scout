@@ -769,6 +769,11 @@ def market_step(conn, now, dry=False):
     # появляются по мере разбора, и отчёт пересчитывается без сети.
     enriched = market.enrich_deals(conn, now)
     try:
+        if market.split_step(conn, now):
+            enriched = True
+    except Exception as e:
+        print("  дробление ниш: ошибка %s" % e)
+    try:
         market.tag_demand_step(conn, now)
     except Exception as e:
         print("  «боль»: ошибка %s" % e)

@@ -1485,6 +1485,10 @@ def maybe_refresh(conn, now, force=False, verbose=True):
     if force or now - int(db.kv_get(conn, "market_yc_ts", 0) or 0) >= 86400:
         refresh_yc(conn, now, verbose=verbose)
     refresh_deals(conn, now, verbose=verbose)
+    try:
+        refresh_cis(conn, now, verbose=verbose)
+    except Exception as e:          # регион — надстройка
+        print("  раунды КЗ/СНГ: ошибка %s" % e)
     refresh_headlines(conn, now)
     rep = compute(conn, now)
     prev = db.kv_get(conn, "market_report")
@@ -2138,6 +2142,124 @@ def gap_step(conn, now, rep, verbose=True):
         db.kv_set(conn, "niche_gaps", json.dumps(gaps, ensure_ascii=False))
         conn.commit()
     return done
+
+
+# ---------------------------------------------------------------------------
+# ✂️ Дробление слишком широких ниш
+# ---------------------------------------------------------------------------
+BROAD_NICHE = 60        # компаний за полгода: больше — это сектор, а не ниша
+SPLIT_PER_RUN = 1
+
+
+def split_step(conn, now, verbose=True):
+    """
+    Ниши больше BROAD_NICHE компаний за полгода («health and wellness» — 199
+    раундов, замер 2026-09-30) переразмечаются ИИ на узкие «клиент + задача».
+    Одна ниша за прогон, каждая — не чаще раза в неделю. Метка ставится прямо
+    в строки deals, поэтому матрица и все подсчёты сразу видят узкие ниши.
+    """
+    import ai
+    if not ai.openrouter_key():
+        return 0
+    done_map = json.loads(db.kv_get(conn, "split_done", "{}") or "{}")
+    counts = {}
+    for r in rounds(conn, now - HISTORY_WEEKS * 7 * 86400):
+        if r["niche"]:
+            counts[r["niche"]] = counts.get(r["niche"], 0) + 1
+    broad = [n for n, c in sorted(counts.items(), key=lambda kv: -kv[1])
+             if c > BROAD_NICHE and now - int(done_map.get(n, 0)) > 7 * 86400][:SPLIT_PER_RUN]
+    names = niche_names(conn)
+    moved = 0
+    for niche in broad:
+        rows = conn.execute("SELECT key, company, what, title FROM deals WHERE niche = ? AND is_round = 1 "
+                            "AND ts >= ?", (niche, now - HISTORY_WEEKS * 7 * 86400)).fetchall()
+        for i in range(0, len(rows), 40):
+            chunk = rows[i:i + 40]
+            items = [{"id": r["key"], "company": r["company"],
+                      "what": (json.loads(r["what"]).get("en") if r["what"] else "") or r["title"][:160]}
+                     for r in chunk]
+            got, err = ai.split_niche(niche, items)
+            if err:
+                if verbose:
+                    print("  дробление «%s»: %s" % (niche, err))
+                break
+            for key, narrow, ru in got:
+                conn.execute("UPDATE deals SET niche = ? WHERE key = ?", (narrow, key))
+                if ru:
+                    names.setdefault(narrow, ru)
+                moved += 1
+        done_map[niche] = now
+        if verbose:
+            print("  дробление «%s»: %d компаний переразмечено" % (niche, moved))
+    db.kv_set(conn, "split_done", json.dumps(done_map))
+    db.kv_set(conn, "niche_names", json.dumps(names, ensure_ascii=False))
+    _ALIAS_CACHE.clear()
+    conn.commit()
+    return moved
+
+
+# ---------------------------------------------------------------------------
+# 🇰🇿 Раунды в Казахстане и СНГ — русскоязычные заголовки
+# ---------------------------------------------------------------------------
+# Англоязычные новости почти не пишут о сделках в регионе, а это первый
+# рынок продукта. Русские заголовки регулярка не разбирает — их сразу
+# отдаём ИИ (enrich_deals), он определит компанию, сумму, стадию и страну.
+CIS_QUERIES = (
+    '(привлек OR привлекла OR "раунд инвестиций" OR "посевной раунд" OR "привлёк") стартап '
+    '(Казахстан OR Алматы OR Астана)',
+    '(привлек OR привлекла OR "раунд инвестиций" OR "посевной раунд") стартап '
+    '(Узбекистан OR Кыргызстан OR Армения OR Грузия OR Азербайджан)',
+    '(стартап OR startup) (raises OR "seed round") (Kazakhstan OR Uzbekistan OR Kyrgyzstan OR Armenia OR Georgia)',
+)
+
+
+def fetch_gnews_ru(query, timeout=20):
+    """Google News по-русски (регион — Казахстан)."""
+    try:
+        r = requests.get(GNEWS, params={"q": query + " when:14d", "hl": "ru", "gl": "KZ", "ceid": "KZ:ru"},
+                         headers={"User-Agent": UA}, timeout=timeout)
+    except requests.RequestException as e:
+        return [], str(e)[:120]
+    if r.status_code != 200:
+        return [], "HTTP %d" % r.status_code
+    out = []
+    for it in re.findall(r"<item>(.*?)</item>", r.text, re.S):
+        title = re.search(r"<title>(.*?)</title>", it, re.S)
+        link = re.search(r"<link>(.*?)</link>", it, re.S)
+        date = re.search(r"<pubDate>(.*?)</pubDate>", it, re.S)
+        src = re.search(r"<source[^>]*>(.*?)</source>", it, re.S)
+        if not title:
+            continue
+        try:
+            ts = int(email.utils.parsedate_to_datetime(date.group(1)).timestamp()) if date else None
+        except (TypeError, ValueError):
+            ts = None
+        out.append((html.unescape(title.group(1)).strip(), link.group(1).strip() if link else "",
+                    html.unescape(src.group(1)).strip() if src else "", ts))
+    return out, None
+
+
+def refresh_cis(conn, now, verbose=True):
+    """Заголовки о раундах в регионе — в очередь разбора ИИ (src = cis)."""
+    _ensure(conn)
+    n, errs = 0, []
+    for q in CIS_QUERIES:
+        rows, err = fetch_gnews_ru(q)
+        if err:
+            errs.append(err)
+            continue
+        for title, url, outlet, ts in rows:
+            t = _clean_title(title)
+            # Имя компании из русского заголовка не достать регуляркой: ключ —
+            # по заголовку, компанию и сумму поставит разбор ИИ.
+            placeholder = "cis-" + hashlib.sha1(t.encode("utf-8")).hexdigest()[:10]
+            if add_deal(conn, title, url, outlet, ts, now, src="cis", company=placeholder, amount=_amount(t)):
+                n += 1
+        time.sleep(0.8)
+    conn.commit()
+    if verbose:
+        print("  раунды КЗ/СНГ: заголовков %d%s" % (n, (" — " + errs[0]) if errs else ""))
+    return n
 
 
 # ---------------------------------------------------------------------------

@@ -608,7 +608,7 @@ tag_items = enrich_items   # прежнее имя — для совместим
 
 # --- раунды: разбор заголовков о сделках --------------------------------------
 
-DEAL_SYSTEM = """You extract venture funding rounds from news headlines and posts for a market radar read by startup founders.
+DEAL_SYSTEM = """You extract venture funding rounds from news headlines and posts (in any language, including Russian) for a market radar read by startup founders.
 For every input item return:
 - id: the same id.
 - is_round: true ONLY if one specific company raised an equity/venture round (pre-seed to late stage). false for: VC firms raising their own funds, IPOs, acquisitions, grants, pure debt or loans, reports, roundups and lists of several deals, rumors ("in talks").
@@ -822,6 +822,29 @@ def web_dossier(niche, examples):
     user = "Niche: %s\nFunded companies in this niche: %s" % (niche, "; ".join(examples[:6]))
     model = (os.environ.get("LS_SMART_MODEL") or "google/gemini-3.8-flash") + ":online"
     return _chat_or(model, WEB_SYSTEM, user, max_tokens=3000, timeout=150)
+
+
+# --- ✂️ Дробление слишком широких ниш ------------------------------------------
+
+SPLIT_SYSTEM = """A startup niche label is too broad to be useful for founders: "%s".
+For each company below give a NARROWER niche: WHO the customer is plus WHAT job is done, 2-5 lowercase English words, no geography (e.g. "employee mental health benefits", "clinical trial recruitment", "remote patient monitoring"). Reuse the same narrower niche for companies that do the same thing; aim for clusters, not one label per company. Never output the broad label itself.
+Reply JSON only: {"items": [{"id": "...", "niche": "...", "niche_ru": "..."}]} — niche_ru is the same niche in Russian."""
+
+
+def split_niche(broad, items):
+    """[(id, узкая ниша, по-русски)] для компаний широкой ниши. (список, ошибка)."""
+    if not openrouter_key():
+        return [], "нет OPENROUTER_API_KEY"
+    data, err = _chat_or(os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL, SPLIT_SYSTEM % broad,
+                         json.dumps({"items": items}, ensure_ascii=False), max_tokens=6000)
+    if err or not isinstance(data, dict):
+        return [], err or "не JSON"
+    out = []
+    for e in data.get("items") or []:
+        if isinstance(e, dict) and e.get("id") and e.get("niche") and str(e["niche"]).lower().strip() != broad:
+            out.append((str(e["id"]), re.sub(r"\s+", " ", str(e["niche"]).lower()).strip()[:48],
+                        str(e.get("niche_ru") or "").strip()[:60]))
+    return out, None
 
 
 # --- 🙋 «Боль» из X -> ниша ---------------------------------------------------
