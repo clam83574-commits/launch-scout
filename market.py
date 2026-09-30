@@ -787,9 +787,67 @@ def niches(conn, now, days=NICHE_DAYS, limit=12):
             "pain": [{"text": p["text"][:200], "url": p["url"], "likes": p["likes"], "ts": p["ts"]} for p in pain],
             "gap": gaps.get(niche),
             "companies": [_round_brief(r) for r in sorted(lst, key=lambda r: -(r["usd"] or 0))[:5]],
+            "companies_6m": len(allr),
+            "late": sum(1 for r in lst if r["stage"] in ("b", "c+", "growth")),
         })
+        out[-1]["opp"] = opportunity(out[-1])
     out.sort(key=lambda d: (-d["early"], -d["n"], -d["usd"]))
     return out[:limit]
+
+
+# ---------------------------------------------------------------------------
+# 🎯 Тип возможности и прозрачный скор
+# ---------------------------------------------------------------------------
+# «Рынок растёт» ≠ «туда стоит идти» (разбор концепции 2026-09-30). Ниша
+# получает ОДИН тип и скор, который складывается из видимых частей — у
+# каждой своя цифра и источник, чтобы стартапер видел, почему так.
+OPP_TYPES = ("window", "forming", "overheated", "local_gap", "watch")
+
+
+def opportunity(n):
+    """{type, score 0-100, parts: [(ключ, баллы, факт)]} по данным ниши."""
+    w = n.get("weekly") or []
+    recent, before = sum(w[-8:]), sum(w[-16:-8])
+    momentum = (recent + 1.0) / (before + 1.0)
+    early_share = n["early"] / max(n["n"], 1)
+    crowd = n.get("companies_6m", n["n"])
+    gap = n.get("gap") or {}
+    pain = len(n.get("pain") or [])
+    mega = bool(n.get("mega"))
+    parts = []
+    # Деньги: ранние раунды за окно — главный сигнал, что ниша открывается.
+    money = min(30, n["early"] * 6)
+    parts.append(("money", money, {"early": n["early"], "n": n["n"], "usd": n["usd"]}))
+    # Динамика: последние 8 недель против 8 до них.
+    # Порог 3 раунда: «2 против 0» — это не рост ×3, а шум мелких чисел.
+    mom = 0 if recent < 3 else 20 if momentum >= 2 else 12 if momentum >= 1.3 else 5 if momentum >= 0.9 else 0
+    parts.append(("momentum", mom, {"recent": recent, "before": before}))
+    # Спрос людей: посты «сделайте кто-нибудь…» по этой нише.
+    dem = min(15, pain * 8)
+    parts.append(("demand", dem, {"posts": pain}))
+    # Конкуренция: сколько разных компаний подняли деньги за полгода.
+    comp = 0 if crowd <= 5 else -5 if crowd <= 12 else -12 if crowd <= 25 else -20
+    if mega:
+        comp -= 5
+    parts.append(("competition", comp, {"companies_6m": crowd, "mega": mega}))
+    # Локальный рынок: свободна ли ниша в Казахстане и СНГ.
+    loc = ({"free": 20, "partly": 10, "crowded": 0}.get(gap.get("kz"), 0)
+           + {"free": 5, "partly": 2, "crowded": 0}.get(gap.get("cis"), 0))
+    parts.append(("local", min(loc, 25), {"kz": gap.get("kz"), "cis": gap.get("cis")}))
+    score = max(0, min(100, 30 + sum(p[1] for p in parts)))
+    # Тип — по правилам, а не по скору: у каждого своя причина.
+    if mega or (crowd > 25) or (n.get("late", 0) >= max(3, n["n"] * 0.6)):
+        t = "overheated"
+    elif gap.get("kz") == "free" and n["n"] >= NICHE_MIN:
+        t = "local_gap"
+    elif n["early"] >= 2 and crowd <= 12 and momentum >= 1.0 and recent >= 3:
+        t = "window"
+    elif n["early"] >= 4 or crowd > 12:
+        t = "forming"
+    else:
+        t = "watch"
+    return {"type": t, "score": round(score), "parts": [{"k": k, "pts": v, "fact": f} for k, v, f in parts],
+            "momentum": round(momentum, 2), "early_share": round(early_share, 2)}
 
 
 # ---------------------------------------------------------------------------
@@ -1048,7 +1106,7 @@ def compute(conn, now):
     return {"generated": now, "formd": formd_stats(conn, now), "window_days": WINDOW_DAYS, "sectors": sectors,
             "physical": physical, "physical_money": phys_money, "all_money": all_money,
             "yc_batches": [{"name": x["name"], "n": x["n"]} for x in yc],
-            "niches": niches(conn, now), "niche_days": NICHE_DAYS,
+            "niches": niches(conn, now, limit=30), "niche_days": NICHE_DAYS,
             "niche_names": niche_names(conn), "headlines": heads[:6]}
 
 
@@ -1765,6 +1823,27 @@ def formd_index(conn, now, days=120):
 # ---------------------------------------------------------------------------
 # 💬 Факты для чата: только свежее и только с источником
 # ---------------------------------------------------------------------------
+def dataset_rows(conn, now):
+    """
+    Раунды за полгода — по строке на компанию — для таблицы rounds в боте.
+    По ней ИИ-собеседник ищет инструментами (search_rounds): модели нужен
+    не срез последних дней, а весь датасет, иначе про нишу вне топа ей
+    нечего сказать (вопрос владельца 2026-09-30).
+    """
+    out = []
+    for r in rounds(conn, now - HISTORY_WEEKS * 7 * 86400):
+        k = company_norm(r["company"])
+        if not k:
+            continue
+        what = r.get("what") or {}
+        out.append({"key": k, "ts": r["ts"], "company": (r["company"] or "")[:80], "usd": r["usd"],
+                    "stage": r["stage"], "niche": r["niche"], "sector": (r["sectors"] or [None])[0],
+                    "country": r.get("country") or "", "investors": ", ".join(r.get("investors") or [])[:120],
+                    "what_ru": (what.get("ru") or "")[:140], "what_en": (what.get("en") or "")[:140],
+                    "url": (r["url"] or "")[:400], "outlets": r["outlets"]})
+    return out
+
+
 def chat_facts(conn, now):
     """
     Компактный набор фактов для ИИ-собеседника в боте: раунды последних
@@ -1782,6 +1861,11 @@ def chat_facts(conn, now):
         "revenue": [{"ts": r["ts"], "kind": r["kind"], "who": r["company"], "usd": r["value_usd"],
                      "text": r["text"], "url": r["url"], "source": r["source"]} for r in rev],
         "articles": analysis_articles(conn, now, days=10, limit=6),
+        # «Боль» за 60 дней — для инструмента search_pain в чате.
+        "pain": [{"ts": p["ts"], "likes": p["likes"], "niche": p["niche"] or "", "text": (p["text"] or "")[:220],
+                  "url": p["url"]} for p in conn.execute(
+            "SELECT ts, likes, niche, text, url FROM demand WHERE ts >= ? AND likes >= 10 "
+            "ORDER BY likes DESC LIMIT 300", (now - 60 * 86400,)).fetchall()],
     }
 
 

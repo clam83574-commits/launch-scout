@@ -165,6 +165,13 @@ def niche_extras():
     check("инвесторы по частоте", set(n["investors"][:2]) == {"a16z", "YC"}, str(n["investors"]))
     check("кривая за полгода: 26 недель", len(n["weekly"]) == market.HISTORY_WEEKS, "")
     check("раунд 60 дней назад — в кривой, но не в окне", n["n"] == 3 and sum(n["weekly"]) == 4, str(n["weekly"]))
+    check("мегараунд в нише -> перегрев", n["opp"]["type"] == "overheated", n["opp"]["type"])
+    small = market.opportunity({"n": 2, "early": 2, "usd": 1e6, "weekly": [0] * 24 + [1, 1], "companies_6m": 2})
+    mom = [p["pts"] for p in small["parts"] if p["k"] == "momentum"][0]
+    check("2 раунда против 0 — не «рост»", mom == 0 and small["type"] != "window", "%s %s" % (mom, small["type"]))
+    win = market.opportunity({"n": 4, "early": 3, "usd": 9e6, "weekly": [0] * 16 + [0] * 6 + [1, 1, 1, 1],
+                              "companies_6m": 5, "pain": [{"text": "x"}]})
+    check("ранние раунды, мало игроков, рост — окно", win["type"] == "window", win["type"])
 
 
 def imports():

@@ -52,6 +52,15 @@ T = {
            "empty": "Nothing notable in the last 24 hours — no new niches or launches with traction."},
 }
 
+OPP = {
+    "ru": {"window": "🔥 окно", "forming": "🧭 формируется", "overheated": "⚠️ перегрев",
+           "local_gap": "🕳 в КЗ пусто", "watch": "👀 наблюдать", "score": "скор"},
+    "kk": {"window": "🔥 терезе", "forming": "🧭 қалыптасуда", "overheated": "⚠️ қызып кеткен",
+           "local_gap": "🕳 ҚЗ-да бос", "watch": "👀 бақылау", "score": "балл"},
+    "en": {"window": "🔥 window", "forming": "🧭 forming", "overheated": "⚠️ overheated",
+           "local_gap": "🕳 empty in KZ", "watch": "👀 watch", "score": "score"},
+}
+
 EXPLAIN = """You explain a daily startup-market brief to founders in plain words.
 Input: niches (where several companies raised venture rounds) and new products (launched in the last 24 hours).
 For every niche write what the companies in it actually sell and to whom — max 14 words, no jargon.
@@ -102,7 +111,12 @@ def build(conn, now):
     """{lang: html} или None, если сказать нечего."""
     rep = market.last_report(conn) or {}
     names = rep.get("niche_names") or {}
-    niches = [n for n in (rep.get("niches") or []) if n["n"] >= market.NICHE_MIN][:3]
+    # Сначала возможности (окно, пусто у нас), по скору; перегрев — в конец:
+    # сводка отвечает «куда стоит смотреть», а не «где больше всего денег».
+    order = {"window": 0, "local_gap": 0, "forming": 1, "watch": 2, "overheated": 3}
+    niches = sorted([n for n in (rep.get("niches") or []) if n["n"] >= market.NICHE_MIN],
+                    key=lambda n: (order.get((n.get("opp") or {}).get("type"), 2),
+                                   -(n.get("opp") or {}).get("score", 0)))[:3]
     day_rounds = sorted(market.rounds(conn, now - 86400), key=lambda r: -(r["usd"] or 0))
     startups = _new_startups(conn, now)
     if not (niches or startups or day_rounds):
@@ -132,6 +146,9 @@ def build(conn, now):
                 label = market.niche_label(n["niche"], lang, names)
                 lines.append("%d. <b>%s</b> — %s" % (i + 1, e(label), tx["niche"] % (
                     n["n"], rep.get("niche_days", market.NICHE_DAYS), n["early"], market.usd(n["usd"], lang))))
+                o = n.get("opp") or {}
+                if o.get("type"):
+                    lines.append("   %s · %s %d/100" % (OPP[lang].get(o["type"], o["type"]), OPP[lang]["score"], o["score"]))
                 if i < len(nx) and nx[i]:
                     lines.append("   " + e(str(nx[i])[:160]))
                 lines.append("   " + ", ".join(

@@ -215,6 +215,52 @@ def _meta(conn, item_id, col, default):
         return default
 
 
+def sync_rounds(conn, now, max_rows=3000):
+    """
+    Раунды за полгода — в таблицу rounds бота (POST /ingest-rounds), только
+    изменившиеся с прошлой отправки: суточный лимит записи D1 общий на
+    аккаунт с tm-scout, и слать все 10 тыс. строк каждые 10 минут нельзя.
+    Отпечатки отправленного хранятся в своей базе (kv ds_hash).
+    """
+    import hashlib
+    import os
+    import requests
+    url, secret = os.environ.get("WORKER_URL", "").strip(), os.environ.get("LS_INGEST_SECRET", "").strip()
+    if not url or not secret:
+        return 0, "нет WORKER_URL/LS_INGEST_SECRET"
+    try:
+        sent = json.loads(db.kv_get(conn, "ds_hash", "{}") or "{}")
+    except ValueError:
+        sent = {}
+    rows = market.dataset_rows(conn, now)
+    todo = []
+    for r in rows:
+        h = hashlib.sha1(json.dumps(r, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()[:12]
+        if sent.get(r["key"]) != h:
+            todo.append((r, h))
+    todo = todo[:max_rows]
+    done, err = 0, None
+    for i in range(0, len(todo), 400):
+        chunk = todo[i:i + 400]
+        try:
+            resp = requests.post(url.rstrip("/") + "/ingest-rounds", timeout=60,
+                                 headers={"x-ingest-secret": secret, "content-type": "application/json"},
+                                 json={"rows": [r for r, _h in chunk]})
+        except requests.RequestException as e:
+            err = str(e)[:120]
+            break
+        if resp.status_code != 200:
+            err = "Worker %d: %s" % (resp.status_code, resp.text[:120])
+            break
+        for r, h in chunk:
+            sent[r["key"]] = h
+        done += len(chunk)
+    keep = {r["key"] for r in rows}
+    db.kv_set(conn, "ds_hash", json.dumps({k: v for k, v in sent.items() if k in keep}))
+    conn.commit()
+    return done, err
+
+
 def main():
     setup_logging("export")
     ap = argparse.ArgumentParser(description="срез находок для бота (D1)")
@@ -240,6 +286,11 @@ def main():
             data["market"] = market_block(conn, now)
         except Exception as e:  # рынок — тоже надстройка
             print("рынок не выгружен: %s" % e)
+        try:
+            n, err = sync_rounds(conn, now)
+            print("датасет раундов для чата: отправлено %d%s" % (n, (" — " + err) if err else ""))
+        except Exception as e:      # датасет — надстройка: срез уходит в любом случае
+            print("датасет раундов не отправлен: %s" % e)
         out = Path(args.json)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")),

@@ -308,7 +308,7 @@ const I18N = {
 // перекраивать основной; казахский — машинный перевод, как и остальной.
 const EXTRA = {
   ru: {
-    hello: "<b>launch-scout</b> — радар рынка для стартаперов.\n\n🧭 <b>Рынок</b> — куда идут деньги инвесторов, по секторам и в цифрах: раунды и их стадии, доля в батчах YC, запросы людей.\n💡 <b>Ниши</b> — где за месяц прошло несколько ранних раундов: туда инвесторы только начали ставить.\n🔥 <b>Находки</b> — продукты с реальным откликом или свежим раундом, а не три лайка.\n💬 <b>Спросите</b> — напишите, чем занимаетесь, и ИИ-аналитик ответит по раундам и запускам последних суток, с датами и ссылками.\n⚙️ <b>Настройки</b> — какие секторы, источники и какие уведомления присылать.",
+    hello: "<b>launch-scout</b> — радар рынка для стартаперов.\n\n🧭 <b>Рынок</b> — куда идут деньги инвесторов, по секторам и в цифрах: раунды и их стадии, доля в батчах YC, запросы людей.\n💡 <b>Ниши</b> — где за месяц прошло несколько ранних раундов: туда инвесторы только начали ставить.\n🔥 <b>Находки</b> — продукты с реальным откликом или свежим раундом, а не три лайка.\n💬 <b>Спросите</b> — напишите, чем занимаетесь, и ИИ-аналитик ответит по раундам за полгода и свежим запускам, с датами и ссылками.\n🧪 <b>/check идея</b> — бот сначала попробует её опровергнуть фактами и скажет, стоит ли делать.\n⚙️ <b>Настройки</b> — какие секторы, источники и какие уведомления присылать.",
     kb_market: "🧭 Рынок", kb_sectors: "🗂 Секторы", kb_settings: "⚙️ Настройки", kb_niches: "💡 Ниши",
     commands: "Команды: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nИли просто напишите вопрос — например: «я делаю CRM для клиник, что рядом со мной сейчас получает деньги?»",
     niches_title: "💡 <b>Ниши, куда пошли деньги</b> — %d дн.\nНиша — где несколько компаний подняли раунды. Ранние раунды (pre-seed, seed, A) значат, что ниша только открывается.",
@@ -318,6 +318,12 @@ const EXTRA = {
     gap_free: "свободно", gap_partly: "частично", gap_crowded: "занято",
     follow_on: "🔔 Слежу: новые раунды в нише придут сообщением", follow_off: "Больше не слежу за нишей",
     e_busy: "ИИ сейчас не ответил — попробуйте через минуту.",
+    digging: "🔍 Копаю: раунды за полгода, конкуренты, жалобы, аналоги в СНГ — до минуты.",
+    dig_btn: "🔍 Глубже",
+    opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
+    opp_overheated: "⚠️ Перегрев: вход только с сильным отличием", opp_local_gap: "🕳 Пусто у нас: доказано деньгами, в КЗ свободно",
+    opp_watch: "👀 Наблюдать: сигналов пока мало", opp_score: "скор",
+    check_help: "Напишите идею после команды, например:\n/check CRM для частных клиник в Казахстане с записью через WhatsApp",
     voice_fail: "Не получилось распознать голосовое (до 3 минут). Попробуйте ещё раз или напишите текстом.",
     chat_limit: "Сегодня уже %d вопросов — это предел, завтра снова можно.", chat_reset: "Разговор и профиль очищены — начнём заново.",
     set_title: "⚙️ <b>Настройки</b>\nНажмите, чтобы включить или выключить.",
@@ -341,7 +347,7 @@ const EXTRA = {
     aud_b2b: "B2B", aud_b2c: "B2C", aud_b2g: "B2G",
   },
   kk: {
-    hello: "<b>launch-scout</b> — стартаперларға арналған нарық радары.\n\n🧭 <b>Нарық</b> — инвесторлардың ақшасы қайда бара жатыр, салалар бойынша және сандармен: раундтар мен олардың кезеңдері, YC батчтарындағы үлес, адамдардың сұраулары.\n💡 <b>Тауашалар</b> — бір айда бірнеше ерте раунд өткен жерлер.\n🔥 <b>Табылымдар</b> — нақты үн қатуы немесе жаңа раунды бар өнімдер.\n💬 <b>Сұраңыз</b> — немен айналысатыныңызды жазыңыз, ЖИ-талдаушы соңғы тәуліктің раундтары мен іске қосулары бойынша күні мен сілтемесімен жауап береді.\n⚙️ <b>Баптаулар</b> — қандай салалар, көздер және хабарламалар.",
+    hello: "<b>launch-scout</b> — стартаперларға арналған нарық радары.\n\n🧭 <b>Нарық</b> — инвесторлардың ақшасы қайда бара жатыр, салалар бойынша және сандармен: раундтар мен олардың кезеңдері, YC батчтарындағы үлес, адамдардың сұраулары.\n💡 <b>Тауашалар</b> — бір айда бірнеше ерте раунд өткен жерлер.\n🔥 <b>Табылымдар</b> — нақты үн қатуы немесе жаңа раунды бар өнімдер.\n💬 <b>Сұраңыз</b> — немен айналысатыныңызды жазыңыз, ЖИ-талдаушы жарты жылдағы раундтар мен жаңа іске қосулар бойынша күні мен сілтемесімен жауап береді.\n🧪 <b>/check идея</b> — бот алдымен оны фактілермен жоққа шығаруға тырысады және жасау керек пе, айтады.\n⚙️ <b>Баптаулар</b> — қандай салалар, көздер және хабарламалар.",
     kb_market: "🧭 Нарық", kb_sectors: "🗂 Салалар", kb_settings: "⚙️ Баптаулар", kb_niches: "💡 Тауашалар",
     commands: "Командалар: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nНемесе сұрағыңызды жай жазыңыз — мысалы: «мен клиникаларға CRM жасаймын, қазір маған жақын не ақша алып жатыр?»",
     niches_title: "💡 <b>Ақша келген тауашалар</b> — %d күн\nТауаша — бірнеше компания раунд тартқан жер. Ерте раундтар (pre-seed, seed, A) тауашаның енді ашылып жатқанын білдіреді.",
@@ -351,6 +357,12 @@ const EXTRA = {
     gap_free: "бос", gap_partly: "ішінара", gap_crowded: "бос емес",
     follow_on: "🔔 Бақылаймын: тауашадағы жаңа раундтар хабарламамен келеді", follow_off: "Тауашаны бақылау тоқтатылды",
     e_busy: "ЖИ қазір жауап бермеді — бір минуттан кейін көріңіз.",
+    digging: "🔍 Зерттеп жатырмын: жарты жылдағы раундтар, бәсекелестер, шағымдар, ТМД-дағы аналогтар — бір минутқа дейін.",
+    dig_btn: "🔍 Тереңірек",
+    opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
+    opp_overheated: "⚠️ Қызып кеткен: кіру тек күшті ерекшелікпен", opp_local_gap: "🕳 Бізде бос: ақшамен дәлелденген, ҚЗ-да бос",
+    opp_watch: "👀 Бақылау: сигнал әзірге аз", opp_score: "балл",
+    check_help: "Идеяны командадан кейін жазыңыз, мысалы:\n/check Қазақстандағы жеке клиникаларға WhatsApp арқылы жазылатын CRM",
     voice_fail: "Дауыстық хабарламаны тану мүмкін болмады (3 минутқа дейін). Қайталаңыз немесе мәтінмен жазыңыз.",
     chat_limit: "Бүгін %d сұрақ қойылды — бұл шек, ертең қайта болады.", chat_reset: "Әңгіме мен профиль тазартылды — қайта бастаймыз.",
     set_title: "⚙️ <b>Баптаулар</b>\nҚосу немесе өшіру үшін басыңыз.",
@@ -374,7 +386,7 @@ const EXTRA = {
     aud_b2b: "B2B", aud_b2c: "B2C", aud_b2g: "B2G",
   },
   en: {
-    hello: "<b>launch-scout</b> — a market radar for founders.\n\n🧭 <b>Market</b> — where investor money is moving, by sector and in numbers: rounds and their stages, share of YC batches, what people ask for.\n💡 <b>Niches</b> — where several early rounds closed within a month: investors have just started betting there.\n🔥 <b>Findings</b> — products with real traction or a fresh round, not three likes.\n💬 <b>Ask</b> — tell it what you build, and the AI analyst answers from the last day’s rounds and launches, with dates and links.\n⚙️ <b>Settings</b> — which sectors, sources and notifications you get.",
+    hello: "<b>launch-scout</b> — a market radar for founders.\n\n🧭 <b>Market</b> — where investor money is moving, by sector and in numbers: rounds and their stages, share of YC batches, what people ask for.\n💡 <b>Niches</b> — where several early rounds closed within a month: investors have just started betting there.\n🔥 <b>Findings</b> — products with real traction or a fresh round, not three likes.\n💬 <b>Ask</b> — tell it what you build, and the AI analyst answers from six months of rounds and fresh launches, with dates and links.\n🧪 <b>/check idea</b> — the bot first tries to refute it with facts and tells you whether it is worth doing.\n⚙️ <b>Settings</b> — which sectors, sources and notifications you get.",
     kb_market: "🧭 Market", kb_sectors: "🗂 Sectors", kb_settings: "⚙️ Settings", kb_niches: "💡 Niches",
     commands: "Commands: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nOr just type a question — e.g. “I build a CRM for clinics, what near me is getting funded right now?”",
     niches_title: "💡 <b>Niches the money went into</b> — %d days\nA niche is where several companies raised rounds. Early rounds (pre-seed, seed, A) mean the niche is only opening up.",
@@ -384,6 +396,12 @@ const EXTRA = {
     gap_free: "free", gap_partly: "partly taken", gap_crowded: "crowded",
     follow_on: "🔔 Following: new rounds in this niche will arrive as a message", follow_off: "No longer following this niche",
     e_busy: "The AI did not answer just now — try again in a minute.",
+    digging: "🔍 Digging: six months of rounds, competitors, complaints, CIS analogs — up to a minute.",
+    dig_btn: "🔍 Deeper",
+    opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
+    opp_overheated: "⚠️ Overheated: enter only with strong differentiation", opp_local_gap: "🕳 Empty here: proven by money, free in KZ",
+    opp_watch: "👀 Watch: few signals yet", opp_score: "score",
+    check_help: "Type your idea after the command, e.g.:\n/check CRM for private clinics in Kazakhstan with booking via WhatsApp",
     voice_fail: "Could not transcribe the voice message (up to 3 minutes). Try again or type it.",
     chat_limit: "You have asked %d questions today — that is the limit, try again tomorrow.", chat_reset: "Conversation and profile cleared — let's start over.",
     set_title: "⚙️ <b>Settings</b>\nTap to switch on or off.",
@@ -673,7 +691,9 @@ const GAP_ICON = { free: "🟢", partly: "🟡", crowded: "🔴" };
 /** Строки ниши: цифры, мегараунд, инвесторы, «боль», свобода в КЗ/СНГ. */
 function nicheLines(rep, n, lang, s, snap) {
   const emo = sectorMeta(snap, n.sector);
+  const o = n.opp || {};
   const out = [`${emo ? emo.emoji + " " : ""}<b>${esc(nicheName(rep, n, lang))}</b> — ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}`];
+  if (o.type) out.push(`   ${s["opp_" + o.type] || o.type} · ${s.opp_score} <b>${o.score}</b>/100`);
   for (const r of (n.companies || []).filter((r) => !(r.usd >= 1e9)).slice(0, 3)) out.push("   • " + roundLine(r, lang, s));
   for (const r of (n.mega || []).slice(0, 1)) out.push("   " + fmt(s.mega, roundLine(r, lang, s)));
   if ((n.investors || []).length) out.push("   " + s.investors + " " + esc(n.investors.join(", ")));
@@ -708,7 +728,10 @@ async function nichesMsg(env, chatId, lang, sid = null, prefs = null, editMsg = 
   // callback_data у Telegram не длиннее 64 байт.
   const mine = new Set((prefs && prefs.niches) || []);
   const all = (rep.niches || []);
-  const kb = list.map((n) => [{ text: `${mine.has(n.niche) ? "✅" : "🔔"} ${nicheName(rep, n, lang)}`.slice(0, 60), callback_data: `nf:${all.indexOf(n)}` }]);
+  const kb = list.map((n) => [
+    { text: `${mine.has(n.niche) ? "✅" : "🔔"} ${nicheName(rep, n, lang)}`.slice(0, 40), callback_data: `nf:${all.indexOf(n)}` },
+    { text: s.dig_btn, callback_data: `dd:${all.indexOf(n)}` },
+  ]);
   kb.push([{ text: s.kb_market, callback_data: "market" }, { text: s.kb_sectors, callback_data: "sectors" }]);
   const payload = { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: { inline_keyboard: kb } };
   if (editMsg) {
@@ -946,15 +969,15 @@ async function settingsAction(env, chatId, msgId, data, prefs, lang) {
  * Меню команд в Telegram — один раз на версию (помечается в kv). Раньше
  * команд в меню не было вовсе: /trends, /lang знали только те, кому сказали.
  */
-const COMMANDS_VERSION = "2026-09-29";
+const COMMANDS_VERSION = "2026-09-30";
 async function setupCommands(env) {
   if ((await meta(env, "commands_version")) === COMMANDS_VERSION) return;
   const list = {
-    ru: [["market", "🧭 Куда движется рынок"], ["niches", "💡 Ниши, куда пошли деньги"], ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
+    ru: [["market", "🧭 Куда движется рынок"], ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"],  ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
       ["sectors", "🗂 Секторы"], ["settings", "⚙️ Настройки уведомлений"], ["lang", "🌐 Язык"]],
-    en: [["market", "🧭 Where the market is heading"], ["niches", "💡 Niches the money went into"], ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
+    en: [["market", "🧭 Where the market is heading"], ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"],  ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
       ["sectors", "🗂 Sectors"], ["settings", "⚙️ Notification settings"], ["lang", "🌐 Language"]],
-    kk: [["market", "🧭 Нарық қайда бет алды"], ["niches", "💡 Ақша келген тауашалар"], ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
+    kk: [["market", "🧭 Нарық қайда бет алды"], ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"],  ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
       ["sectors", "🗂 Салалар"], ["settings", "⚙️ Хабарлама баптаулары"], ["lang", "🌐 Тіл"]],
   };
   const cmd = (arr) => arr.map(([command, description]) => ({ command, description }));
@@ -1180,6 +1203,13 @@ async function handleUpdate(env, update) {
     await nichesMsg(env, chatId, lang, null, prefs);
     return;
   }
+  if (data.startsWith("dd:")) {
+    // «Копай глубже» по нише: исследование с инструментами и поиском в сети.
+    const rep = (marketOf(await loadSnapshot(env)) || {}).report || {};
+    const n = (rep.niches || [])[Number(data.slice(3))];
+    if (n) await chatReply(env, chatId, `Dig deep into the niche "${n.niche}" (sector ${n.sector}).`, lang, "deep");
+    return;
+  }
   if (data.startsWith("nf:")) {
     // Следить / не следить за нишей: раунды в ней придут отдельным сообщением.
     const rep = (marketOf(await loadSnapshot(env)) || {}).report || {};
@@ -1275,6 +1305,11 @@ async function handleUpdate(env, update) {
       // Расшифровку не показываем — сразу ответ (просьба владельца 2026-09-29).
       await chatReply(env, chatId, heard, lang);
     }
+  } else if (text.startsWith("/check")) {
+    // «Проверь мою идею»: сначала пытаемся её опровергнуть фактами.
+    const idea = raw.replace(/^\/check(@\w+)?/i, "").trim();
+    if (idea.length < 10) await tg(env, "sendMessage", { chat_id: chatId, text: s.check_help });
+    else await chatReply(env, chatId, idea, lang, "check");
   } else if (raw && !raw.startsWith("/")) {
     await chatReply(env, chatId, raw, lang);
   } else if (text) {
@@ -1698,7 +1733,42 @@ async function chatHistory(env, uid) {
   return (results || []).reverse();
 }
 
-async function chatReply(env, chatId, question, lang) {
+// Инструкции для режима с инструментами: модель сама запрашивает датасет.
+const TOOL_RULES = `
+You have tools over the bot's full dataset: search_rounds (all venture rounds of the last 6 months), list_opportunities (niches with opportunity type and transparent score), search_pain (people asking for products on X), search_launches (launches of the last 7 days with traction). Before answering any question about a market, niche, company, trend or idea, CALL THE TOOLS — never answer from memory. Search in English keywords even if the user writes in Russian or Kazakh; try synonyms if a search returns little.
+Interpret signals, do not just list them. Tell apart: growing demand + few funded players = an open window; many early rounds + many similar products = a forming market (look for an unserved vertical); mega-rounds, late stages, dozens of players = overheated (entry needs strong differentiation). Always say which of these the evidence shows and why, citing the numbers the tools returned.`;
+
+const CHECK_SYSTEM = `You are the analyst inside launch-scout. The user gives a startup idea. Your job is to try to KILL it with evidence first, then say honestly whether it survives. Market priority: Kazakhstan, then CIS and MENA, then global.
+${"%TOOLS%"}
+Use the tools (search_rounds with several keyword sets, search_pain, search_launches, list_opportunities) and, when needed, web search for competitors in Kazakhstan/CIS and their prices.
+Answer in %LANG%, plain text, no markdown headers, compact:
+❌ / ⚠️ lines — the strongest reasons NOT to do it (funded competitors with names, sums and dates; crowding; unproven willingness to pay; CAC; regulation).
+🟢 lines — evidence FOR it (early rounds, growing requests, weak local competition, a technology window).
+Verdict: one of «делать», «делать узко (какой сегмент)», «не делать» — with one sentence why.
+What to verify in 7 days: 3 concrete steps (whom to interview, what landing/price test, what pilot).
+Every company or number must come from the tools or web search, with its date and link. If data is thin, say so instead of guessing.`;
+
+const DEEP_SYSTEM = `You are the analyst inside launch-scout. Dig deep into ONE niche for a founder (Kazakhstan first, then CIS/MENA, then global).
+${"%TOOLS%"}
+Use search_rounds (several keyword sets, 6 months), search_pain, search_launches, list_opportunities, and web search for competitors, their prices and customer complaints.
+Answer in %LANG%, plain text, compact, sections as short lines starting with an emoji:
+💰 Money: who raised, how much, stage, when (numbers, dates, links) and what the trend over months shows.
+🏁 Players: who already does this globally and in Kazakhstan/CIS, with prices where found.
+😡 Complaints: what customers dislike about existing products (only what you found).
+🎯 First customer (ICP) and where to find the first 10.
+💳 Monetization that works in this niche.
+🧩 Technology/API that makes it cheaper to build now.
+⚠️ Why this might NOT be worth doing.
+✅ 7-day validation plan: 3 steps.
+Every fact must have a date and a link. Say plainly where data is missing.`;
+
+/**
+ * Ответ ИИ-аналитика. mode: "chat" — разговор (JSON с обновлением профиля),
+ * "check" — «Проверь мою идею», "deep" — «Копай глубже» по нише.
+ * С OpenRouter модель работает с инструментами по полному датасету; без
+ * него (или если OpenRouter не ответил) — обычный чат на срезе через Groq.
+ */
+async function chatReply(env, chatId, question, lang, mode = "chat") {
   const s = L(lang);
   const today = new Date().toISOString().slice(0, 10);
   const total = Number((await meta(env, "chat_calls_" + today)) || 0);
@@ -1707,56 +1777,271 @@ async function chatReply(env, chatId, question, lang) {
   if (total >= CHAT_MAX_PER_DAY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_day });
   if (mine >= CHAT_MAX_PER_USER) return tg(env, "sendMessage", { chat_id: chatId, text: fmt(s.chat_limit, mine) });
   await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
+  if (mode !== "chat") await tg(env, "sendMessage", { chat_id: chatId, text: s.digging });
 
   const prof = await env.DB.prepare("SELECT about FROM chat_profile WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
   const profile = (prof && prof.about) || "";
   const snap = await loadSnapshot(env);
   const hist = await chatHistory(env, chatId);
-  // Без OpenRouter чат идёт в бесплатный Groq, где запрос вместе с ответом
-  // должен уложиться в 8000 токенов в минуту: 2026-09-29 он весил 8557 и
-  // получал отказ. Для Groq — меньше фактов, короче история и ответ.
-  const big = !!env.LS_OPENROUTER_KEY;
-  const turns = big ? hist : hist.slice(-4);
-  const messages = [
-    { role: "system", content: CHAT_SYSTEM.replace("%LANG%", LANG_EN[lang] || "Russian") },
-    { role: "user", content: `TODAY: ${today}\nPROFILE: ${profile || "unknown"}\n\nDATA:\n${chatData(snap, question, profile, big ? 14000 : 7000)}` },
-    ...turns.map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, big ? 1500 : 700) })),
-    { role: "user", content: question.slice(0, 1500) },
-  ];
-  const r = await smartFetch(env, { messages, reasoning_effort: "low", max_completion_tokens: big ? 2000 : 1300, temperature: 0.3,
-    response_format: { type: "json_object" } }, ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]);
+  const langName = LANG_EN[lang] || "Russian";
+  let answer = "", about = "";
+
+  if (env.LS_OPENROUTER_KEY) {
+    const sys = mode === "check" ? CHECK_SYSTEM : mode === "deep" ? DEEP_SYSTEM : CHAT_SYSTEM + "\n" + TOOL_RULES;
+    const messages = [
+      { role: "system", content: sys.replace("%TOOLS%", TOOL_RULES).replace("%LANG%", langName) },
+      // Короткий срез — ориентир; точные цифры модель берёт инструментами.
+      { role: "user", content: `TODAY: ${today}\nPROFILE: ${profile || "unknown"}\n\nFRESH CONTEXT (last days; use tools for anything else):\n${chatData(snap, question, profile, 5000)}` },
+      ...(mode === "chat" ? hist : []).map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, 1500) })),
+      { role: "user", content: question.slice(0, 1500) },
+    ];
+    const res = await toolChat(env, messages, { web: mode !== "chat", maxSteps: mode === "chat" ? 3 : 4 });
+    if (res.text) {
+      if (mode === "chat") {
+        const t = res.text, d = (() => { try { return JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)); } catch { return null; } })();
+        answer = String((d && d.answer) || (d ? "" : t)).trim();
+        about = String((d && d.profile) || "").trim();
+      } else {
+        answer = res.text;
+      }
+    }
+  }
+
+  if (!answer && mode === "chat") {
+    // Запасной путь: срез в промпте через Groq (без инструментов). Запрос
+    // вместе с ответом должен уложиться в 8000 токенов в минуту: 2026-09-29
+    // он весил 8557 и получал отказ — поэтому меньше фактов и короче история.
+    const messages = [
+      { role: "system", content: CHAT_SYSTEM.replace("%LANG%", langName) },
+      { role: "user", content: `TODAY: ${today}\nPROFILE: ${profile || "unknown"}\n\nDATA:\n${chatData(snap, question, profile, 7000)}` },
+      ...hist.slice(-4).map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, 700) })),
+      { role: "user", content: question.slice(0, 1500) },
+    ];
+    const r = await groqFetch(env, { messages, reasoning_effort: "low", max_completion_tokens: 1300, temperature: 0.3,
+      response_format: { type: "json_object" } }, ["openai/gpt-oss-120b", "openai/gpt-oss-20b"], 25000);
+    if (r && r.ok) {
+      try {
+        const content = ((await r.json()).choices[0].message.content || "").trim();
+        const d = JSON.parse(content.slice(content.indexOf("{"), content.lastIndexOf("}") + 1));
+        answer = String((d && d.answer) || "").trim();
+        about = String((d && d.profile) || "").trim();
+      } catch { /* ниже — сообщение об ошибке */ }
+    } else if (r) {
+      await noteAiError(env, "groq chat", r.status, await r.text().catch(() => ""));
+    }
+  }
   await setMeta(env, "chat_calls_" + today, total + 1);
   await setMeta(env, `chat_user_${chatId}_${today}`, mine + 1);
-  if (!r) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_time });
-  if (r.status === 429) {
-    const mins = waitMinutes(await r.text().catch(() => ""));
-    return tg(env, "sendMessage", { chat_id: chatId, text: mins ? fmt(s.e_quota_in, mins) : s.e_quota });
-  }
-  if (!r.ok) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_busy });
-  let data;
-  try {
-    const content = ((await r.json()).choices[0].message.content || "").trim();
-    data = JSON.parse(content.slice(content.indexOf("{"), content.lastIndexOf("}") + 1));
-  } catch {
-    return tg(env, "sendMessage", { chat_id: chatId, text: s.e_bad });
-  }
-  const answer = String((data && data.answer) || "").trim();
-  if (!answer) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_bad });
+  if (!answer) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_busy });
+
   const now = Math.floor(Date.now() / 1000);
   await env.DB.batch([
     env.DB.prepare("INSERT INTO chat_log (user_id, ts, role, text) VALUES (?1, ?2, 'user', ?3)").bind(String(chatId), now, question.slice(0, 1500)),
     env.DB.prepare("INSERT INTO chat_log (user_id, ts, role, text) VALUES (?1, ?2, 'assistant', ?3)").bind(String(chatId), now + 1, answer.slice(0, 3000)),
     env.DB.prepare("DELETE FROM chat_log WHERE user_id = ?1 AND ts < ?2").bind(String(chatId), now - 3 * 86400),
   ]).catch(() => null);
-  const about = String((data && data.profile) || "").trim().slice(0, 400);
   if (about && about !== profile) {
     await env.DB.prepare("INSERT OR REPLACE INTO chat_profile (user_id, about, ts) VALUES (?1, ?2, ?3)")
-      .bind(String(chatId), about, now).run().catch(() => null);
+      .bind(String(chatId), about.slice(0, 400), now).run().catch(() => null);
   }
   // Telegram: не больше 4096 символов в сообщении — длинный ответ частями.
   for (let i = 0; i < answer.length; i += 3800) {
     await tg(env, "sendMessage", { chat_id: chatId, text: esc(answer.slice(i, i + 3800)), parse_mode: "HTML", disable_web_page_preview: true });
   }
+}
+
+// ---------------------------------------------------------------------------
+// 🧰 Инструменты ИИ: запросы к полному датасету, а не срез в промпте
+//
+// Раньше модель получала в промпте отобранные факты последних 72 часов и
+// топ-10 ниш. Про нишу вне топа или про то, что было три месяца назад, ей
+// было нечего сказать (вопрос владельца 2026-09-30). Теперь она сама
+// спрашивает у бота: ищет раунды за полгода по ключевым словам, получает
+// сводку ниши, жалобы людей, свежие запуски. Искать и считать — дело D1
+// (таблица rounds), у Worker лимит ~10 мс процессора на запрос.
+// ---------------------------------------------------------------------------
+const TOOLS = [
+  { type: "function", function: { name: "search_rounds",
+    description: "Search ALL venture rounds of the last 6 months (one row per company) by English keywords over company, niche and description. Returns aggregates (count, sum, early-stage count, rounds per month, top investors) and up to 25 rows with dates and links.",
+    parameters: { type: "object", properties: {
+      keywords: { type: "array", items: { type: "string" }, description: "2-6 English keywords or short phrases, e.g. [\"insurance\", \"claims\"]" },
+      sector: { type: "string", description: "optional sector id: hardware, defense_space, energy, mobility, ai_agents, ai_infra, devtools, security, fintech, health, consumer, commerce, b2b_saas, edu, proptech, crypto" },
+      stage: { type: "string", enum: ["any", "early", "late"] },
+      days: { type: "integer", description: "look back this many days, max 183" } },
+      required: ["keywords"] } } },
+  { type: "function", function: { name: "list_opportunities",
+    description: "Niches where several companies raised rounds in the last 28 days, each with an opportunity type (window, forming, overheated, local_gap, watch), a transparent score with its parts, investors, weekly trend over 26 weeks, people's requests and whether Kazakhstan/CIS already has analogs.",
+    parameters: { type: "object", properties: { type: { type: "string", enum: ["any", "window", "forming", "overheated", "local_gap", "watch"] } } } } },
+  { type: "function", function: { name: "search_pain",
+    description: "Posts on X where people ask for a product or complain (\"someone should build…\", \"I'd pay for…\") in the last 60 days, by English keywords.",
+    parameters: { type: "object", properties: { keywords: { type: "array", items: { type: "string" } } }, required: ["keywords"] } } },
+  { type: "function", function: { name: "search_launches",
+    description: "Product launches of the last 7 days (Product Hunt, Hacker News, X, GitHub) with measured traction, by English keywords.",
+    parameters: { type: "object", properties: { keywords: { type: "array", items: { type: "string" } } }, required: ["keywords"] } } },
+];
+
+const EARLY_STAGES = ["pre-seed", "seed", "a"];
+const LATE_STAGES = ["b", "c+", "growth"];
+
+function kwList(a) {
+  return (Array.isArray(a) ? a : [a]).map((x) => String(x || "").toLowerCase().trim()).filter((x) => x.length >= 3).slice(0, 6);
+}
+
+/** Совпадения ключевых слов с текстом: число совпавших слов. */
+function kwHits(text, kws) {
+  const t = String(text || "").toLowerCase();
+  let n = 0;
+  for (const k of kws) if (t.includes(k.length > 6 ? k.slice(0, k.length - 2) : k)) n++;
+  return n;
+}
+
+async function toolSearchRounds(env, a) {
+  const kws = kwList(a.keywords);
+  if (!kws.length) return { error: "no keywords" };
+  const days = Math.min(Math.max(Number(a.days) || 183, 7), 183);
+  const since = Math.floor(Date.now() / 1000) - days * 86400;
+  const where = ["ts >= ?1"], binds = [since];
+  // Любое из слов — в SQL (быстро), порядок по числу совпадений — здесь.
+  where.push("(" + kws.map((k, i) => { binds.push("%" + (k.length > 6 ? k.slice(0, k.length - 2) : k) + "%"); return `doc LIKE ?${binds.length}`; }).join(" OR ") + ")");
+  if (a.sector) { binds.push(String(a.sector)); where.push(`sector = ?${binds.length}`); }
+  if (a.stage === "early") where.push("stage IN ('pre-seed','seed','a')");
+  if (a.stage === "late") where.push("stage IN ('b','c+','growth')");
+  const { results } = await env.DB.prepare(`SELECT * FROM rounds WHERE ${where.join(" AND ")} LIMIT 600`)
+    .bind(...binds).all().catch((e) => ({ results: [], err: String(e) }));
+  const rows = (results || []).map((r) => ({ ...r, hits: kwHits(r.doc, kws) }))
+    .filter((r) => r.hits >= Math.min(2, kws.length)).sort((x, y) => y.hits - x.hits || y.ts - x.ts);
+  const byMonth = {}, inv = {};
+  let sum = 0, early = 0;
+  for (const r of rows) {
+    const m = new Date(r.ts * 1000).toISOString().slice(0, 7);
+    byMonth[m] = (byMonth[m] || 0) + 1;
+    sum += r.usd || 0;
+    if (EARLY_STAGES.includes(r.stage)) early++;
+    for (const i of String(r.investors || "").split(",").map((x) => x.trim()).filter(Boolean)) inv[i] = (inv[i] || 0) + 1;
+  }
+  return {
+    matched: rows.length, days, total_usd_m: Math.round(sum / 1e6), early_stage: early,
+    per_month: byMonth,
+    top_investors: Object.entries(inv).sort((x, y) => y[1] - x[1]).slice(0, 8).map(([k, v]) => `${k} (${v})`),
+    rounds: rows.slice(0, 25).map((r) => ({ date: new Date(r.ts * 1000).toISOString().slice(0, 10), company: r.company,
+      usd_m: r.usd ? Math.round(r.usd / 1e5) / 10 : null, stage: r.stage, niche: r.niche, sector: r.sector,
+      country: r.country, investors: r.investors, what: r.what_en || r.what_ru, url: r.url })),
+  };
+}
+
+async function toolOpportunities(env, a) {
+  const rep = (marketOf(await loadSnapshot(env)) || {}).report || {};
+  return (rep.niches || []).filter((n) => !a.type || a.type === "any" || (n.opp || {}).type === a.type).slice(0, 15).map((n) => ({
+    niche: n.niche, sector: n.sector, type: (n.opp || {}).type, score: (n.opp || {}).score,
+    score_parts: ((n.opp || {}).parts || []).map((p) => `${p.k} ${p.pts > 0 ? "+" : ""}${p.pts} ${JSON.stringify(p.fact)}`),
+    rounds_28d: n.n, early: n.early, usd_m: Math.round(n.usd / 1e6), companies_6m: n.companies_6m,
+    mega: (n.mega || []).map((r) => `${r.company} $${Math.round((r.usd || 0) / 1e6)}M`),
+    weekly_26w: (n.weekly || []).join(","), investors: n.investors,
+    companies: (n.companies || []).map((r) => `${r.company} ${r.usd ? "$" + (r.usd / 1e6).toFixed(1) + "M" : ""} ${r.stage || ""} — ${(r.what || {}).en || ""} ${r.url || ""}`),
+    people_ask: (n.pain || []).map((p) => `${p.text} ${p.url}`),
+    kazakhstan: n.gap ? n.gap.kz : "not checked", cis: n.gap ? n.gap.cis : "not checked",
+    local_analogs: n.gap ? (n.gap.analogs || []).map((x) => `${x.name} ${x.country} ${x.url}`) : [],
+  }));
+}
+
+async function toolPain(env, a) {
+  const kws = kwList(a.keywords);
+  const c = (marketOf(await loadSnapshot(env)) || {}).chat || {};
+  return (c.pain || []).map((p) => ({ ...p, hits: kwHits(`${p.text} ${p.niche}`, kws) })).filter((p) => p.hits)
+    .sort((x, y) => y.hits - x.hits || (y.likes || 0) - (x.likes || 0)).slice(0, 15)
+    .map((p) => ({ date: new Date(p.ts * 1000).toISOString().slice(0, 10), likes: p.likes, niche: p.niche, text: p.text, url: p.url }));
+}
+
+async function toolLaunches(env, a) {
+  const kws = kwList(a.keywords);
+  const snap = await loadSnapshot(env);
+  return ((snap && snap.findings) || []).map((f) => ({ f, hits: kwHits(`${f.title} ${f.body} ${(f.gist || {}).en || ""}`, kws) }))
+    .filter((x) => x.hits).sort((x, y) => y.hits - x.hits || y.f.score - x.f.score).slice(0, 12)
+    .map(({ f }) => ({ date: new Date(f.first_seen * 1000).toISOString().slice(0, 10), source: f.source, title: String(f.title || "").slice(0, 120),
+      traction: `${f.likes ?? "?"} likes/points/votes, ${f.replies ?? "?"} replies`, about: (f.gist || {}).en || "", url: f.url, site: f.product_url }));
+}
+
+async function runTool(env, name, args) {
+  try {
+    if (name === "search_rounds") return await toolSearchRounds(env, args || {});
+    if (name === "list_opportunities") return await toolOpportunities(env, args || {});
+    if (name === "search_pain") return await toolPain(env, args || {});
+    if (name === "search_launches") return await toolLaunches(env, args || {});
+  } catch (e) {
+    return { error: String(e).slice(0, 200) };
+  }
+  return { error: "unknown tool" };
+}
+
+/**
+ * Разговор с инструментами: модель запрашивает данные, Worker отвечает,
+ * пока модель не даст итог (не больше 4 шагов и ~26 секунд — у фоновой
+ * работы вебхука 30 секунд). Только OpenRouter: у бесплатного Groq на
+ * такие диалоги не хватает 8000 токенов в минуту. Возвращает текст
+ * последнего ответа модели или { error }.
+ */
+async function toolChat(env, messages, { maxSteps = 4, budgetMs = 26000, web = false } = {}) {
+  if (!env.LS_OPENROUTER_KEY) return { error: "no-openrouter" };
+  const started = Date.now();
+  let model = env.LS_CHAT_MODEL || OR_CHAT_MODEL;
+  if (web && !model.endsWith(":online")) model += ":online";
+  const msgs = [...messages];
+  for (let step = 0; step <= maxSteps; step++) {
+    const left = budgetMs - (Date.now() - started);
+    if (left < 5000) break;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), left);
+    let r;
+    try {
+      r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST", signal: ctrl.signal,
+        headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
+          "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+        body: JSON.stringify({ model, messages: msgs, max_tokens: 2500, temperature: 0.3,
+          ...(step < maxSteps ? { tools: TOOLS, tool_choice: "auto" } : {}) }),
+      });
+    } catch (e) {
+      await noteAiError(env, "openrouter tools " + model, 0, String(e));
+      return { error: "timeout" };
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!r.ok) {
+      await noteAiError(env, "openrouter tools " + model, r.status, await r.text().catch(() => ""));
+      return { error: "http", status: r.status };
+    }
+    const j = await r.json().catch(() => null);
+    const m = j && j.choices && j.choices[0] && j.choices[0].message;
+    if (!m) return { error: "bad" };
+    const calls = m.tool_calls || [];
+    if (!calls.length) return { text: String(m.content || "").trim() };
+    msgs.push({ role: "assistant", content: m.content || "", tool_calls: calls });
+    for (const c of calls.slice(0, 4)) {
+      let args = {};
+      try { args = JSON.parse((c.function && c.function.arguments) || "{}"); } catch { args = {}; }
+      const res = await runTool(env, c.function && c.function.name, args);
+      msgs.push({ role: "tool", tool_call_id: c.id, content: JSON.stringify(res).slice(0, 12000) });
+    }
+  }
+  return { error: "steps" };
+}
+
+/** Раунды за полгода из прогона — в таблицу rounds (POST /ingest-rounds). */
+async function ingestRounds(env, rows) {
+  const cols = ["key", "ts", "company", "usd", "stage", "niche", "sector", "country", "investors", "what_ru", "what_en", "url", "outlets", "doc"];
+  const per = Math.floor(99 / cols.length);           // D1: не больше 100 параметров на запрос
+  const stmts = [];
+  for (let i = 0; i < rows.length; i += per) {
+    const chunk = rows.slice(i, i + per), binds = [];
+    const ph = chunk.map((r) => {
+      const doc = [r.company, r.niche, r.what_en, r.what_ru, r.sector, r.investors, r.country].join(" ").toLowerCase();
+      const vals = [r.key, r.ts, r.company, r.usd, r.stage, r.niche, r.sector, r.country, r.investors, r.what_ru, r.what_en, r.url, r.outlets, doc];
+      return "(" + vals.map((v) => { binds.push(v === undefined ? null : v); return `?${binds.length}`; }).join(",") + ")";
+    }).join(",");
+    stmts.push(env.DB.prepare(`INSERT OR REPLACE INTO rounds (${cols.join(",")}) VALUES ${ph}`).bind(...binds));
+  }
+  if (stmts.length) await env.DB.batch(stmts);
+  return rows.length;
 }
 
 // Один раз на экземпляр Worker: иначе каждое нажатие кнопки стоило бы
@@ -1771,6 +2056,9 @@ async function ensureTables(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS chat_log (user_id TEXT, ts INTEGER, role TEXT, text TEXT)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS chat_log_user ON chat_log (user_id, ts)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS chat_profile (user_id TEXT PRIMARY KEY, about TEXT, ts INTEGER)"),
+    // Датасет раундов за полгода — для инструментов ИИ (search_rounds).
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS rounds (key TEXT PRIMARY KEY, ts INTEGER, company TEXT, usd REAL, stage TEXT, niche TEXT, sector TEXT, country TEXT, investors TEXT, what_ru TEXT, what_en TEXT, url TEXT, outlets INTEGER, doc TEXT)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS rounds_ts ON rounds (ts)"),
   ]);
   // Таблица prefs создавалась раньше без языка и фильтров — дополняем на
   // месте. Повторное добавление колонки D1 отклоняет, это ожидаемо.
@@ -2161,6 +2449,20 @@ export default {
       // видно, что именно не так (лимит D1, размер, права).
       if (err) return new Response(`срез не сохранён: ${err}`, { status: 503 });
       return new Response(`принято: ${data.findings.length}${env.SNAP ? " (KV)" : " (D1)"}`);
+    }
+
+    if (request.method === "POST" && url.pathname === "/ingest-rounds") {
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) {
+        return new Response("нет", { status: 403 });
+      }
+      await ensureTables(env);
+      const body = await request.json().catch(() => null);
+      if (!body || !Array.isArray(body.rows)) return new Response("нет rows", { status: 400 });
+      try {
+        return new Response(`принято раундов: ${await ingestRounds(env, body.rows.slice(0, 500))}`);
+      } catch (e) {
+        return new Response(`не сохранено: ${String(e).slice(0, 300)}`, { status: 503 });
+      }
     }
 
     if (request.method === "POST" && url.pathname === "/tg") {
