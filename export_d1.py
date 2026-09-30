@@ -289,7 +289,20 @@ def sync_matrix(conn, now, max_rows=600):
         if sent.get(r["niche"]) != h:
             todo.append((r, h))
     todo = todo[:max_rows]
+    # Ниши, отправленные раньше, но пропавшие из матрицы (склеены с дублем,
+    # мусорные ярлыки), — удалить в боте из базы и векторного индекса.
+    current = {r["niche"] for r in rows}
+    gone = [k for k in sent if k not in current] + ["unknown", "other"]
     done, err = 0, None
+    if gone:
+        try:
+            resp = requests.post(url.rstrip("/") + "/ingest-matrix", timeout=150,
+                                 headers={"x-ingest-secret": secret, "content-type": "application/json"},
+                                 json={"rows": [], "delete": gone[:500]})
+            if resp.status_code != 200:
+                err = "удаление: Worker %d" % resp.status_code
+        except requests.RequestException as e:
+            err = "удаление: %s" % str(e)[:80]
     # По 20 строк: на 60 боевой бот (эмбеддинги + индекс) не укладывался в
     # 90 секунд (2026-09-30).
     for i in range(0, len(todo), 20):

@@ -2074,8 +2074,10 @@ async function ingestRounds(env, rows) {
 // ---------------------------------------------------------------------------
 const EMB_MODEL = "@cf/baai/bge-m3";
 const FAST_MODEL = "google/gemini-3.8-flash";
-const NICHE_SIM_MIN = 0.38;
-let lastMatches = [];      // сырые совпадения последнего поиска — для замера /debug-ask
+const NICHE_SIM_MIN = 0.35;
+let lastMatches = [];
+let lastKept = [];
+const JUNK = new Set(["unknown", "other", "n/a", "none", "misc", "various"]);         // ниши после фильтра релевантности — для замера      // сырые совпадения последнего поиска — для замера /debug-ask
 
 async function embed(env, texts) {
   const r = await env.AI.run(EMB_MODEL, { text: texts });
@@ -2132,6 +2134,83 @@ async function indexNiches(env, items) {
   return n;
 }
 
+/**
+ * Фильтр релевантности: из ниш, найденных по смыслу, быстрая модель Groq
+ * оставляет относящиеся к вопросу. Векторный поиск на вопрос о страховании
+ * тянул «baby monitoring» и «loan origination» (замер 2026-09-30), а итоговые
+ * суммы по нишам должны считаться только по релевантным. Английский
+ * ранжировщик Workers AI русские вопросы не понимает, поэтому — LLM.
+ * Не успела за 2,5 с или ошиблась — берём найденное как есть.
+ */
+const GATE_MODEL = "openai/gpt-oss-20b";
+
+async function gateNiches(env, question, cands) {
+  const keys = groqKeys(env);
+  if (!keys.length || cands.length <= 1) return cands.map((c) => c.niche);
+  const list = cands.map((c, i) => `${i}: ${c.niche}${c.name_ru ? " / " + c.name_ru : ""}`).join("\n");
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 2500);
+  try {
+    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST", signal: ctrl.signal,
+      headers: { authorization: `Bearer ${keys[0]}`, "content-type": "application/json" },
+      body: JSON.stringify({ model: env.LS_GATE_MODEL || GATE_MODEL, temperature: 0, max_completion_tokens: 300,
+        reasoning_effort: "low", response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: "You pick which startup niches are relevant to a founder's question. A niche is relevant if its companies are what the question asks about (same industry and problem), not merely adjacent. Reply JSON only: {\"keep\": [indices]}. If the question is general (where to go, what is overheated) keep all." },
+          { role: "user", content: `Question: ${question.slice(0, 600)}\nNiches:\n${list}` }] }),
+    });
+    if (!r.ok) {
+      await noteAiError(env, "groq gate", r.status, await r.text().catch(() => ""));
+      return cands.map((c) => c.niche);
+    }
+    const t = ((await r.json()).choices[0].message.content || "").trim();
+    const keep = (JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)).keep || []).map(Number);
+    const out = keep.filter((i) => cands[i]).map((i) => cands[i].niche);
+    return out.length ? out : cands.map((c) => c.niche);
+  } catch (e) {
+    return cands.map((c) => c.niche);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Общие слова вопроса: по ним вектор тянуло к финансовым нишам («есть ли
+// деньги в edtech» находил платежи, а не образование — замер 2026-09-30).
+// \b в JavaScript не видит границ кириллических слов — поэтому юникод-классы.
+const STOP_WORDS = /(?<!\p{L})(сколько|деньги|денег|деньгах|инвестиц\p{L}*|раунд\p{L}*|сейчас|есть|ли|что|какие|какой|куда|где|кто|рынок|рынке|рынка|ниш\p{L}*|полгода|месяц\p{L}*|за|в|на|и|с|по|для|money|funding|rounds?|how|much|what|which|market|now|is|are|there|any)(?!\p{L})/giu;
+
+// Словарь «слово вопроса -> основа в названиях ниш» для поиска по словам.
+const SYNONYMS = [
+  [/edtech|образован|обучен|школ|студент|учёб|учеб|репетит/i, ["educat", "learning", "school", "student", "tutor"]],
+  [/страхов|insur/i, ["insurance"]], [/юрист|юрид|legal|право/i, ["legal", "law"]],
+  [/медицин|клиник|здоров|врач|пациент|health/i, ["health", "clinic", "patient", "medical"]],
+  [/финтех|платеж|платёж|банк|fintech|payment/i, ["payment", "bank", "fintech"]],
+  [/кредит|займ|lend|loan/i, ["lending", "loan", "credit"]], [/стейбл|stablecoin/i, ["stablecoin"]],
+  [/крипт|блокчейн|web3|crypto/i, ["crypto", "blockchain", "onchain"]],
+  [/логист|склад|достав|грузо|logist|warehouse/i, ["logistic", "warehouse", "freight", "delivery", "supply chain"]],
+  [/недвиж|строит|стройк|real estate/i, ["real estate", "construction", "property", "housing"]],
+  [/агро|сельск|ферм|agri/i, ["agri", "farm", "crop"]], [/дрон|беспилот|drone/i, ["drone", "unmanned", "uas"]],
+  [/робот|robot|гуманоид/i, ["robot", "humanoid"]], [/оборон|военн|defen/i, ["defense", "military"]],
+  [/космос|спутник|space|satellit/i, ["space", "satellite", "orbit"]],
+  [/энерг|электросет|солнеч|батар|energy|grid/i, ["energy", "grid", "solar", "battery", "power"]],
+  [/кибер|безопасн|security/i, ["security", "identity", "fraud"]],
+  [/бухгалт|учёт|финансов|accounting/i, ["accounting", "bookkeeping", "finance", "tax"]],
+  [/маркетинг|реклам|marketing/i, ["marketing", "advertis"]], [/продаж|sales|crm/i, ["sales", "crm"]],
+  [/найм|рекрут|hr\b|кадр|recruit|hiring/i, ["recruit", "hiring", "talent", "hr "]],
+  [/голос|voice/i, ["voice"]], [/поддержк|support/i, ["support", "customer service"]],
+  [/разработ|программ|devtool|developer|coding/i, ["developer", "coding", "code"]],
+  [/e-?commerce|ecommerce|магазин|маркетплейс|ритейл|retail/i, ["commerce", "retail", "marketplace", "shop"]],
+  [/путешеств|туризм|travel/i, ["travel"]], [/еда|ресторан|food/i, ["food", "restaurant"]],
+];
+
+function lexicalStems(question) {
+  const out = new Set();
+  for (const [rx, stems] of SYNONYMS) if (rx.test(question)) stems.forEach((x) => out.add(x));
+  for (const w of question.toLowerCase().match(/[a-z][a-z-]{4,}/g) || []) out.add(w.slice(0, 7));
+  return [...out].slice(0, 8);
+}
+
 const usdM = (v) => (v ? (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${(v / 1e6).toFixed(1)}M`) : "amount n/a");
 
 /**
@@ -2145,33 +2224,61 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
   let names = [];
   if (niche) names = [niche];
   else {
-    const [qv] = await embed(env, [question.slice(0, 1000)]);
+    const clean = question.replace(STOP_WORDS, " ").replace(/\s+/g, " ").trim() || question;
+    const stems = lexicalStems(question);
+    // Поиск по словам в названиях ниш — параллельно с векторным.
+    const lexP = stems.length
+      ? env.DB.prepare(`SELECT niche FROM niche_matrix WHERE ${stems.map((_, k) => `(lower(niche) LIKE ?${k + 1})`).join(" OR ")} LIMIT 40`)
+        .bind(...stems.map((x) => `%${x}%`)).all().catch(() => ({ results: [] }))
+      : Promise.resolve({ results: [] });
+    const [[qv], lex] = await Promise.all([embed(env, [clean.slice(0, 1000)]), lexP]);
+    const lexNames = (lex.results || []).map((r) => r.niche);
     if (qv) {
-      const res = await env.VEC.query(qv, { topK: 8, returnMetadata: "all" });
+      const res = await env.VEC.query(qv, { topK: 12, returnMetadata: "all" });
       lastMatches = ((res && res.matches) || []).map((m) => ({ niche: m.metadata && m.metadata.niche, score: Math.round(m.score * 1000) / 1000 }));
-      // Порог относительный: у bge-m3 близкие ниши дают 0,40–0,60, а
-      // абсолютный 0,45 отрезал и нужное. Берём всё не дальше 0,06 от
-      // лучшего совпадения и не ниже пола.
+      // Порог относительный: у bge-m3 близкие ниши дают 0,40–0,60. Берём
+      // не дальше 0,08 от лучшего совпадения, дальше решает фильтр.
       const ms = (res && res.matches) || [];
       const best = ms.length ? ms[0].score : 0;
-      names = ms.filter((m) => m.score >= NICHE_SIM_MIN && m.score >= best - 0.06).map((m) => m.metadata && m.metadata.niche).filter(Boolean);
+      names = ms.filter((m) => m.score >= NICHE_SIM_MIN && m.score >= best - 0.08).map((m) => m.metadata && m.metadata.niche).filter(Boolean);
     }
+    // Объединение: сначала совпавшие по словам (их точность выше), затем
+    // по смыслу; всего не больше 16 кандидатов — дальше решает фильтр.
+    names = [...new Set([...lexNames.slice(0, 10), ...names])].filter((n) => !JUNK.has(n)).slice(0, 16);
   }
+  // Строки матрицы и прямые совпадения по компаниям — параллельно.
+  const tokens = [...new Set((question.match(/[A-Za-z][A-Za-z0-9.&-]{3,}/g) || []).map((t) => t.toLowerCase()))].slice(0, 3);
+  // Фильтр релевантности — параллельно с загрузкой строк (по английским
+  // названиям ниш): экономит ~0,3 с до первого слова.
+  const gateP = (!niche && names.length > 1) ? gateNiches(env, question, names.map((n) => ({ niche: n }))) : Promise.resolve(null);
+  const [keepList, matrixRes, ...companyRes] = await Promise.all([
+    gateP,
+    names.length
+      ? env.DB.prepare(`SELECT niche, name_ru, data FROM niche_matrix WHERE niche IN (${names.map((_, k) => "?" + (k + 1)).join(",")})`)
+        .bind(...names).all().catch(() => ({ results: [] }))
+      : Promise.resolve({ results: [] }),
+    ...tokens.map((t) => env.DB.prepare("SELECT * FROM rounds WHERE lower(company) LIKE ?1 ORDER BY ts DESC LIMIT 3")
+      .bind(`%${t}%`).all().catch(() => ({ results: [] }))),
+  ]);
+  const by = Object.fromEntries((matrixRes.results || []).map((r) => [r.niche, r]));
+  let found = names.filter((n) => by[n]).map((n) => ({ niche: n, name_ru: by[n].name_ru }));
+  if (keepList) {
+    const keep = new Set(keepList);
+    const kept = found.filter((c) => keep.has(c.niche));
+    if (kept.length) found = kept;
+  }
+  lastKept = found.map((c) => c.niche);
   const rows = [];
-  if (names.length) {
-    const { results } = await env.DB.prepare(`SELECT niche, name_ru, data FROM niche_matrix WHERE niche IN (${names.map((_, k) => "?" + (k + 1)).join(",")})`)
-      .bind(...names).all().catch(() => ({ results: [] }));
-    const by = Object.fromEntries((results || []).map((r) => [r.niche, r]));
-    for (const n of names) if (by[n]) { try { rows.push({ ...JSON.parse(by[n].data), name_ru: by[n].name_ru }); } catch { /* пропуск */ } }
-  }
-  // Итог по всем найденным нишам — считает код, не модель.
-  if (rows.length > 1) {
+  for (const c of found) { try { rows.push({ ...JSON.parse(by[c.niche].data), name_ru: by[c.niche].name_ru }); } catch { /* пропуск */ } }
+  // Итог по всем релевантным нишам — считает код, не модель (модель сама
+  // складывала суммы — замер 2026-09-30).
+  if (rows.length) {
     const tot = { rounds: 0, early: 0, usd: 0, monthly: {} };
     for (const d of rows) {
       tot.rounds += d.companies_6m || 0; tot.early += d.early_6m || 0; tot.usd += d.usd_6m || 0;
       for (const [m, v] of Object.entries(d.monthly || {})) tot.monthly[m] = (tot.monthly[m] || 0) + v;
     }
-    add(`TOTAL over the ${rows.length} matched niches, last 6 months: ${tot.rounds} companies raised rounds (${tot.early} early-stage), ${usdM(tot.usd)} excluding $1B+ mega-rounds; rounds per month ${JSON.stringify(tot.monthly)}`);
+    add(`TOTAL (computed, use it for any sum or count across niches) over the ${rows.length} relevant niches (${rows.map((d) => d.niche).join("; ")}), last 6 months: ${tot.rounds} companies raised rounds (${tot.early} early-stage), ${usdM(tot.usd)} excluding $1B+ mega-rounds; rounds per month ${JSON.stringify(tot.monthly)}`);
   }
   for (const d of rows.slice(0, 6)) {
     const o = d.opp || {};
@@ -2194,11 +2301,8 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
     }
   }
   // Компании, названные в вопросе прямо (латиница от 4 букв).
-  const tokens = [...new Set((question.match(/[A-Za-z][A-Za-z0-9.&-]{3,}/g) || []).map((t) => t.toLowerCase()))].slice(0, 3);
-  for (const t of tokens) {
-    const { results } = await env.DB.prepare("SELECT * FROM rounds WHERE lower(company) LIKE ?1 ORDER BY ts DESC LIMIT 3")
-      .bind(`%${t}%`).all().catch(() => ({ results: [] }));
-    for (const r of results || []) add(`ROUND ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${r.niche}": ${r.what_en || r.what_ru || ""}`, r.url);
+  for (const res of companyRes) {
+    for (const r of res.results || []) add(`ROUND ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${r.niche}": ${r.what_en || r.what_ru || ""}`, r.url);
   }
   // Общий вопрос («куда идти?») или мало совпадений — верхние возможности.
   const rep = ((snap && marketOf(snap)) || {}).report || {};
@@ -2213,14 +2317,14 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
   return { facts, niches: rows };
 }
 
-const FAST_RULES = `Answer ONLY from the FACTS list. After every claim put the fact number in square brackets, e.g. [F3]; a claim with a company, a sum or a count MUST carry one. Never use companies, numbers or events from your own memory. If FACTS do not answer the question, say so in one line and say what the data does show.
+const FAST_RULES = `Never add up or compute numbers yourself: for any sum or count across niches quote the TOTAL fact. Answer ONLY from the FACTS list. After every claim put the fact number in square brackets, e.g. [F3]; a claim with a company, a sum or a count MUST carry one. Never use companies, numbers or events from your own memory. If FACTS do not answer the question, say so in one line and say what the data does show.
 Interpret, do not just list: say whether the evidence shows an open window (demand, few funded players), a forming market (many early rounds and similar products — look for an unserved vertical) or an overheated one (mega-rounds, late stages, dozens of players).
 Plain text, short paragraphs or bullets starting with •, no markdown headers, no tables. Answer in %LANG%.`;
 
 const FAST_SYSTEM = {
   chat: `You are the analyst inside launch-scout, a market radar for founders (Kazakhstan first, then CIS/MENA, then global).
 ${FAST_RULES}
-Tailor the answer to the user's PROFILE and end with 1-2 concrete next steps. At most 12 lines.
+Tailor the answer to the user's PROFILE and end with 1-2 concrete next steps. At most 8 short lines — the user can tap «Глубже» for details.
 If the user's message tells something new about them (what they build, skills, budget, market), add a last line "PROFILE: <their updated profile in one English sentence>"; otherwise do not add it.`,
   deep: `You are the analyst inside launch-scout. Give a deep dive into ONE niche for a founder (Kazakhstan first).
 ${FAST_RULES}
@@ -2231,16 +2335,26 @@ Format: ❌/⚠️ lines — strongest reasons not to do it; 🟢 lines — evid
 };
 
 /** Потоковый ответ OpenRouter: onDelta(текст до сих пор). Возвращает полный текст или null. */
-async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000) {
+// Первое слово не пришло за это время — обрываем и идём к запасной модели:
+// на замере 2026-09-30 провайдер Gemini изредка молчал 13–15 секунд.
+const FIRST_TOKEN_MS = 4500;
+const FALLBACK_FAST_MODEL = "openai/gpt-oss-120b";
+
+async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000, maxTokens = 1800, firstMs = FIRST_TOKEN_MS) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let gotFirst = false;
+  const firstTimer = setTimeout(() => { if (!gotFirst) ctrl.abort(); }, firstMs);
   try {
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
         "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
-      body: JSON.stringify({ model, messages, stream: true, max_tokens: 1800, temperature: 0.3,
-        reasoning: { effort: "low", exclude: true } }),
+      body: JSON.stringify({ model, messages, stream: true, max_tokens: maxTokens, temperature: 0.3,
+        reasoning: { effort: "low", exclude: true },
+        // gpt-oss — на серверах Groq через OpenRouter: первое слово за доли
+        // секунды и сотни токенов в секунду, без минутного лимита бесплатного Groq.
+        ...(model.startsWith("openai/gpt-oss") ? { provider: { order: ["groq"], allow_fallbacks: true } } : {}) }),
     });
     if (!r.ok || !r.body) {
       await noteAiError(env, "openrouter fast " + model, r.status, await r.text().catch(() => ""));
@@ -2261,16 +2375,17 @@ async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000
         if (payload === "[DONE]") continue;
         try {
           const d = JSON.parse(payload).choices[0].delta.content;
-          if (d) { text += d; await onDelta(text); }
+          if (d) { gotFirst = true; text += d; await onDelta(text); }
         } catch { /* служебные строки потока */ }
       }
     }
     return text;
   } catch (e) {
-    await noteAiError(env, "openrouter fast " + model, 0, String(e));
+    await noteAiError(env, "openrouter fast " + model, 0, gotFirst ? String(e) : `нет первого слова за ${firstMs} мс`);
     return null;
   } finally {
     clearTimeout(timer);
+    clearTimeout(firstTimer);
   }
 }
 
@@ -2282,17 +2397,29 @@ function groundAnswer(text, facts) {
   const byId = Object.fromEntries(facts.map((f) => [f.id, f]));
   let dropped = 0;
   const lines = [];
+  // Ссылка — одиночная [F6] или группа [F6, F7] / [F6-F8]: групповые раньше
+  // не распознавались, и строки с опорой вырезались как непроверенные.
+  const GROUP = /\[(F\d+(?:\s*[,;–-]\s*F?\d+)*)\]/g;
+  const idsOf = (g) => {
+    const out = [];
+    for (const part of g.split(/\s*[,;]\s*/)) {
+      const m = /F?(\d+)(?:\s*[–-]\s*F?(\d+))?/.exec(part);
+      if (!m) continue;
+      const a = Number(m[1]), b = m[2] ? Number(m[2]) : a;
+      for (let i = a; i <= Math.min(b, a + 20); i++) out.push(i);
+    }
+    return out;
+  };
   for (const raw of String(text || "").split("\n")) {
-    const cites = [...raw.matchAll(/\[F(\d+)\]/g)].map((m) => Number(m[1]));
+    const cites = [...raw.matchAll(GROUP)].flatMap((m) => idsOf(m[1]));
     const valid = cites.filter((c) => byId[c]);
     const hasNumbers = /\$\s?\d|\d+\s?(млн|млрд|million|billion|M\b|B\b|%|раунд|round)/i.test(raw);
     if (hasNumbers && !valid.length) { dropped++; continue; }
     let line = esc(raw);
-    line = line.replace(/\[F(\d+)\]/g, (m, n) => {
-      const f = byId[Number(n)];
-      if (!f) return "";
-      return f.url && okUrl(f.url) ? `<a href="${esc(f.url)}">[${n}]</a>` : "";
-    });
+    line = line.replace(GROUP, (m, g) => idsOf(g).map((n) => {
+      const f = byId[n];
+      return f && f.url && okUrl(f.url) ? `<a href="${esc(f.url)}">[${n}]</a>` : "";
+    }).join(""));
     lines.push(line.replace(/\s+$/, ""));
   }
   return { html: lines.join("\n").replace(/\n{3,}/g, "\n\n").trim(), dropped };
@@ -2337,7 +2464,7 @@ At most 8 competitors and 5 complaints, only ones you actually found with real U
 async function fastAnswer(env, chatId, question, lang, mode, { niche = null, profile = "", hist = [] } = {}) {
   const s = L(lang);
   if (!env.AI || !env.VEC || !env.LS_OPENROUTER_KEY) return false;
-  const snap = await loadSnapshot(env);
+  const snap = await loadSnapshot(env);   // кэш на минуту — обычно мгновенно
   let fx;
   try {
     fx = await matrixFacts(env, question, { niche, snap });
@@ -2386,7 +2513,9 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
       await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, text: shown.slice(0, 3800) + " …" });
     }
   };
-  const full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, onDelta);
+  const maxTok = mode === "chat" ? 900 : 1800;
+  let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, onDelta, 25000, maxTok);
+  if (!full && !msgId) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, messages, onDelta, 20000, maxTok, 8000);
   if (!full || !full.trim()) {
     if (msgId) await tg(env, "deleteMessage", { chat_id: chatId, message_id: msgId });
     return false;
@@ -2854,14 +2983,17 @@ export default {
       const t1 = Date.now();
       let first = 0;
       const factText = fx.facts.map((f) => `[F${f.id}] ${f.text}`).join("\n").slice(0, 16000);
-      const full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, [
+      const dbgMsgs = [
         { role: "system", content: FAST_SYSTEM[mode].replace("%LANG%", "Russian") },
         { role: "user", content: `TODAY: ${new Date().toISOString().slice(0, 10)}\nPROFILE: unknown\n\nFACTS:\n${factText}\n\nQUESTION: ${q}` },
-      ], async () => { if (!first) first = Date.now(); });
+      ];
+      const onD = async () => { if (!first) first = Date.now(); };
+      let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, dbgMsgs, onD, 25000, mode === "chat" ? 900 : 1800);
+      if (!full) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, dbgMsgs, onD, 20000, mode === "chat" ? 900 : 1800, 8000);
       const t2 = Date.now();
       const g = groundAnswer(full || "", fx.facts);
       return json({ facts_ms: t1 - t0, first_token_ms: first ? first - t0 : null, total_ms: t2 - t0,
-        niches: fx.niches.map((d) => d.niche), matches: lastMatches, n_facts: fx.facts.length, dropped_lines: g.dropped, answer: full, facts: fx.facts });
+        niches: fx.niches.map((d) => d.niche), kept: lastKept, matches: lastMatches, n_facts: fx.facts.length, dropped_lines: g.dropped, answer: full, facts: fx.facts });
     }
 
     if (request.method === "POST" && url.pathname === "/ingest-matrix") {
@@ -2872,7 +3004,16 @@ export default {
       const body = await request.json().catch(() => null);
       if (!body || !Array.isArray(body.rows)) return new Response("нет rows", { status: 400 });
       try {
-        return new Response(`принято ниш: ${await ingestMatrix(env, body.rows.slice(0, 100))}`);
+        // Ниши, которых больше нет в матрице (склеены, мусорные), — из базы и индекса.
+        const gone = (Array.isArray(body.delete) ? body.delete : []).slice(0, 500);
+        if (gone.length) {
+          for (let i = 0; i < gone.length; i += 50) {
+            const part = gone.slice(i, i + 50);
+            await env.DB.prepare(`DELETE FROM niche_matrix WHERE niche IN (${part.map((_, k) => "?" + (k + 1)).join(",")})`).bind(...part).run();
+            await env.VEC.deleteByIds(await Promise.all(part.map((n) => vecId(n))));
+          }
+        }
+        return new Response(`принято ниш: ${await ingestMatrix(env, body.rows.slice(0, 100))}, удалено: ${gone.length}`);
       } catch (e) {
         return new Response(`не сохранено: ${String(e).slice(0, 300)}`, { status: 503 });
       }
