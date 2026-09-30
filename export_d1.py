@@ -261,6 +261,11 @@ def sync_rounds(conn, now, max_rows=3000):
     return done, err
 
 
+# Версия отпечатков матрицы: новая версия = отправить всё заново. v2 —
+# после того как 497 ниш из 557 не попали в векторный индекс (2026-09-30).
+MX_KEY = "mx_hash_v2"
+
+
 def sync_matrix(conn, now, max_rows=600):
     """
     Матрица ниш — в бота (POST /ingest-matrix), только изменившиеся строки.
@@ -274,7 +279,7 @@ def sync_matrix(conn, now, max_rows=600):
     if not url or not secret:
         return 0, "нет WORKER_URL/LS_INGEST_SECRET"
     try:
-        sent = json.loads(db.kv_get(conn, "mx_hash", "{}") or "{}")
+        sent = json.loads(db.kv_get(conn, MX_KEY, "{}") or "{}")
     except ValueError:
         sent = {}
     rows = market.niche_matrix(conn, now)
@@ -301,7 +306,7 @@ def sync_matrix(conn, now, max_rows=600):
             sent[r["niche"]] = h
         done += len(chunk)
     keep = {r["niche"] for r in rows}
-    db.kv_set(conn, "mx_hash", json.dumps({k: v for k, v in sent.items() if k in keep}))
+    db.kv_set(conn, MX_KEY, json.dumps({k: v for k, v in sent.items() if k in keep}))
     conn.commit()
     return done, err
 

@@ -2074,7 +2074,8 @@ async function ingestRounds(env, rows) {
 // ---------------------------------------------------------------------------
 const EMB_MODEL = "@cf/baai/bge-m3";
 const FAST_MODEL = "google/gemini-3.8-flash";
-const NICHE_SIM_MIN = 0.45;
+const NICHE_SIM_MIN = 0.38;
+let lastMatches = [];      // сырые совпадения последнего поиска — для замера /debug-ask
 
 async function embed(env, texts) {
   const r = await env.AI.run(EMB_MODEL, { text: texts });
@@ -2108,13 +2109,27 @@ async function ingestMatrix(env, rows) {
       .bind(r.niche, r.name_ru || "", r.sector || "", JSON.stringify(d), now);
   });
   for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50));
-  const vecs = await embed(env, rows.map((r) => r.doc || r.niche));
-  const items = [];
-  for (let i = 0; i < rows.length; i++) {
-    if (vecs[i]) items.push({ id: await vecId(rows[i].niche), values: vecs[i], metadata: { niche: rows[i].niche } });
+  return indexNiches(env, rows.map((r) => ({ niche: r.niche, doc: r.doc || r.niche })));
+}
+
+/**
+ * Эмбеддинги ниш — пачками по 20: на пачке из 60 длинных описаний Workers AI
+ * молча возвращал пустой ответ, и 497 ниш из 557 не попали в индекс
+ * (2026-09-30). Бросает ошибку, если хоть одна пачка не посчиталась, —
+ * тогда прогон повторит эти строки.
+ */
+async function indexNiches(env, items) {
+  let n = 0;
+  for (let i = 0; i < items.length; i += 20) {
+    const part = items.slice(i, i + 20);
+    const vecs = await embed(env, part.map((x) => x.doc.slice(0, 1500)));
+    if (vecs.length !== part.length) throw new Error(`эмбеддинги: ${vecs.length} из ${part.length}`);
+    const out = [];
+    for (let k = 0; k < part.length; k++) out.push({ id: await vecId(part[k].niche), values: vecs[k], metadata: { niche: part[k].niche } });
+    await env.VEC.upsert(out);
+    n += out.length;
   }
-  if (items.length) await env.VEC.upsert(items);
-  return items.length;
+  return n;
 }
 
 const usdM = (v) => (v ? (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${(v / 1e6).toFixed(1)}M`) : "amount n/a");
@@ -2133,7 +2148,13 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
     const [qv] = await embed(env, [question.slice(0, 1000)]);
     if (qv) {
       const res = await env.VEC.query(qv, { topK: 8, returnMetadata: "all" });
-      names = ((res && res.matches) || []).filter((m) => m.score >= NICHE_SIM_MIN).map((m) => m.metadata && m.metadata.niche).filter(Boolean);
+      lastMatches = ((res && res.matches) || []).map((m) => ({ niche: m.metadata && m.metadata.niche, score: Math.round(m.score * 1000) / 1000 }));
+      // Порог относительный: у bge-m3 близкие ниши дают 0,40–0,60, а
+      // абсолютный 0,45 отрезал и нужное. Берём всё не дальше 0,06 от
+      // лучшего совпадения и не ниже пола.
+      const ms = (res && res.matches) || [];
+      const best = ms.length ? ms[0].score : 0;
+      names = ms.filter((m) => m.score >= NICHE_SIM_MIN && m.score >= best - 0.06).map((m) => m.metadata && m.metadata.niche).filter(Boolean);
     }
   }
   const rows = [];
@@ -2805,6 +2826,24 @@ export default {
 
     // Замер быстрого ответа — только в локальной разработке (wrangler dev
     // --var LS_DEBUG:1): в бою переменной нет, маршрут не существует.
+    // Переиндексация матрицы — тоже только в локальной разработке.
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-reindex") {
+      const off = Number(url.searchParams.get("off") || 0);
+      const { results } = await env.DB.prepare("SELECT niche, name_ru, sector, data FROM niche_matrix ORDER BY niche LIMIT 100 OFFSET ?1").bind(off).all();
+      const items = (results || []).map((r) => {
+        let d = {};
+        try { d = JSON.parse(r.data); } catch { d = {}; }
+        const comp = (d.top_6m || []).slice(0, 6).map((c) => `${c.company} (${(c.what || {}).en || ""})`).join("; ");
+        return { niche: r.niche, doc: `${r.niche}. ${r.name_ru || ""}. Sector: ${r.sector || ""}. Companies: ${comp}` };
+      });
+      return json({ off, rows: items.length, indexed: await indexNiches(env, items) });
+    }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-emb") {
+      const r = await env.AI.run(EMB_MODEL, { text: [url.searchParams.get("q") || "insurance"] });
+      const v = (await embed(env, [url.searchParams.get("q") || "insurance"]))[0];
+      const q = v ? await env.VEC.query(v, { topK: 5, returnMetadata: "all" }) : null;
+      return json({ keys: Object.keys(r || {}), shape: r && r.shape, dim: v ? v.length : null, matches: q && q.matches });
+    }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-ask") {
       await ensureTables(env);
       const q = url.searchParams.get("q") || "";
@@ -2822,7 +2861,7 @@ export default {
       const t2 = Date.now();
       const g = groundAnswer(full || "", fx.facts);
       return json({ facts_ms: t1 - t0, first_token_ms: first ? first - t0 : null, total_ms: t2 - t0,
-        niches: fx.niches.map((d) => d.niche), n_facts: fx.facts.length, dropped_lines: g.dropped, answer: full, facts: fx.facts });
+        niches: fx.niches.map((d) => d.niche), matches: lastMatches, n_facts: fx.facts.length, dropped_lines: g.dropped, answer: full, facts: fx.facts });
     }
 
     if (request.method === "POST" && url.pathname === "/ingest-matrix") {

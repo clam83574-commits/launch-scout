@@ -728,6 +728,11 @@ HISTORY_WEEKS = 26       # история за полгода — для кри�
 MEGA_USD = 1e9
 
 
+# Ярлыки разметки, которые не ниши: по «unknown» поиск тянул в ответ
+# случайные раунды (замер 2026-09-30).
+JUNK_NICHES = {"unknown", "other", "n/a", "none", "misc", "various"}
+
+
 def week_index(ts, now):
     """Номер недели от текущей: 0 — последние 7 дней, 1 — неделя до них…"""
     return int((now - ts) // (7 * 86400))
@@ -760,6 +765,8 @@ def niches(conn, now, days=NICHE_DAYS, limit=12, window_min=2):
     except ValueError:
         web = {}
     for niche, allr in hist.items():
+        if niche in JUNK_NICHES or len(niche) < 4:
+            continue
         lst = [r for r in allr if r["ts"] >= now - days * 86400]
         if len(lst) < window_min:
             continue
