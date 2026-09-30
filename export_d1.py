@@ -261,6 +261,51 @@ def sync_rounds(conn, now, max_rows=3000):
     return done, err
 
 
+def sync_matrix(conn, now, max_rows=600):
+    """
+    Матрица ниш — в бота (POST /ingest-matrix), только изменившиеся строки.
+    Бот кладёт их в D1 и строит по ним векторный индекс (Workers AI +
+    Vectorize), так что поиск по смыслу работает на любом языке.
+    """
+    import hashlib
+    import os
+    import requests
+    url, secret = os.environ.get("WORKER_URL", "").strip(), os.environ.get("LS_INGEST_SECRET", "").strip()
+    if not url or not secret:
+        return 0, "нет WORKER_URL/LS_INGEST_SECRET"
+    try:
+        sent = json.loads(db.kv_get(conn, "mx_hash", "{}") or "{}")
+    except ValueError:
+        sent = {}
+    rows = market.niche_matrix(conn, now)
+    todo = []
+    for r in rows:
+        h = hashlib.sha1(json.dumps(r, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")).hexdigest()[:12]
+        if sent.get(r["niche"]) != h:
+            todo.append((r, h))
+    todo = todo[:max_rows]
+    done, err = 0, None
+    for i in range(0, len(todo), 60):
+        chunk = todo[i:i + 60]
+        try:
+            resp = requests.post(url.rstrip("/") + "/ingest-matrix", timeout=90,
+                                 headers={"x-ingest-secret": secret, "content-type": "application/json"},
+                                 json={"rows": [r for r, _h in chunk]})
+        except requests.RequestException as e:
+            err = str(e)[:120]
+            break
+        if resp.status_code != 200:
+            err = "Worker %d: %s" % (resp.status_code, resp.text[:160])
+            break
+        for r, h in chunk:
+            sent[r["niche"]] = h
+        done += len(chunk)
+    keep = {r["niche"] for r in rows}
+    db.kv_set(conn, "mx_hash", json.dumps({k: v for k, v in sent.items() if k in keep}))
+    conn.commit()
+    return done, err
+
+
 def main():
     setup_logging("export")
     ap = argparse.ArgumentParser(description="срез находок для бота (D1)")
@@ -291,6 +336,11 @@ def main():
             print("датасет раундов для чата: отправлено %d%s" % (n, (" — " + err) if err else ""))
         except Exception as e:      # датасет — надстройка: срез уходит в любом случае
             print("датасет раундов не отправлен: %s" % e)
+        try:
+            n, err = sync_matrix(conn, now)
+            print("матрица ниш для чата: отправлено %d%s" % (n, (" — " + err) if err else ""))
+        except Exception as e:      # матрица — надстройка
+            print("матрица ниш не отправлена: %s" % e)
         out = Path(args.json)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")),

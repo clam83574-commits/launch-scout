@@ -803,6 +803,27 @@ def gap_check(niche, examples):
     return None, "429 от Groq"
 
 
+# --- 🔎 Конкуренты, цены и жалобы по нише (из сети, заранее) -----------------
+
+WEB_SYSTEM = """You research one startup niche on the web for a market radar used by founders (Kazakhstan and CIS first, then global).
+Find real products that serve this niche: global leaders and players in Kazakhstan/CIS. For each give the price if published, and what customers complain about (from reviews, forums, app stores).
+Reply with JSON only:
+{"competitors": [{"name": "...", "url": "https://...", "market": "global|US|EU|KZ|RU|CIS|MENA", "price": "e.g. $49/mo or 'not published'", "note": "one line: what it does / its weakness"}],
+ "complaints": [{"text": "what customers dislike, one line", "source": "https://..."}],
+ "pricing": "one line on typical pricing models in this niche",
+ "icp": "one line: who buys first and where to find them"}
+At most 8 competitors and 5 complaints, only ones you actually found with real URLs. Never invent."""
+
+
+def web_dossier(niche, examples):
+    """Сведения из сети по нише — заранее, чтобы «Глубже» отвечал за секунды. (словарь, ошибка)."""
+    if not openrouter_key():
+        return None, "нет OPENROUTER_API_KEY"
+    user = "Niche: %s\nFunded companies in this niche: %s" % (niche, "; ".join(examples[:6]))
+    model = (os.environ.get("LS_SMART_MODEL") or "google/gemini-3.8-flash") + ":online"
+    return _chat_or(model, WEB_SYSTEM, user, max_tokens=3000, timeout=150)
+
+
 # --- 🙋 «Боль» из X -> ниша ---------------------------------------------------
 
 DEMAND_SYSTEM = """You match posts where people ask for a product ("someone should build...", "I'd pay for...") to startup niches.

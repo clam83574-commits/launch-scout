@@ -781,6 +781,10 @@ def market_step(conn, now, dry=False):
                 rep = market.update_report(conn, now)
         except Exception as e:
             print("  аналоги в СНГ: ошибка %s" % e)
+        try:
+            market.web_step(conn, now, rep)
+        except Exception as e:
+            print("  сеть по нише: ошибка %s" % e)
         broadcast += market.niche_alerts(conn, rep, now)
         # Вывод модели — не чаще раза в 12 часов на язык (кэш в story).
         market.render_all(conn, rep, now)

@@ -12,6 +12,16 @@ keep_vars = true
 # (замерено 2026-09-20).
 account_id = "21869b3e20e58e47ff17e4b4b34944a5"
 
+# Матрица ниш для ИИ-собеседника (2026-09-30): эмбеддинги — Workers AI
+# (@cf/baai/bge-m3, многоязычная, 1024 измерения), поиск по смыслу —
+# Vectorize. Бесплатно: ~2 тыс. ниш = 2 млн измерений при лимите 5 млн.
+[ai]
+binding = "AI"
+
+[[vectorize]]
+binding = "VEC"
+index_name = "launch-scout-niches"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "launch-scout"

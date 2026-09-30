@@ -733,7 +733,7 @@ def week_index(ts, now):
     return int((now - ts) // (7 * 86400))
 
 
-def niches(conn, now, days=NICHE_DAYS, limit=12):
+def niches(conn, now, days=NICHE_DAYS, limit=12, window_min=2):
     """
     Ниши, в которые за окно пришло несколько раундов, — ответ на вопрос
     «какая идея сейчас залетает». Считаются разные компании, а не заметки.
@@ -755,9 +755,13 @@ def niches(conn, now, days=NICHE_DAYS, limit=12):
     except ValueError:
         gaps = {}
     out = []
+    try:
+        web = json.loads(db.kv_get(conn, "niche_web", "{}") or "{}")
+    except ValueError:
+        web = {}
     for niche, allr in hist.items():
         lst = [r for r in allr if r["ts"] >= now - days * 86400]
-        if len(lst) < 2:
+        if len(lst) < window_min:
             continue
         secs, inv = {}, {}
         for r in lst:
@@ -790,6 +794,21 @@ def niches(conn, now, days=NICHE_DAYS, limit=12):
             "companies_6m": len(allr),
             "late": sum(1 for r in lst if r["stage"] in ("b", "c+", "growth")),
         })
+        if window_min == 0:
+            # Поля матрицы (niche_matrix): полгода целиком, а не окно 28 дней.
+            monthly, stages = {}, {}
+            for r in allr:
+                m = time.strftime("%Y-%m", time.gmtime(r["ts"]))
+                monthly[m] = monthly.get(m, 0) + 1
+                st = r["stage"] or "unknown"
+                stages[st] = stages.get(st, 0) + 1
+            out[-1].update({
+                "monthly": monthly, "stages_6m": stages,
+                "early_6m": sum(1 for r in allr if r["stage"] in EARLY),
+                "usd_6m": round(sum(r["usd"] or 0 for r in allr if (r["usd"] or 0) < MEGA_USD)),
+                "top_6m": [_round_brief(r) for r in sorted(allr, key=lambda r: -(r["usd"] or 0))[:8]],
+                "web": web.get(niche),
+            })
         out[-1]["opp"] = opportunity(out[-1])
     out.sort(key=lambda d: (-d["early"], -d["n"], -d["usd"]))
     return out[:limit]
@@ -1823,6 +1842,29 @@ def formd_index(conn, now, days=120):
 # ---------------------------------------------------------------------------
 # 💬 Факты для чата: только свежее и только с источником
 # ---------------------------------------------------------------------------
+def niche_matrix(conn, now):
+    """
+    Матрица ниш — по строке на каждую нишу с раундами за полгода: деньги по
+    месяцам, стадии, компании, инвесторы, «боль», КЗ/СНГ, тип и скор, а также
+    найденные в сети конкуренты и жалобы (niche_web). Из неё ИИ-собеседник
+    берёт готовые цифры за один запрос вместо цепочки вызовов (решение
+    владельца 2026-09-30: ответ должен приходить за секунды и опираться на
+    датасет). Возвращает [{niche, name_ru, sector, doc, data}].
+    """
+    names = niche_names(conn)
+    out = []
+    for n in niches(conn, now, limit=100000, window_min=0):
+        comp = "; ".join("%s (%s)" % (c["company"], (c.get("what") or {}).get("en", ""))
+                         for c in (n.get("top_6m") or [])[:6])
+        ru = names.get(n["niche"], "")
+        # Текст для эмбеддинга: название ниши на двух языках и что делают
+        # её компании — по нему вопрос на любом языке находит нишу.
+        doc = "%s. %s. Sector: %s. Companies: %s" % (n["niche"], ru, n.get("sector") or "", comp)
+        out.append({"niche": n["niche"], "name_ru": ru, "sector": n.get("sector"),
+                    "doc": doc[:1500], "data": n})
+    return out
+
+
 def dataset_rows(conn, now):
     """
     Раунды за полгода — по строке на компанию — для таблицы rounds в боте.
@@ -1987,6 +2029,57 @@ def gap_step(conn, now, rep, verbose=True):
                   % (n["niche"], gaps[n["niche"]]["kz"], gaps[n["niche"]]["cis"], len(analogs)))
     if done:
         db.kv_set(conn, "niche_gaps", json.dumps(gaps, ensure_ascii=False))
+        conn.commit()
+    return done
+
+
+# ---------------------------------------------------------------------------
+# 🔎 Конкуренты и жалобы из сети — заранее, для верхних ниш
+# ---------------------------------------------------------------------------
+WEB_PER_RUN = 1
+WEB_PER_DAY = 24
+WEB_MAX_AGE = 7 * 86400
+
+
+def web_step(conn, now, rep, verbose=True):
+    """
+    Для верхних ниш (окно, пусто у нас, формируется) — конкуренты с ценами и
+    жалобы клиентов из сети, раз в неделю на нишу, не больше 24 в сутки.
+    Тогда «Глубже» и вопросы о конкурентах отвечаются из матрицы за секунды,
+    а живой поиск нужен только для редких ниш.
+    """
+    import ai
+    web = json.loads(db.kv_get(conn, "niche_web", "{}") or "{}")
+    day = time.strftime("%Y-%m-%d", time.gmtime(now))
+    used = int(db.kv_get(conn, "web_calls_" + day, 0) or 0)
+    if used >= WEB_PER_DAY:
+        return 0
+    order = {"window": 0, "local_gap": 0, "forming": 1, "watch": 2, "overheated": 3}
+    cands = sorted(rep.get("niches") or [], key=lambda n: (order.get((n.get("opp") or {}).get("type"), 2),
+                                                           -(n.get("opp") or {}).get("score", 0)))[:24]
+    todo = [n for n in cands if now - int((web.get(n["niche"]) or {}).get("ts", 0)) > WEB_MAX_AGE]
+    done = 0
+    for n in todo[:WEB_PER_RUN]:
+        examples = ["%s (%s)" % (c["company"], (c.get("what") or {}).get("en", "")) for c in n["companies"]]
+        data, err = ai.web_dossier(n["niche"], examples)
+        db.kv_set(conn, "web_calls_" + day, used + done + 1)
+        if err or not isinstance(data, dict):
+            if verbose:
+                print("  сеть по нише: %s — %s" % (n["niche"], err))
+            continue
+        clean = {
+            "competitors": [c for c in (data.get("competitors") or []) if isinstance(c, dict) and c.get("name")
+                            and str(c.get("url") or "").startswith("http")][:8],
+            "complaints": [c for c in (data.get("complaints") or []) if isinstance(c, dict) and c.get("text")][:5],
+            "pricing": str(data.get("pricing") or "")[:300], "icp": str(data.get("icp") or "")[:300], "ts": now,
+        }
+        web[n["niche"]] = clean
+        done += 1
+        if verbose:
+            print("  сеть по нише: %s — конкурентов %d, жалоб %d"
+                  % (n["niche"], len(clean["competitors"]), len(clean["complaints"])))
+    if done:
+        db.kv_set(conn, "niche_web", json.dumps(web, ensure_ascii=False))
         conn.commit()
     return done
 
