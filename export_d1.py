@@ -290,10 +290,12 @@ def sync_matrix(conn, now, max_rows=600):
             todo.append((r, h))
     todo = todo[:max_rows]
     done, err = 0, None
-    for i in range(0, len(todo), 60):
-        chunk = todo[i:i + 60]
+    # По 20 строк: на 60 боевой бот (эмбеддинги + индекс) не укладывался в
+    # 90 секунд (2026-09-30).
+    for i in range(0, len(todo), 20):
+        chunk = todo[i:i + 20]
         try:
-            resp = requests.post(url.rstrip("/") + "/ingest-matrix", timeout=90,
+            resp = requests.post(url.rstrip("/") + "/ingest-matrix", timeout=150,
                                  headers={"x-ingest-secret": secret, "content-type": "application/json"},
                                  json={"rows": [r for r, _h in chunk]})
         except requests.RequestException as e:
