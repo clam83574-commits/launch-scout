@@ -1267,7 +1267,60 @@ def compute(conn, now):
             "physical": physical, "physical_money": phys_money, "all_money": all_money,
             "yc_batches": [{"name": x["name"], "n": x["n"]} for x in yc],
             "niches": niches(conn, now, limit=30), "niche_days": NICHE_DAYS,
-            "niche_names": niche_names(conn), "headlines": heads[:6]}
+            "niche_names": niche_names(conn), "headlines": heads[:6],
+            "investors_top": investors_top(conn, now)}
+
+
+# Одни и те же фонды пишут по-разному: «a16z» и «Andreessen Horowitz».
+INVESTOR_ALIASES = {"a16z": "andreessen horowitz", "andreessen horowitz a16z": "andreessen horowitz",
+                    "yc": "y combinator", "ycombinator": "y combinator", "sequoia": "sequoia capital",
+                    "gv": "google ventures", "kleiner perkins caufield byers": "kleiner perkins",
+                    "lightspeed": "lightspeed venture partners", "accel partners": "accel",
+                    "general catalyst partners": "general catalyst", "nea": "new enterprise associates"}
+
+
+def _investor_key(name):
+    k = re.sub(r"[^a-z0-9 ]+", " ", (name or "").lower().replace("&", " and "))
+    k = re.sub(r"\s+", " ", k).strip()
+    k = re.sub(r"^(led by|with|and) ", "", k)
+    return INVESTOR_ALIASES.get(k, k)
+
+
+def investors_top(conn, now, limit=60):
+    """
+    Кто вкладывает больше всех за полгода: число раундов (ранних отдельно),
+    сумма, секторы и ниши, примеры компаний. Считает код по датасету, а не
+    модель — вопрос «топ-10 инвесторов» раньше получал «нет данных».
+    """
+    agg = {}
+    for r in rounds(conn, now - HISTORY_WEEKS * 7 * 86400):
+        for name in r.get("investors") or []:
+            k = _investor_key(name)
+            if len(k) < 2 or k in ("undisclosed", "unknown", "angel investors", "angels", "existing investors"):
+                continue
+            a = agg.setdefault(k, {"names": {}, "n": 0, "early": 0, "usd": 0.0, "sectors": {}, "niches": {},
+                                   "companies": [], "last": 0})
+            a["names"][name] = a["names"].get(name, 0) + 1
+            a["n"] += 1
+            a["early"] += 1 if r["stage"] in EARLY else 0
+            a["usd"] += (r["usd"] or 0) if (r["usd"] or 0) < MEGA_USD else 0
+            for s in r["sectors"][:1]:
+                a["sectors"][s] = a["sectors"].get(s, 0) + 1
+            if r["niche"]:
+                a["niches"][r["niche"]] = a["niches"].get(r["niche"], 0) + 1
+            a["last"] = max(a["last"], r["ts"])
+            a["companies"].append({"company": r["company"], "usd": r["usd"], "stage": r["stage"], "ts": r["ts"],
+                                   "url": r["url"]})
+    top = lambda d, n: [k for k, _v in sorted(d.items(), key=lambda kv: -kv[1])[:n]]
+    out = []
+    for k, a in agg.items():
+        if a["n"] < 2:
+            continue
+        out.append({"name": max(a["names"], key=a["names"].get), "n": a["n"], "early": a["early"], "usd": round(a["usd"]),
+                    "sectors": {s: a["sectors"][s] for s in top(a["sectors"], 3)}, "niches": top(a["niches"], 4),
+                    "companies": sorted(a["companies"], key=lambda c: -c["ts"])[:4], "last": a["last"]})
+    out.sort(key=lambda x: (-x["n"], -x["early"], -x["usd"]))
+    return out[:limit]
 
 
 # ---------------------------------------------------------------------------
@@ -2428,7 +2481,7 @@ def web_step(conn, now, rep, verbose=True):
 # Спрос людей в цифрах, независимый от инвесторов (просьба владельца
 # 2026-10-01). Раз в час до GT_PER_RUN ниш, каждая раз в неделю; на 429
 # прогон останавливается. Из Cloudflare Google отвечает 429, поэтому только тут.
-GT_PER_RUN = 12
+GT_PER_RUN = 18
 GT_EVERY = 3600
 GT_MAX_AGE = 7 * 86400
 

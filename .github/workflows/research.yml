@@ -1,0 +1,38 @@
+# Глубокий поиск по запросу из чата: бот запускает с номером задания
+# (сам вопрос в запуск не передаётся — логи публичного репозитория видны всем).
+name: research
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Номер задания от бота"
+        required: true
+
+concurrency:
+  group: research-${{ github.event.inputs.job }}
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      X_AUTH_TOKEN: ${{ secrets.X_AUTH_TOKEN }}
+      X_CT0: ${{ secrets.X_CT0 }}
+      LS_INGEST_SECRET: ${{ secrets.LS_INGEST_SECRET }}
+      WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      # Только чтение кэша: нужны id операций X (data/x_queries.json); базу
+      # основного прогона этот запуск не меняет и не сохраняет.
+      - uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: research-none
+          restore-keys: scout-db-
+      - run: python research.py --job "${{ github.event.inputs.job }}"

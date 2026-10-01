@@ -187,6 +187,8 @@ def niche_extras():
     hot = market.search_signal(gt, "hot")
     check("поиск: рост выше медианы ниш", hot and hot["rel"] == 1.5 and hot["pct"] > 90, hot)
     check("поиск: пустой ряд не считается", market.search_signal(gt, "rare") is None, "")
+    check("инвесторы: a16z = Andreessen Horowitz", market._investor_key("a16z") == market._investor_key("Andreessen Horowitz"), "")
+    check("инвесторы: «led by» отрезается", market._investor_key("led by Sequoia") == "sequoia capital", market._investor_key("led by Sequoia"))
     from sources import gtrends
     flat = gtrends.summarize([(i, 50) for i in range(52)])
     check("поиск: ровный ряд — рост ×1", flat["g3m"] == 1.0 and not flat["low"], flat)

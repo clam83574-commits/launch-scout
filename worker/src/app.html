@@ -31,12 +31,12 @@
     --bg2: var(--tg-theme-secondary-bg-color, #232e3c);
     --text: var(--tg-theme-text-color, #f5f5f5);
     --hint: var(--tg-theme-hint-color, #8b98a5);
-    --link: var(--tg-theme-link-color, #6ab3f3);
+    --link: #6ab3f3;
     --btn: var(--tg-theme-button-color, #5288c1);
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s-other: #6f6e69;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--text);
+  html, body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; max-width: 100%;
     font: 15px/1.4 -apple-system, "Segoe UI", Roboto, system-ui, sans-serif; }
   body { padding: 0 0 calc(64px + env(safe-area-inset-bottom)); }
   button { font: inherit; }
@@ -85,7 +85,18 @@
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
   .chart { position: relative; }
   .tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px;
-    border-radius: 8px; padding: 6px 8px; white-space: nowrap; transform: translate(-50%, -100%); display: none; }
+    border-radius: 8px; padding: 6px 8px; white-space: normal; max-width: min(260px, 80vw); transform: translate(-50%, -100%); display: none; z-index: 5; }
+  .mk, .mk .chart, .niches, .niche { max-width: 100%; overflow-x: clip; }
+  /* Ссылки везде одного читаемого цвета, а не системного тёмно-синего. */
+  a { color: var(--link); }
+  /* Карточка идеи собирается ~15-40 с: «дышащая» сфера и этап, чтобы было видно, что идёт работа. */
+  .busy { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; background: var(--bg2); margin: 10px 0; }
+  .busy .orb { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 35%, #9fd0ff, var(--btn)); animation: breathe 1.6s ease-in-out infinite; }
+  .busy small { display: block; color: var(--hint); font-size: 12px; margin-top: 2px; }
+  @keyframes breathe { 0%, 100% { transform: scale(.75); opacity: .55; box-shadow: 0 0 0 0 color-mix(in srgb, var(--btn) 45%, transparent); }
+    50% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 10px transparent; } }
+  @media (prefers-reduced-motion: reduce) { .busy .orb { animation: none; } }
   .linkbtn { border: 0; background: none; color: var(--link); padding: 4px 0; font-size: 13px; cursor: pointer; }
   table { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
   th, td { text-align: right; padding: 3px 4px; border-bottom: 1px solid var(--line); }
@@ -285,7 +296,7 @@
       effort: { days: "дни", weeks: "недели", months: "месяцы", unclear: "неясно" },
       open_post: "Открыть пост", open_site: "Сайт проекта", orig: "Исходный пост",
       fav_add: "⭐ Взять в работу", fav_on: "✓ В работе", idea_btn: "🧩 Карточка идеи",
-      idea_wait: "Ищу аналоги и собираю карточку… ~15 с", idea_net: "Не удалось связаться с сервером — попробуйте ещё раз.",
+      idea_wait: "Ищу аналоги и собираю карточку… ~15 с", idea_steps: "Ищу аналоги в сети…|Проверяю Казахстан и СНГ…|Смотрю цены и жалобы…|Собираю MVP и риски…|Почти готово…", idea_elapsed: "идёт поиск · %d с", idea_net: "Не удалось связаться с сервером — попробуйте ещё раз.",
       idea_fail: "Карточка не собралась.",
       why_now: "⏱ Почему сейчас", who_pays: "💳 Кто платит", analogs: "🇰🇿 Аналоги в Казахстане и СНГ",
       mvp: "🛠 MVP за две недели", risk: "⚠️ Главный риск", loc: "🌍 Под Казахстан",
@@ -307,12 +318,12 @@
       n_funding: "💰 Раунды за сутки", n_funding_d: "Новые сделки от $1 млн — только в моих секторах",
       n_alerts: "🚀 Сдвиги рынка", n_alerts_d: "Сектор из моих перешёл в рост",
       s_sens: "Порог находок", sens_strict: "Только сильные", sens_normal: "Обычный", sens_wide: "Всё заметное",
-      s_sectors: "Секторы", s_sectors_note: "Находки, раунды и сдвиги — только по отмеченным. Ничего не отмечено — всё.",
-      s_sources: "Источники находок", s_sources_note: "Ничего не отмечено — все.",
-      s_aud: "Для кого продукт", s_aud_note: "Уведомления — только по отмеченным. Ничего не отмечено — приходят все.",
+      s_sectors: "Секторы", s_sectors_note: "Находки, раунды и сдвиги — только по отмеченным. Снимите галочки с лишнего.",
+      s_sources: "Источники находок", s_sources_note: "Снимите галочки с лишнего.",
+      s_aud: "Для кого продукт", s_aud_note: "Уведомления — только по отмеченным. Снимите галочки с лишнего.",
       aud_b2b: "B2B — для бизнеса", aud_b2c: "B2C — для людей", aud_b2g: "B2G — для государства",
       s_cats: "Категории", s_cats_note: "Горячие и сводка — только по отмеченным. Ничего не отмечено — приходит всё.",
-      saved_ok: "✓ Сохранено", save_err: "Не сохранилось — проверьте связь и повторите.",
+      saved_ok: "✓ Сохранено", need_one: "Оставьте хотя бы один пункт", save_err: "Не сохранилось — проверьте связь и повторите.",
       no_access: "Нет доступа. Откройте приложение из бота — и, если попросит, пришлите боту код доступа.",
       load_err: "Не удалось загрузить данные. Закройте и откройте приложение ещё раз.",
     },
@@ -323,7 +334,7 @@
       effort: { days: "күндер", weeks: "апталар", months: "айлар", unclear: "белгісіз" },
       open_post: "Постты ашу", open_site: "Жоба сайты", orig: "Бастапқы пост",
       fav_add: "⭐ Жұмысқа алу", fav_on: "✓ Жұмыста", idea_btn: "🧩 Идея картасы",
-      idea_wait: "Аналогтарды іздеп, картаны жинап жатырмын… ~15 с", idea_net: "Сервермен байланыс болмады — қайта көріңіз.",
+      idea_wait: "Аналогтарды іздеп, картаны жинап жатырмын… ~15 с", idea_steps: "Желіден аналогтар іздеп жатырмын…|Қазақстан мен ТМД-ны тексеріп жатырмын…|Бағалар мен шағымдарды қарап жатырмын…|MVP мен тәуекелдерді жинап жатырмын…|Дайын болуға жақын…", idea_elapsed: "іздеу жүріп жатыр · %d с", idea_net: "Сервермен байланыс болмады — қайта көріңіз.",
       idea_fail: "Карта жиналмады.",
       why_now: "⏱ Неге қазір", who_pays: "💳 Кім төлейді", analogs: "🇰🇿 Қазақстан мен ТМД-дағы аналогтар",
       mvp: "🛠 Екі аптадағы MVP", risk: "⚠️ Басты тәуекел", loc: "🌍 Қазақстанға бейімдеу",
@@ -345,12 +356,12 @@
       n_funding: "💰 Тәуліктік раундтар", n_funding_d: "$1 млн-нан жаңа мәмілелер — тек менің салаларымда",
       n_alerts: "🚀 Нарықтағы өзгерістер", n_alerts_d: "Менің салам өсуге көшті",
       s_sens: "Табылымдар шегі", sens_strict: "Тек күштілер", sens_normal: "Қалыпты", sens_wide: "Бәрі елеулі",
-      s_sectors: "Салалар", s_sectors_note: "Табылымдар, раундтар мен өзгерістер — тек белгіленгендер бойынша. Ештеңе белгіленбесе — бәрі.",
-      s_sources: "Табылым көздері", s_sources_note: "Ештеңе белгіленбесе — бәрі.",
-      s_aud: "Өнім кімге арналған", s_aud_note: "Хабарламалар — тек белгіленгендер бойынша. Ештеңе белгіленбесе — бәрі келеді.",
+      s_sectors: "Салалар", s_sectors_note: "Табылымдар, раундтар мен өзгерістер — тек белгіленгендер бойынша. Артығын алып тастаңыз.",
+      s_sources: "Табылым көздері", s_sources_note: "Артығын алып тастаңыз.",
+      s_aud: "Өнім кімге арналған", s_aud_note: "Хабарламалар — тек белгіленгендер бойынша. Артығын алып тастаңыз.",
       aud_b2b: "B2B — бизнеске", aud_b2c: "B2C — адамдарға", aud_b2g: "B2G — мемлекетке",
-      s_cats: "Санаттар", s_cats_note: "Ыстықтар мен шолу — тек белгіленгендер бойынша. Ештеңе белгіленбесе — бәрі келеді.",
-      saved_ok: "✓ Сақталды", save_err: "Сақталмады — байланысты тексеріп, қайталаңыз.",
+      s_cats: "Санаттар", s_cats_note: "Ыстықтар мен шолу — тек белгіленгендер бойынша. Артығын алып тастаңыз.",
+      saved_ok: "✓ Сақталды", need_one: "Кемінде бір тармақ қалдырыңыз", save_err: "Сақталмады — байланысты тексеріп, қайталаңыз.",
       no_access: "Қолжетімділік жоқ. Қосымшаны боттан ашыңыз — сұраса, ботқа қолжетімділік кодын жіберіңіз.",
       load_err: "Деректер жүктелмеді. Қосымшаны жауып, қайта ашыңыз.",
     },
@@ -361,7 +372,7 @@
       effort: { days: "days", weeks: "weeks", months: "months", unclear: "unclear" },
       open_post: "Open post", open_site: "Project site", orig: "Original post",
       fav_add: "⭐ Work on it", fav_on: "✓ In progress", idea_btn: "🧩 Idea card",
-      idea_wait: "Searching for analogs and building the card… ~15 s", idea_net: "Could not reach the server — try again.",
+      idea_wait: "Searching for analogs and building the card… ~15 s", idea_steps: "Searching analogs on the web…|Checking Kazakhstan and CIS…|Looking at prices and complaints…|Drafting MVP and risks…|Almost done…", idea_elapsed: "searching · %d s", idea_net: "Could not reach the server — try again.",
       idea_fail: "The card did not come together.",
       why_now: "⏱ Why now", who_pays: "💳 Who pays", analogs: "🇰🇿 Analogs in Kazakhstan and the CIS",
       mvp: "🛠 Two-week MVP", risk: "⚠️ Main risk", loc: "🌍 For Kazakhstan",
@@ -383,12 +394,12 @@
       n_funding: "💰 Daily funding rounds", n_funding_d: "New deals from $1M — only in my sectors",
       n_alerts: "🚀 Market shifts", n_alerts_d: "One of my sectors turned upward",
       s_sens: "Findings threshold", sens_strict: "Strong only", sens_normal: "Normal", sens_wide: "Everything notable",
-      s_sectors: "Sectors", s_sectors_note: "Findings, rounds and shifts only for the checked ones. None checked — everything.",
-      s_sources: "Finding sources", s_sources_note: "None checked — all.",
-      s_aud: "Who the product is for", s_aud_note: "Notifications only for the checked ones. None checked — you get all.",
+      s_sectors: "Sectors", s_sectors_note: "Findings, rounds and shifts only for the checked ones. Uncheck what you don't need.",
+      s_sources: "Finding sources", s_sources_note: "Uncheck what you don't need.",
+      s_aud: "Who the product is for", s_aud_note: "Notifications only for the checked ones. Uncheck what you don't need.",
       aud_b2b: "B2B — for businesses", aud_b2c: "B2C — for consumers", aud_b2g: "B2G — for government",
       s_cats: "Categories", s_cats_note: "Hot findings and the digest only for the checked ones. None checked — you get everything.",
-      saved_ok: "✓ Saved", save_err: "Not saved — check your connection and try again.",
+      saved_ok: "✓ Saved", need_one: "Keep at least one", save_err: "Not saved — check your connection and try again.",
       no_access: "No access. Open the app from the bot — and if asked, send the bot your access code.",
       load_err: "Could not load the data. Close the app and open it again.",
     },
@@ -576,14 +587,32 @@
 
   // Карточка идеи собирается моделью с веб-поиском ~15 с, поэтому кнопка
   // сразу говорит, сколько ждать; повторно та же карточка приходит из кэша.
+  /** Модель с веб-поиском вставляет в текст «([site](url?utm_source=openai))» — убираем. */
+  function cleanMd(v) {
+    if (typeof v === "string") return v.replace(/\s*\(\[[^\]]*\]\([^)]*\)\)/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[?&]utm_source=openai/g, "").trim();
+    if (Array.isArray(v)) return v.map(cleanMd);
+    if (v && typeof v === "object") { const o = {}; for (const k in v) o[k] = k === "url" ? String(v[k] || "").replace(/[?&]utm_source=openai/g, "") : cleanMd(v[k]); return o; }
+    return v;
+  }
   async function loadIdea(f) {
     const btn = $("#ideaBtn"), box = $("#ideaBox");
-    btn.disabled = true; btn.textContent = tr("idea_wait");
+    btn.hidden = true;
+    box.innerHTML = `<div class="busy" role="status" aria-live="polite"><i class="orb"></i><div><b id="busyStep"></b><small id="busyTime"></small></div></div>`;
+    const steps = tr("idea_steps").split("|"), t0 = Date.now();
+    const tick = () => {
+      const sec = Math.round((Date.now() - t0) / 1000), st = $("#busyStep"), tm = $("#busyTime");
+      if (!st) return;
+      st.textContent = steps[Math.min(steps.length - 1, Math.floor(sec / 6))];
+      tm.textContent = tr("idea_elapsed").replace("%d", sec);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
     let r;
     try { r = await api("/api/idea?id=" + f.id); } catch (e) { r = { error: tr("idea_net") }; }
+    clearInterval(timer);
     btn.remove();
     if (!r || r.error || !r.card) { box.innerHTML = `<p class="note">${esc((r && r.error) || tr("idea_fail"))}</p>`; return; }
-    const c = r.card;
+    const c = cleanMd(r.card);
     const analogs = (c.analogs || []).map((a) => `<li><a href="${esc(a.url)}" data-ext>${esc(a.name)}</a>${a.market ? " (" + esc(a.market) + ")" : ""}${a.note ? " — " + esc(a.note) : ""}</li>`).join("");
     box.innerHTML = `
       <h4>${esc(tr("why_now"))}</h4><div>${esc(c.why_now)}</div>
@@ -645,7 +674,9 @@
 
   function renderSettings() {
     const p = state.prefs;
-    const mineA = new Set(p.audience), mineS = new Set(p.sectors), mineSrc = new Set(p.sources);
+    // Пустой список = «всё»: показываем все галочки отмеченными, снимают лишнее.
+    const allIf = (arr) => ({ has: (k) => !arr.length || arr.includes(k) });
+    const mineA = allIf(p.audience), mineS = allIf(p.sectors), mineSrc = allIf(p.sources);
     const sw = (k) => `<label class="sw"><span><b>${esc(tr("n_" + k))}</b><small>${esc(tr("n_" + k + "_d"))}</small></span>
       <input type="checkbox" data-n="${k}"${p.notify[k] !== false ? " checked" : ""}></label>`;
     const secs = sectorList();
@@ -685,7 +716,13 @@
   });
   $("#settings").addEventListener("change", (e) => {
     const i = e.target;
-    const picked = (attr) => [...document.querySelectorAll(`#settings [data-${attr}]:checked`)].map((x) => x.dataset[attr]);
+    const picked = (attr) => {
+      const all = [...document.querySelectorAll(`#settings [data-${attr}]`)];
+      const on = all.filter((x) => x.checked).map((x) => x.dataset[attr]);
+      // Всё отмечено — хранится как «всё» (пустой список): новые секторы тоже придут.
+      if (!on.length) { i.checked = true; toast(tr("need_one")); return picked(attr); }
+      return on.length === all.length ? [] : on;
+    };
     if (i.dataset.n) state.prefs.notify[i.dataset.n] = i.checked;
     else if (i.dataset.a) state.prefs.audience = picked("a");
     else if (i.dataset.s) state.prefs.sectors = picked("s");
@@ -973,7 +1010,7 @@
       ${am.stages ? `<h2>${esc(mk("stages"))}</h2><div class="sub">${esc(mk("stages_s"))}</div><div class="chart" id="mkStage">${stageBar(am.stages)}</div>` : ""}
       ${rep.physical ? `<h2>${esc(mk("phys_t"))}</h2><div class="sub">${esc(mk("phys_s"))}</div><div class="chart" id="mkPhys">${physChart(rep.physical.history, W)}</div>` : ""}
     </div>`;
-    for (const id of ["mkDaily", "mkWeek", "mkSec", "mkStage", "mkPhys"]) { const el = document.getElementById(id); if (el) withTip(el); }
+    for (const id of ["mkDaily", "mkWeek", "mkStage", "mkPhys"]) { const el = document.getElementById(id); if (el) withTip(el); }
     box.querySelectorAll(".niche").forEach((el) => withTip(el));
   }
 

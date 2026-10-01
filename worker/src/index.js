@@ -154,10 +154,10 @@ async function saveSnapshot(env, raw, updated) {
  * User-Agent обязателен: без него API GitHub отвечает 403 «Request
  * forbidden by administrative rules», а fetch в Workers сам его не ставит.
  */
-async function dispatchRun(env, inputs = {}) {
+async function dispatchRun(env, inputs = {}, workflow = WORKFLOW) {
   if (!env.LS_GH_TOKEN) return "нет LS_GH_TOKEN";
   const r = await fetch(
-    `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+    `https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`,
     {
       method: "POST",
       headers: {
@@ -223,7 +223,7 @@ async function tokenReminder(env, now) {
 const LANGS = ["ru", "kk", "en"];
 const I18N = {
   ru: {
-    hello: "<b>launch-scout</b>\n\nИщет продукты в первые часы после выхода. Считает не лайки, а темп их набора, ускорение, отклонение от нормы автора и долю закладок.\n\nНаходки приходят сами. Кнопками — когда захотите сами.",
+    hello: "<b>Launch Scout</b> — радар рынка для фаундеров.\n\n💰 Куда идут деньги: раунды, инвесторы, SEC.\n💡 Какие ниши открываются и где уже перегрев.\n🇰🇿 Что свободно в Казахстане и СНГ.\n🔎 Живой поиск по сети, X и Google Trends.\n\nСпросите что угодно — текстом или голосом.",
     kb_top: "🔥 Топ-10", kb_fresh: "🆕 За сутки", kb_trends: "📈 Тренды", kb_cats: "🗂 Категории", kb_app: "📱 Открыть приложение",
     empty: "Пока пусто: за это окно источники ничего не принесли.", no_more: "Больше нет.",
     next: "Дальше?", more10: "➡️ Ещё 10", start_over: "🔄 В начало",
@@ -250,7 +250,7 @@ const I18N = {
     digest: "📋 <b>Сводка</b>",
   },
   kk: {
-    hello: "<b>launch-scout</b>\n\nӨнімдерді шыққаннан кейінгі алғашқы сағаттарда табады. Лайктарды емес, олардың жиналу қарқынын, үдеуін, автордың әдеттегі деңгейінен ауытқуын және бетбелгілер үлесін есептейді.\n\nТабылымдар өздігінен келеді. Қаласаңыз — батырмалармен.",
+    hello: "<b>Launch Scout</b> — фаундерлерге арналған нарық радары.\n\n💰 Ақша қайда барады: раундтар, инвесторлар, SEC.\n💡 Қай тауашалар ашылып жатыр, қайда қызып кетті.\n🇰🇿 Қазақстан мен ТМД-да не бос.\n🔎 Желіден, X пен Google Trends-тен тікелей іздеу.\n\nКез келген сұрақ қойыңыз — мәтінмен немесе дауыспен.",
     kb_top: "🔥 Үздік 10", kb_fresh: "🆕 Тәулік ішінде", kb_trends: "📈 Трендтер", kb_cats: "🗂 Санаттар", kb_app: "📱 Қосымшаны ашу",
     empty: "Әзірге бос: осы уақыт аралығында көздер ештеңе әкелмеді.", no_more: "Басқа жоқ.",
     next: "Әрі қарай?", more10: "➡️ Тағы 10", start_over: "🔄 Басына",
@@ -277,7 +277,7 @@ const I18N = {
     digest: "📋 <b>Шолу</b>",
   },
   en: {
-    hello: "<b>launch-scout</b>\n\nFinds products in the first hours after launch. It scores not likes but how fast they come in, acceleration, deviation from the author’s usual level and the bookmark share.\n\nFindings arrive on their own. Use the buttons whenever you want.",
+    hello: "<b>Launch Scout</b> — a market radar for founders.\n\n💰 Where the money goes: rounds, investors, SEC.\n💡 Which niches are opening and which are overheated.\n🇰🇿 What is still free in Kazakhstan and CIS.\n🔎 Live search across the web, X and Google Trends.\n\nAsk anything — by text or voice.",
     kb_top: "🔥 Top 10", kb_fresh: "🆕 Last 24h", kb_trends: "📈 Trends", kb_cats: "🗂 Categories", kb_app: "📱 Open the app",
     empty: "Nothing yet: the sources brought nothing in this window.", no_more: "No more.",
     next: "More?", more10: "➡️ 10 more", start_over: "🔄 From the top",
@@ -332,6 +332,7 @@ const EXTRA = {
     why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
+    src_db: "База раундов", src_web: "Веб и новости", live_head: "🔎 Ищу вживую: %s", research_started: "📡 Запустил глубокий поиск по X и Google Trends — дополнение придёт отдельным сообщением через 1–2 минуты.", research_limit: "📡 Глубокий поиск — до %d раз в сутки, лимит на сегодня исчерпан.", research_err: "📡 Глубокий поиск сейчас не запустился — попробуйте позже.", research_head: "📡 <b>Дополнение: X и Google Trends</b>", research_empty: "📡 В X и Google Trends по этому запросу ничего заметного.", ab_deep: "🔬 Глубже", ab_map: "🗺 Карта идеи", ab_wide: "🧭 Смежные ниши", ab_comp: "⚔️ Конкуренты", ab_follow: "🔔 Следить", ab_unfollow: "✅ Слежу", ab_live: "📡 Искать везде", ctx_gone: "Контекст устарел — задайте вопрос заново", adj_title: "🧭 <b>Рядом с «%s»</b>", adj_line: "компаний за 6 мес: %d, ранних %d, %s", onboard: "👋 Пять быстрых вопросов — и я буду подбирать ниши и инсайты под вас. Отметьте, что подходит, и нажмите «Показать радар».",
     opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
     opp_overheated: "⚠️ Перегрев: вход только с сильным отличием", opp_local_gap: "🕳 Пусто у нас: доказано деньгами, в КЗ свободно",
     opp_watch: "👀 Наблюдать: сигналов пока мало", opp_score: "скор",
@@ -383,6 +384,7 @@ const EXTRA = {
     why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
+    src_db: "Раундтар базасы", src_web: "Веб және жаңалықтар", live_head: "🔎 Тікелей іздеп жатырмын: %s", research_started: "📡 X және Google Trends бойынша терең іздеу басталды — толықтыру 1–2 минуттан кейін бөлек хабарламамен келеді.", research_limit: "📡 Терең іздеу — тәулігіне %d рет, бүгінгі лимит бітті.", research_err: "📡 Терең іздеу қазір басталмады — кейінірек көріңіз.", research_head: "📡 <b>Толықтыру: X және Google Trends</b>", research_empty: "📡 Бұл сұрау бойынша X пен Google Trends-те елеулі ештеңе жоқ.", ab_deep: "🔬 Тереңірек", ab_map: "🗺 Идея картасы", ab_wide: "🧭 Көршілес тауашалар", ab_comp: "⚔️ Бәсекелестер", ab_follow: "🔔 Бақылау", ab_unfollow: "✅ Бақылаудамын", ab_live: "📡 Барлық жерден іздеу", ctx_gone: "Контекст ескірді — сұрақты қайта қойыңыз", adj_title: "🧭 <b>«%s» маңында</b>", adj_line: "6 айда компаниялар: %d, ерте %d, %s", onboard: "👋 Бес жылдам сұрақ — сонда тауашалар мен инсайттарды сізге қарай таңдаймын. Сәйкесін белгілеп, «Радарды көрсету» батырмасын басыңыз.",
     opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
     opp_overheated: "⚠️ Қызып кеткен: кіру тек күшті ерекшелікпен", opp_local_gap: "🕳 Бізде бос: ақшамен дәлелденген, ҚЗ-да бос",
     opp_watch: "👀 Бақылау: сигнал әзірге аз", opp_score: "балл",
@@ -434,6 +436,7 @@ const EXTRA = {
     why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
+    src_db: "Rounds database", src_web: "Web and news", live_head: "🔎 Searching live: %s", research_started: "📡 Started a deep search on X and Google Trends — the follow-up arrives as a separate message in 1–2 minutes.", research_limit: "📡 Deep search is limited to %d a day — today's limit is used up.", research_err: "📡 Deep search did not start — try again later.", research_head: "📡 <b>Follow-up: X and Google Trends</b>", research_empty: "📡 Nothing notable on X or Google Trends for this query.", ab_deep: "🔬 Deeper", ab_map: "🗺 Idea map", ab_wide: "🧭 Adjacent niches", ab_comp: "⚔️ Competitors", ab_follow: "🔔 Follow", ab_unfollow: "✅ Following", ab_live: "📡 Search everywhere", ctx_gone: "Context expired — ask again", adj_title: "🧭 <b>Next to “%s”</b>", adj_line: "companies in 6 months: %d, early %d, %s", onboard: "👋 Five quick questions — and I'll pick niches and insights for you. Tick what fits and tap “Show radar”.",
     opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
     opp_overheated: "⚠️ Overheated: enter only with strong differentiation", opp_local_gap: "🕳 Empty here: proven by money, free in KZ",
     opp_watch: "👀 Watch: few signals yet", opp_score: "score",
@@ -511,6 +514,11 @@ const LANG_PICKER = {
 };
 
 async function tg(env, method, payload) {
+  // Отладка (/debug-chat при LS_DEBUG=1): вызовы Telegram пишутся в список, а не уходят.
+  if (globalThis.__tgCap) {
+    globalThis.__tgCap.push({ t: Date.now(), method, text: payload.text, kb: payload.reply_markup });
+    return { ok: true, result: { message_id: globalThis.__tgCap.length } };
+  }
   // LS_TG_API — только для локальной проверки (wrangler dev): заглушка
   // вместо Telegram записывает, что бот отправил бы. В бою не задаётся.
   const base = env.LS_TG_API || "https://api.telegram.org";
@@ -1210,8 +1218,11 @@ async function handleUpdate(env, update) {
       // получал бы всё подряд и не знал бы, что можно настроить.
       const snap = await loadSnapshot(env);
       if (marketOf(snap)) {
-        await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).lang_set + "\n\n" + L(lang).hello, parse_mode: "HTML" });
-        await show(env, chatId, null, sectorsPicker(p, lang, snap, "home"));
+        await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).lang_set + "\n\n" + L(lang).hello, parse_mode: "HTML", reply_markup: keyboardFor(lang) });
+        // Первый вход: анкета основателя вместо выбора секторов — по ней
+        // подбираются ниши, радар и ответы чата (просьба владельца 2026-10-01).
+        await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).onboard });
+        await show(env, chatId, null, founderView(p, lang));
         return;
       }
     }
@@ -1266,6 +1277,10 @@ async function handleUpdate(env, update) {
         .bind(String(chatId), sum, Math.floor(Date.now() / 1000)).run().catch(() => null);
       await show(env, chatId, msgId, founderView(p, lang));
     }
+    return;
+  }
+  if (data.startsWith("ca:") || data.startsWith("cn:")) {
+    await answerAction(env, chatId, lang, data, prefs, cb, msgId);
     return;
   }
   if (data.startsWith("dd:")) {
@@ -1348,6 +1363,11 @@ async function handleUpdate(env, update) {
     await tg(env, "sendMessage", { chat_id: chatId, text: s.refresh_ok, reply_markup: keyboardFor(lang) });
   } else if (text.startsWith("/start") || text.startsWith("/help")) {
     await tg(env, "sendMessage", { chat_id: chatId, text: s.hello, parse_mode: "HTML", reply_markup: keyboardFor(lang) });
+    // Первое знакомство: пять вопросов о человеке — под них подбираются ниши и ответы.
+    if (!prefs.founder || !Object.keys(prefs.founder).length) {
+      await tg(env, "sendMessage", { chat_id: chatId, text: s.onboard });
+      await show(env, chatId, null, founderView(prefs, lang));
+    }
   } else if (text.startsWith("/top")) {
     await listTop(env, chatId, 0, 72, s.top_title, null, lang);
   } else if (text.startsWith("/new")) {
@@ -1517,11 +1537,12 @@ async function smartFetch(env, body, groqModels, { web = false, timeoutMs = 2700
   const started = Date.now();
   if (env.LS_OPENROUTER_KEY) {
     const { tools, tool_choice, reasoning_effort, max_completion_tokens, ...rest } = body;
-    const models = [env.LS_CHAT_MODEL || OR_CHAT_MODEL, OR_FALLBACK_MODEL];
-    for (let model of models) {
-      // Поиск в сети у OpenRouter — суффикс :online (плагин web, платный
-      // сверх модели: около $0.02 за карточку при 5 результатах).
-      if (web && !model.endsWith(":online")) model += ":online";
+    // С поиском — сначала Perplexity sonar (~11 с, первоисточники), запасная —
+    // модель чата с :online (20-30 с на замере 2026-10-01).
+    const models = web ? [env.LS_WEB_MODEL || WEB_SOURCE_MODEL, (env.LS_CHAT_MODEL || OR_CHAT_MODEL) + ":online"]
+      : [env.LS_CHAT_MODEL || OR_CHAT_MODEL, OR_FALLBACK_MODEL];
+    for (const model of models) {
+      const isPplx = model.startsWith("perplexity/");
       const left = timeoutMs - (Date.now() - started);
       if (left < 4000) break;
       const ctrl = new AbortController();
@@ -1531,7 +1552,7 @@ async function smartFetch(env, body, groqModels, { web = false, timeoutMs = 2700
           method: "POST", signal: ctrl.signal,
           headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
             "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
-          body: JSON.stringify({ ...rest, max_tokens: max_completion_tokens || 2000, model }),
+          body: JSON.stringify({ ...rest, ...(isPplx ? { response_format: undefined } : {}), max_tokens: max_completion_tokens || 2000, model }),
         });
         if (r.ok) return r;
         await noteAiError(env, "openrouter " + model, r.status, await r.text().catch(() => ""));
@@ -1849,7 +1870,7 @@ async function chatReply(env, chatId, question, lang, mode = "chat", opts = {}) 
   // Быстрый путь: матрица ниш + один вызов модели с потоком (секунды).
   // Запасные ниже — цепочка инструментов и срез через Groq — только если он
   // недоступен (нет матрицы, индекса или OpenRouter не ответил).
-  if (await fastAnswer(env, chatId, question, lang, mode, { niche: opts.niche || null, profile, hist })) {
+  if (await fastAnswer(env, chatId, question, lang, mode, { niche: opts.niche || null, profile, hist, live: !!opts.live, research: !!opts.research })) {
     await setMeta(env, "chat_calls_" + today, total + 1);
     await setMeta(env, `chat_user_${chatId}_${today}`, mine + 1);
     return;
@@ -2388,6 +2409,15 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
       add(`OPPORTUNITY "${n.niche}": type ${o.type}, score ${o.score}/100; last 28 days ${n.n} rounds (${n.early} early), ${usdM(n.usd)}; ${n.companies_6m} companies in 6 months; Kazakhstan ${n.gap ? n.gap.kz : "not checked"}`);
     }
   }
+  // Кто вкладывает: рейтинг посчитан кодом по всем раундам за полгода.
+  if (/инвест|инвестор|фонд|венчур|ангел|\bvc\b|investor|\bfunds?\b|backer|кто вкладыва|кто финансир/iu.test(question)) {
+    const inv = rep.investors_top || [];
+    const secsQ = [...new Set(rows.map((d) => d.sector).filter(Boolean))];
+    const pick = secsQ.length ? inv.filter((x) => secsQ.some((sx) => (x.sectors || {})[sx])).slice(0, 8) : [];
+    const list = [...pick, ...inv.filter((x) => !pick.includes(x))].slice(0, 15);
+    list.forEach((x, i) => add(`INVESTOR LEADERBOARD (computed from our dataset of rounds, last 6 months)${pick.includes(x) ? " in sectors " + secsQ.join("/") : ""} #${i + 1}: ${x.name} — ${x.n} rounds (${x.early} early-stage), ${usdM(x.usd)} raised in those rounds; sectors ${JSON.stringify(x.sectors)}; niches ${(x.niches || []).join(", ")}; recent: ${(x.companies || []).map((c) => `${c.company} ${usdM(c.usd)}${c.stage ? " " + c.stage : ""}`).join("; ")}`,
+      ((x.companies || [])[0] || {}).url || null));
+  }
   const secs = (rep.sectors || []).filter((x) => x.signals).map((x) => `${x.id} ${x.trend} (${(x.money || {}).cur_n || 0} rounds/${rep.window_days || 14}d, ${(x.money || {}).cur_early || 0} early)`);
   if (secs.length) add(`SECTOR TRENDS (share of all rounds): ${secs.join("; ")}`);
   return { facts, niches: rows };
@@ -2395,16 +2425,26 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
 
 const FAST_RULES = `Never add up or compute numbers yourself: for any sum or count across niches quote the TOTAL fact. Answer ONLY from the FACTS list. After every claim put the fact number in square brackets, e.g. [F3]; a claim with a company, a sum or a count MUST carry one. Never use companies, numbers or events from your own memory. If FACTS do not answer the question, say so in one line and say what the data does show.
 Interpret, do not just list: say whether the evidence shows an open window (demand, few funded players), a forming market (many early rounds and similar products — look for an unserved vertical) or an overheated one (mega-rounds, late stages, dozens of players).
-Plain text, short paragraphs or bullets starting with •, no markdown headers, no tables. Answer in %LANG%.`;
+Never open with what is missing (no "В данных нет…", "No data on…"): the first line answers the question with what the evidence shows; if something asked is not in FACTS, say it in one short line at the end.
+FORMAT for a phone screen: the first line is the verdict in one sentence wrapped in **double asterisks**. Then short bullets, each starting with ONE fitting emoji instead of a dot (💰 money · 📈 growth · 🔎 search interest · 🏁 competitors · 🇰🇿 Kazakhstan/CIS · 💼 investors · 🙋 demand · ⚠️ risk · 💡 idea); key numbers and names in **bold**. A blank line between blocks. No # headers, no tables, no other markdown. Answer in %LANG%.`;
 
 const FAST_SYSTEM = {
   chat: `You are the analyst inside launch-scout, a market radar for founders (Kazakhstan first, then CIS/MENA, then global).
 ${FAST_RULES}
-Tailor the answer to the user's PROFILE and end with 1-2 concrete next steps. At most 8 short lines — the user can tap «Глубже» for details.
+Tailor the answer to the user's PROFILE. 3-5 bullets, then a blank line and a line like "👉 **Что сделать:**" (in the answer language) with 1-2 numbered concrete steps. At most 10 short lines — the user has buttons for a deep dive, an idea map and competitors.
 If the user's message tells something new about them (what they build, skills, budget, market), add a last line "PROFILE: <their updated profile in one English sentence>"; otherwise do not add it.`,
   deep: `You are the analyst inside launch-scout. Give a deep dive into ONE niche for a founder (Kazakhstan first).
 ${FAST_RULES}
 Sections as short lines starting with an emoji: 💰 money and trend by month · 🏁 players and prices (global and KZ/CIS) · 😡 what customers complain about · 🎯 first customers · 💳 how money is made · ⚠️ why this might NOT be worth doing · ✅ 7-day validation plan (3 steps). At most 22 lines.`,
+  map: `You are the analyst inside launch-scout. Build a one-screen IDEA MAP for a founder (Kazakhstan first, then CIS/MENA, then global).
+${FAST_RULES}
+Exactly these blocks, each a bold emoji title line and 1-2 short lines: 🎯 **Problem and who pays** · 📊 **Market signals** (money, rounds, search interest, demand) · 🏁 **Competitors and prices** · 🇰🇿 **Kazakhstan/CIS** · 🛠 **MVP in 2 weeks** (3 features max) · 👥 **First 10 customers** (where exactly to find them) · 💳 **Business model and price** · ⚠️ **Main risk** · ✅ **7-day test** (3 steps). Titles in the answer language. At most 26 lines.`,
+  comp: `You are the analyst inside launch-scout. Show a founder who already does this and where a newcomer can win (Kazakhstan first).
+${FAST_RULES}
+Blocks: 🏁 leaders with prices (one line each, name in bold) · 🇰🇿 local players · 😡 what customers complain about · 🕳 gaps a small team can take · 👉 first move. At most 18 lines.`,
+  research: `You are the analyst inside launch-scout. FACTS come from a live search on X (posts with likes and author audience) and Google Trends. Summarise what people actually say and how search interest moves, for the founder's QUESTION.
+${FAST_RULES}
+Weigh posts by engagement and author audience; ignore spam and giveaways. Blocks: 🗣 what people say (2-4 bullets) · 🔎 search interest (worldwide and Kazakhstan) · 💡 what it means for the founder. At most 14 lines.`,
   check: `You are the analyst inside launch-scout. The user gives a startup idea. First try to KILL it with evidence, then say honestly whether it survives. Market priority: Kazakhstan, then CIS/MENA, then global.
 ${FAST_RULES}
 Format: ❌/⚠️ lines — strongest reasons not to do it; 🟢 lines — evidence for it; "Вердикт:" one of делать / делать узко (which segment) / не делать, with one sentence why; then 3 steps to verify in 7 days. At most 18 lines.`,
@@ -2469,8 +2509,12 @@ async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000
  * Итоговый текст: ссылки [F7] -> источники, строки с суммами и числами без
  * ссылки на факт — вон (так модель не может «вспомнить» свои цифры).
  */
+const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+const sup = (n) => String(n).split("").map((d) => SUP[Number(d)]).join("");
+
 function groundAnswer(text, facts) {
   const byId = Object.fromEntries(facts.map((f) => [f.id, f]));
+  const order = new Map();
   let dropped = 0;
   const lines = [];
   // Ссылка — одиночная [F6] или группа [F6, F7] / [F6-F8]: групповые раньше
@@ -2491,11 +2535,21 @@ function groundAnswer(text, facts) {
     const valid = cites.filter((c) => byId[c]);
     const hasNumbers = /\$\s?\d|\d+\s?(млн|млрд|million|billion|M\b|B\b|%|раунд|round)/i.test(raw);
     if (hasNumbers && !valid.length) { dropped++; continue; }
-    let line = esc(raw);
-    line = line.replace(GROUP, (m, g) => idsOf(g).map((n) => {
-      const f = byId[n];
-      return f && f.url && okUrl(f.url) ? `<a href="${esc(f.url)}">[${n}]</a>` : "";
-    }).join(""));
+    let line = esc(raw).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*\*/g, "");
+    // Сноска — маленький номер по порядку появления (¹ ² ³), а не [17]:
+    // в Telegram крупные «[4]» среди текста читались хуже самого текста.
+    line = line.replace(/\s*\[(F\d+(?:\s*[,;–-]\s*F?\d+)*)\]/g, (m) => {
+      const g = /\[(.+)\]/.exec(m)[1];
+      const links = [...new Set(idsOf(g))].map((n) => {
+        const f = byId[n];
+        if (!(f && f.url && okUrl(f.url))) return "";
+        if (!order.has(f.url)) order.set(f.url, order.size + 1);
+        return `<a href="${esc(f.url)}">${sup(order.get(f.url))}</a>`;
+      }).filter(Boolean);
+      return links.length ? " " + links.join(" ") : "";
+    });
+    // Одна и та же сноска подряд («³ ³») — один раз.
+    line = line.replace(/(<a href="([^"]+)">[^<]+<\/a>)(?:\s*<a href="\2">[^<]+<\/a>)+/g, "$1");
     lines.push(line.replace(/\s+$/, ""));
   }
   return { html: lines.join("\n").replace(/\n{3,}/g, "\n\n").trim(), dropped };
@@ -2505,10 +2559,14 @@ function groundAnswer(text, facts) {
 async function webSearchWithStatus(env, chatId, statusText, subject, examples) {
   const st = await tg(env, "sendMessage", { chat_id: chatId, text: statusText });
   let data = null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 22000);
   try {
-    const model = (env.LS_CHAT_MODEL || FAST_MODEL) + ":online";
+    // Perplexity sonar: ~11 с и ссылки на первоисточники; gemini с поиском
+    // висел 20-33 с и обрывал JSON (замер 2026-10-01).
+    const model = env.LS_WEB_MODEL || WEB_SOURCE_MODEL;
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
+      method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
         "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
       body: JSON.stringify({ model, max_tokens: 2500, temperature: 0.2, messages: [
@@ -2523,6 +2581,8 @@ async function webSearchWithStatus(env, chatId, statusText, subject, examples) {
     }
   } catch (e) {
     await noteAiError(env, "openrouter web", 0, String(e));
+  } finally {
+    clearTimeout(timer);
   }
   if (st && st.ok) await tg(env, "deleteMessage", { chat_id: chatId, message_id: st.result.message_id });
   return data && typeof data === "object" ? data : null;
@@ -2533,14 +2593,294 @@ Find real products that already do this: global leaders and players in Kazakhsta
 Reply with JSON only: {"competitors": [{"name": "...", "url": "https://...", "market": "global|US|EU|KZ|RU|CIS|MENA", "price": "...", "note": "one line"}], "complaints": [{"text": "...", "source": "https://..."}], "pricing": "one line", "icp": "one line"}
 At most 8 competitors and 5 complaints, only ones you actually found with real URLs. Never invent.`;
 
+// ---------------------------------------------------------------------------
+// 🔎 Живой поиск по запросу
+//
+// «Нет данных» на вопрос о конкретной компании или фонде — провал (журнал
+// чата 2026-09-30: NACE AI, топ инвесторов). Быстрая модель по вопросу решает,
+// нужен ли живой поиск, и даёт фразы; источники идут параллельно, статус в
+// чате показывает ход и удаляется, когда ответ готов. Из Cloudflare доступны
+// HN, GitHub и веб-поиск OpenRouter; Google News отвечает 503, Reddit — 403,
+// а RSS Bing разрешён только для некоммерческого использования. X и Google
+// Trends — через глубокий поиск в GitHub Actions (researchDispatch).
+// ---------------------------------------------------------------------------
+const PLAN_SYSTEM = `You plan a live search for a market radar for startup founders. Reply JSON only:
+{"live": true|false, "queries": ["English search phrase, 2-5 words", "... at most 3"], "terms": ["1-3 word phrase people type into Google about this topic, at most 3"], "entities": ["company, product, fund or person names from the question"]}
+live = true if the question names a specific company, product, fund, person or event, asks for news or anything recent, or asks something a database of startup funding rounds and niches would not answer (e.g. how a product works, user numbers, pricing). Otherwise false.`;
+
+async function planSearch(env, question) {
+  const fallback = { live: false, queries: [question.slice(0, 80)], terms: [], entities: [] };
+  try {
+    const r = await groqFetch(env, { temperature: 0, max_completion_tokens: 400, reasoning_effort: "low",
+      response_format: { type: "json_object" },
+      messages: [{ role: "system", content: PLAN_SYSTEM }, { role: "user", content: question.slice(0, 800) }] },
+    ["openai/gpt-oss-20b"], 5000);
+    if (!r || !r.ok) return fallback;
+    const d = JSON.parse((await r.json()).choices[0].message.content || "{}");
+    const arr = (x, n) => (Array.isArray(x) ? x.map((v) => String(v).trim()).filter(Boolean).slice(0, n) : []);
+    const queries = arr(d.queries, 3);
+    return { live: !!d.live, queries: queries.length ? queries : fallback.queries, terms: arr(d.terms, 3), entities: arr(d.entities, 4) };
+  } catch (e) {
+    return fallback;
+  }
+}
+
+const WEB_FACTS_SYSTEM = `You search the web to answer a startup founder's question. Reply JSON only:
+{"facts": [{"text": "one factual sentence with names, numbers and dates", "url": "https://exact source page", "date": "YYYY-MM-DD or empty"}]}
+6-10 facts, newest first, only from pages you actually opened. Cover what the question needs: what the company/product does, funding and investors, revenue or users, pricing, competitors, Kazakhstan/CIS presence. Never invent.`;
+
+async function webFacts(env, question, queries, { model = null, timeoutMs = 16000 } = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST", signal: ctrl.signal,
+      headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
+        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+      body: JSON.stringify({ model: model || env.LS_WEB_MODEL || WEB_FAST_MODEL, max_tokens: 1500, temperature: 0.1,
+        // У Perplexity поиск свой; остальным — плагин поиска OpenRouter.
+        ...(String(model || "").startsWith("perplexity/") ? {} : { plugins: [{ id: "web", max_results: 6 }] }),
+        messages: [{ role: "system", content: WEB_FACTS_SYSTEM }, { role: "user", content: `Question: ${question.slice(0, 800)}\nSearch phrases: ${queries.join("; ")}` }] }),
+    });
+    if (!r.ok) { await noteAiError(env, "openrouter live web", r.status, await r.text().catch(() => "")); return []; }
+    const t = ((await r.json()).choices[0].message.content || "").trim();
+    const d = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1));
+    return (d.facts || []).filter((f) => f && f.text).slice(0, 10).map((f) => ({
+      text: `WEB${f.date ? " " + f.date : ""}: ${String(f.text).slice(0, 300)}`,
+      // Редирект Google-поиска живёт недолго — такую ссылку не показываем.
+      url: okUrl(f.url) && !/vertexaisearch|grounding-api-redirect/.test(f.url) ? String(f.url).replace(/[?&]utm_source=openai/, "") : null }));
+  } catch (e) {
+    await noteAiError(env, "openrouter live web", 0, String(e));
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Замер 2026-10-01 на вопросе о Nace.AI: gemini-3.8-flash с поиском — 21 с и
+// оборванный JSON; flash-lite — 6,5 с, но ссылки — временные редиректы Google;
+// perplexity/sonar — 11 с, первоисточники. Идут параллельно, факты сливаются.
+const WEB_FAST_MODEL = "google/gemini-3.1-flash-lite";
+const WEB_SOURCE_MODEL = "perplexity/sonar";
+
+async function hnFacts(queries) {
+  const since = Math.floor(Date.now() / 1000) - 365 * 86400;
+  const res = await Promise.all(queries.slice(0, 2).map((q) =>
+    fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(q)}&tags=story&numericFilters=created_at_i>${since},points>4&hitsPerPage=6`)
+      .then((r) => (r.ok ? r.json() : { hits: [] })).catch(() => ({ hits: [] }))));
+  const seen = new Set(), out = [];
+  for (const h of res.flatMap((x) => x.hits || []).sort((a, b) => (b.points || 0) - (a.points || 0))) {
+    if (seen.has(h.objectID)) continue;
+    seen.add(h.objectID);
+    out.push({ text: `HACKER NEWS ${String(h.created_at || "").slice(0, 10)} (${h.points || 0} points, ${h.num_comments || 0} comments): ${h.title}`,
+      url: `https://news.ycombinator.com/item?id=${h.objectID}` });
+  }
+  return out.slice(0, 6);
+}
+
+async function ghFacts(env, queries) {
+  const h = { "user-agent": "launch-scout-bot", accept: "application/vnd.github+json" };
+  if (env.LS_GH_TOKEN) h.authorization = `Bearer ${env.LS_GH_TOKEN}`;
+  const r = await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(queries[0])}&sort=stars&per_page=5`, { headers: h })
+    .then((x) => (x.ok ? x.json() : { items: [] })).catch(() => ({ items: [] }));
+  return (r.items || []).filter((x) => x.stargazers_count >= 20).map((x) => ({
+    text: `GITHUB open-source ${x.full_name} (${x.stargazers_count} stars, updated ${String(x.pushed_at || "").slice(0, 10)}): ${String(x.description || "").slice(0, 200)}`,
+    url: x.html_url }));
+}
+
+async function dbFacts(env, plan) {
+  // По базе ищем только названия (сущности): фраза «NACE AI pricing» целиком в названии не встретится.
+  const words = (plan.entities.length ? plan.entities : plan.queries.slice(0, 1)).map((w) => w.toLowerCase().trim()).filter((w) => w.length >= 3).slice(0, 4);
+  if (!words.length) return [];
+  // «NACE AI» в вопросе и «Nace.AI» в базе: сравниваем без точек, пробелов и дефисов.
+  const squash = (col) => `replace(replace(replace(lower(${col}), '.', ''), ' ', ''), '-', '')`;
+  const cond = words.map((_, k) => `(${squash("company")} LIKE ?${k + 1} OR ${squash("key")} LIKE ?${k + 1})`).join(" OR ");
+  const { results } = await env.DB.prepare(`SELECT * FROM rounds WHERE ${cond} ORDER BY ts DESC LIMIT 10`)
+    .bind(...words.map((w) => `%${w.replace(/[.\s-]+/g, "")}%`)).all().catch(() => ({ results: [] }));
+  return (results || []).map((r) => ({
+    text: `ROUND ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${r.niche}"${r.investors ? ", investors " + r.investors : ""}: ${r.what_en || r.what_ru || ""}`,
+    url: r.url }));
+}
+
+/** Живой поиск со статусом в чате: [{text, url}] — факты для ответа. */
+async function liveSearch(env, chatId, question, plan, lang) {
+  const s = L(lang);
+  const src = [["db", s.src_db], ["web", s.src_web], ["hn", "Hacker News"], ["gh", "GitHub"]];
+  const state = Object.fromEntries(src.map(([k]) => [k, null]));
+  const head = fmt(s.live_head, plan.queries.map((q) => `«${q}»`).join(", "));
+  const view = () => head + "\n" + src.map(([k, label]) => `${state[k] === null ? "⏳" : state[k] ? "✅" : "▫️"} ${label}${state[k] ? " · " + state[k] : ""}`).join("\n");
+  const st = await tg(env, "sendMessage", { chat_id: chatId, text: view() });
+  let lastEdit = 0;
+  const done = async (k, list) => {
+    state[k] = list.length;
+    if (st && st.ok && Date.now() - lastEdit > 700) {
+      lastEdit = Date.now();
+      await tg(env, "editMessageText", { chat_id: chatId, message_id: st.result.message_id, text: view() });
+    }
+    return list;
+  };
+  const [db, web, hn, gh] = await Promise.all([
+    dbFacts(env, plan).catch(() => []).then((x) => done("db", x)),
+    Promise.all([webFacts(env, question, plan.queries, { model: WEB_FAST_MODEL, timeoutMs: 11000 }),
+      webFacts(env, question, plan.queries, { model: WEB_SOURCE_MODEL, timeoutMs: 14000 })])
+      .then(([a, b]) => {
+        const seen = new Set(), out = [];
+        for (const f of [...b, ...a]) {
+          const k = f.text.toLowerCase().replace(/[^a-zа-я0-9]/g, "").slice(0, 60);
+          if (!seen.has(k)) { seen.add(k); out.push(f); }
+        }
+        return out.slice(0, 14);
+      }).then((x) => done("web", x)),
+    hnFacts(plan.queries).catch(() => []).then((x) => done("hn", x)),
+    ghFacts(env, plan.queries).catch(() => []).then((x) => done("gh", x)),
+  ]);
+  const del = () => (st && st.ok ? tg(env, "deleteMessage", { chat_id: chatId, message_id: st.result.message_id }) : null);
+  return { facts: [...db, ...web, ...hn, ...gh], clear: del };
+}
+
+// ---------------------------------------------------------------------------
+// 📡 Глубокий поиск: X и Google Trends через GitHub Actions
+// ---------------------------------------------------------------------------
+const RESEARCH_PER_USER = 6;
+
+async function researchDispatch(env, chatId, lang, question, plan) {
+  const today = new Date().toISOString().slice(0, 10);
+  const used = Number((await meta(env, `research_${chatId}_${today}`)) || 0);
+  if (used >= RESEARCH_PER_USER) return "limit";
+  const id = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  await setMeta(env, "rjob_" + id, JSON.stringify({ chatId, lang, q: question.slice(0, 800), queries: plan.queries,
+    terms: plan.terms.length ? plan.terms : plan.queries.slice(0, 2), ts: Math.floor(Date.now() / 1000) }));
+  const err = await dispatchRun(env, { job: id }, "research.yml");
+  if (err) { await noteAiError(env, "research dispatch", 0, err); return "err"; }
+  await setMeta(env, `research_${chatId}_${today}`, used + 1);
+  return null;
+}
+
+/** Находки глубокого поиска -> факты -> ответ в чат вторым сообщением. */
+async function researchAnswer(env, res) {
+  const job = JSON.parse((await meta(env, "rjob_" + res.id)) || "null");
+  if (!job) return;
+  await setMeta(env, "rjob_" + res.id, "");
+  const s = L(job.lang);
+  const facts = [];
+  const add = (text, url = null) => facts.push({ id: facts.length + 1, text, url });
+  for (const t of (res.x || []).slice(0, 18)) {
+    add(`X POST ${t.ts ? new Date(t.ts * 1000).toISOString().slice(0, 10) : ""} by @${t.who} (${t.followers ?? "?"} followers; ${t.likes} likes, ${t.replies} replies${t.views ? ", " + t.views + " views" : ""}): ${String(t.text || "").replace(/\s+/g, " ")}`, t.url);
+  }
+  for (const g of res.trends || []) {
+    for (const geo of ["world", "KZ"]) {
+      const v = g[geo];
+      if (!v) continue;
+      add(v.low ? `GOOGLE TRENDS "${g.term}" ${geo === "KZ" ? "in Kazakhstan" : "worldwide"}: almost no searches.`
+        : `GOOGLE TRENDS "${g.term}" ${geo === "KZ" ? "in Kazakhstan" : "worldwide"}: last 12 weeks vs previous 12 = ${v.g3m}x, last 8 weeks vs a year ago = ${v.g1y}x, peak ${v.peak_ago} weeks ago; weekly index (0-100) ${JSON.stringify(g[geo + "_weekly"] || [])}. Google changed how it counts searches in mid-2026 — many terms dropped together; treat drops under ~40% with caution.`,
+      `https://trends.google.com/trends/explore?q=${encodeURIComponent(g.term)}${geo === "KZ" ? "&geo=KZ" : ""}`);
+    }
+  }
+  if (!facts.length) {
+    await tg(env, "sendMessage", { chat_id: job.chatId, text: s.research_empty + (res.x_err ? ` (X: ${String(res.x_err).slice(0, 60)})` : "") });
+    return;
+  }
+  const messages = [
+    { role: "system", content: FAST_SYSTEM.research.replace("%LANG%", LANG_EN[job.lang] || "Russian") },
+    { role: "user", content: `FACTS:\n${facts.map((f) => `[F${f.id}] ${f.text}`).join("\n").slice(0, 14000)}\n\nQUESTION: ${job.q}` },
+  ];
+  let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, async () => {}, 30000, 1400, 8000);
+  if (!full) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, messages, async () => {}, 25000, 1400, 8000);
+  if (!full) return;
+  const { html } = groundAnswer(full, facts);
+  await tg(env, "sendMessage", { chat_id: job.chatId, text: (s.research_head + "\n\n" + html).slice(0, 3900), parse_mode: "HTML", disable_web_page_preview: true });
+}
+
+// ---------------------------------------------------------------------------
+// 🧭 Кнопки под ответом и смежные ниши
+// ---------------------------------------------------------------------------
+function answerKb(s, ctx, following) {
+  if (!ctx.niche) return { inline_keyboard: [[{ text: s.ab_map, callback_data: "ca:map" }, { text: s.ab_live, callback_data: "ca:live" }]] };
+  return { inline_keyboard: [
+    [{ text: s.ab_deep, callback_data: "ca:deep" }, { text: s.ab_map, callback_data: "ca:map" }],
+    [{ text: s.ab_wide, callback_data: "ca:wide" }, { text: s.ab_comp, callback_data: "ca:comp" }],
+    [{ text: following ? s.ab_unfollow : s.ab_follow, callback_data: "ca:follow" }, { text: s.ab_live, callback_data: "ca:live" }],
+  ] };
+}
+
+async function saveCtx(env, chatId, ctx) {
+  await setMeta(env, "ctx_" + chatId, JSON.stringify({ ...ctx, ts: Math.floor(Date.now() / 1000) }));
+}
+async function loadCtx(env, chatId) {
+  try { return JSON.parse((await meta(env, "ctx_" + chatId)) || "{}") || {}; } catch { return {}; }
+}
+
+/** Смежные ниши — соседи по смыслу в векторном индексе, цифры из матрицы. Без модели: мгновенно. */
+async function adjacentMsg(env, chatId, lang, ctx) {
+  const s = L(lang);
+  const id = await vecId(ctx.niche);
+  const got = await env.VEC.getByIds([id]).catch(() => []);
+  let values = got && got[0] && got[0].values;
+  if (!values) values = (await embed(env, [ctx.niche]))[0];
+  if (!values) { await tg(env, "sendMessage", { chat_id: chatId, text: s.niches_empty }); return; }
+  const res = await env.VEC.query(values, { topK: 9, returnMetadata: "all" });
+  const names = ((res && res.matches) || []).map((m) => m.metadata && m.metadata.niche).filter((n) => n && n !== ctx.niche).slice(0, 6);
+  if (!names.length) { await tg(env, "sendMessage", { chat_id: chatId, text: s.niches_empty }); return; }
+  const { results } = await env.DB.prepare(`SELECT niche, name_ru, data FROM niche_matrix WHERE niche IN (${names.map((_, k) => "?" + (k + 1)).join(",")})`)
+    .bind(...names).all().catch(() => ({ results: [] }));
+  const byName = Object.fromEntries((results || []).map((r) => [r.niche, r]));
+  const lines = [fmt(s.adj_title, esc(lang === "en" ? ctx.niche : ctx.name_ru || ctx.niche))];
+  const kb = [], shownTitles = new Set();
+  names.forEach((n, i) => {
+    const r = byName[n];
+    if (!r) return;
+    let d = {};
+    try { d = JSON.parse(r.data); } catch { /* пусто */ }
+    const o = d.opp || {}, g = d.gap || {};
+    let title = lang === "en" ? n : r.name_ru || n;
+    // Две английские ниши с одинаковым русским названием — различаем по-английски.
+    if (shownTitles.has(title)) title = `${title} (${n})`;
+    shownTitles.add(title);
+    lines.push("", `<b>${esc(title)}</b> — ${s["opp_" + o.type] || ""} · <b>${o.score ?? "?"}</b>/100`,
+      `   ${fmt(s.adj_line, d.companies_6m || 0, d.early_6m || 0, usd(d.usd_6m, s))}${g.kz ? ` · ${GAP_ICON[g.kz] || "⚪"} ${s.gap_kz} ${s["gap_" + g.kz] || ""}` : ""}` +
+      (d.search && d.search.rel ? ` · 🔎 ${d.search.pct >= 50 ? "↑" : "↓"}` : ""));
+    kb.push([{ text: `🔬 ${title}`.slice(0, 40), callback_data: `cn:${i}` }]);
+  });
+  await saveCtx(env, chatId, { ...ctx, adj: names });
+  await tg(env, "sendMessage", { chat_id: chatId, text: lines.join("\n").slice(0, 3900), parse_mode: "HTML", disable_web_page_preview: true,
+    reply_markup: { inline_keyboard: kb } });
+}
+
+/** Кнопки «ca:*» под ответом и «cn:i» — смежная ниша. */
+async function answerAction(env, chatId, lang, data, prefs, cb, msgId) {
+  const s = L(lang);
+  const ctx = await loadCtx(env, chatId);
+  if (data.startsWith("cn:")) {
+    const n = (ctx.adj || [])[Number(data.slice(3))];
+    if (n) await chatReply(env, chatId, `Dig deep into the niche "${n}".`, lang, "deep", { niche: n });
+    return;
+  }
+  const act = data.slice(3);
+  if (!ctx.q && !ctx.niche) { await tg(env, "answerCallbackQuery", { callback_query_id: cb.id, text: s.ctx_gone }); return; }
+  if (act === "deep" && ctx.niche) return chatReply(env, chatId, `Dig deep into the niche "${ctx.niche}".`, lang, "deep", { niche: ctx.niche });
+  if (act === "comp" && ctx.niche) return chatReply(env, chatId, `Who already does this in "${ctx.niche}": competitors, their prices and weak spots, and where a newcomer can win. Original question: ${ctx.q || ""}`, lang, "comp", { niche: ctx.niche });
+  if (act === "map") return chatReply(env, chatId, ctx.niche ? `Idea map for a startup in the niche "${ctx.niche}". Original question: ${ctx.q || ""}` : `Idea map for: ${ctx.q}`, lang, "map", { niche: ctx.niche || null });
+  if (act === "wide" && ctx.niche) return adjacentMsg(env, chatId, lang, ctx);
+  if (act === "follow" && ctx.niche) {
+    const p = await setPrefs(env, chatId, { niches: toggle(prefs.niches, ctx.niche) });
+    const on = (p.niches || []).includes(ctx.niche);
+    await tg(env, "answerCallbackQuery", { callback_query_id: cb.id, text: on ? s.follow_on : s.follow_off });
+    if (msgId) await tg(env, "editMessageReplyMarkup", { chat_id: chatId, message_id: msgId, reply_markup: answerKb(s, ctx, on) });
+    return;
+  }
+  if (act === "live" && ctx.q) return chatReply(env, chatId, ctx.q, lang, "chat", { niche: null, live: true, research: true });
+}
+
 /**
  * Быстрый ответ по матрице. mode: chat | deep (niche задана) | check.
  * Возвращает true, если ответ отправлен; false — пусть отвечает запасной путь.
  */
-async function fastAnswer(env, chatId, question, lang, mode, { niche = null, profile = "", hist = [] } = {}) {
+async function fastAnswer(env, chatId, question, lang, mode, { niche = null, profile = "", hist = [], live = false, research = false } = {}) {
   const s = L(lang);
   if (!env.AI || !env.VEC || !env.LS_OPENROUTER_KEY) return false;
   const snap = await loadSnapshot(env);   // кэш на минуту — обычно мгновенно
+  // План живого поиска — параллельно с матрицей (быстрая модель, ~1 с).
+  const planP = mode === "chat" || mode === "check" || mode === "map" ? planSearch(env, question) : Promise.resolve(null);
   let fx;
   try {
     fx = await matrixFacts(env, question, { niche, snap });
@@ -2548,8 +2888,17 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
     await noteAiError(env, "matrix", 0, String(e));
     return false;
   }
+  const plan = await planP;
+  // Живой поиск: вопрос о конкретной компании или событии, ниши в матрице
+  // не нашлось или человек сам нажал «Искать везде».
+  let liveRes = null, cleared = false;
+  if (plan && (live || plan.live || (!fx.niches.length && mode === "chat"))) {
+    liveRes = await liveSearch(env, chatId, question, plan, lang);
+    for (const f of liveRes.facts) fx.facts.push({ id: fx.facts.length + 1, text: f.text, url: f.url });
+  }
+  const clearStatus = async () => { if (liveRes && !cleared) { cleared = true; await liveRes.clear(); } };
   // Сеть — только если про конкурентов в матрице ничего нет.
-  if (mode === "deep" && fx.niches[0] && !fx.niches[0].web) {
+  if ((mode === "deep" || mode === "map" || mode === "comp") && fx.niches[0] && !fx.niches[0].web) {
     const d = fx.niches[0];
     const web = await webSearchWithStatus(env, chatId, fmt(s.searching_niche, lang === "en" ? d.niche : d.name_ru || d.niche), d.niche,
       (d.top_6m || []).slice(0, 5).map((r) => r.company));
@@ -2579,8 +2928,9 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   let msgId = null, lastEdit = 0;
   const onDelta = async (t) => {
     const now = Date.now();
-    const shown = t.replace(/\[F\d+\]/g, "").replace(/\nPROFILE:.*$/s, "");
+    const shown = t.replace(/\[F\d+(?:\s*[,;–-]\s*F?\d+)*\]/g, "").replace(/\*\*/g, "").replace(/\nPROFILE:.*$/s, "");
     if (!msgId && shown.trim().length > 20) {
+      await clearStatus();
       const m = await tg(env, "sendMessage", { chat_id: chatId, text: shown.slice(0, 3800) + " …" });
       if (m && m.ok) msgId = m.result.message_id;
       lastEdit = now;
@@ -2589,9 +2939,10 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
       await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, text: shown.slice(0, 3800) + " …" });
     }
   };
-  const maxTok = mode === "chat" ? 900 : 1800;
+  const maxTok = mode === "chat" ? 1100 : 2000;
   let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, onDelta, 25000, maxTok);
   if (!full && !msgId) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, messages, onDelta, 20000, maxTok, 8000);
+  await clearStatus();
   if (!full || !full.trim()) {
     if (msgId) await tg(env, "deleteMessage", { chat_id: chatId, message_id: msgId });
     return false;
@@ -2600,11 +2951,24 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   const body = full.replace(/\nPROFILE:.*$/s, "").trim();
   const { html } = groundAnswer(body, fx.facts);
   const finalText = (html || esc(body)).slice(0, 3900);
+  // Кнопки под ответом: что можно сделать с этой нишей дальше.
+  const prevCtx = mode === "chat" || mode === "check" ? {} : await loadCtx(env, chatId);
+  const top = fx.niches[0];
+  const ctx = { niche: niche || (top && top.niche) || null, name_ru: (top && top.name_ru) || prevCtx.name_ru || "",
+    q: prevCtx.q || question.slice(0, 800) };
+  const following = ctx.niche ? ((await getPrefs(env, chatId)).niches || []).includes(ctx.niche) : false;
+  const kb = answerKb(s, ctx, following);
+  await saveCtx(env, chatId, ctx);
   if (msgId) {
-    const r = await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true });
-    if (!(r && r.ok)) await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, text: body.replace(/\[F\d+\]/g, "").slice(0, 3900) });
+    const r = await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb });
+    if (!(r && r.ok)) await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, text: body.replace(/\[F\d+(?:\s*[,;–-]\s*F?\d+)*\]/g, "").replace(/\*\*/g, "").slice(0, 3900), reply_markup: kb });
   } else {
-    await tg(env, "sendMessage", { chat_id: chatId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true });
+    await tg(env, "sendMessage", { chat_id: chatId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb });
+  }
+  // «Искать везде»: X и Google Trends — в GitHub Actions, дополнение придёт следом.
+  if (research && plan) {
+    const r = await researchDispatch(env, chatId, lang, question, plan);
+    await tg(env, "sendMessage", { chat_id: chatId, text: r === "limit" ? fmt(s.research_limit, RESEARCH_PER_USER) : r ? s.research_err : s.research_started });
   }
   const now = Math.floor(Date.now() / 1000);
   await env.DB.batch([
@@ -3163,6 +3527,29 @@ export default {
       const q = v ? await env.VEC.query(v, { topK: 5, returnMetadata: "all" }) : null;
       return json({ keys: Object.keys(r || {}), shape: r && r.shape, dim: v ? v.length : null, matches: q && q.matches });
     }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-chat") {
+      await ensureTables(env);
+      globalThis.__tgCap = [];
+      const t0 = Date.now();
+      const q = url.searchParams.get("q") || "", mode = url.searchParams.get("mode") || "chat";
+      const okA = await fastAnswer(env, "debug", q, url.searchParams.get("lang") || "ru", mode,
+        { niche: url.searchParams.get("niche") || null, live: url.searchParams.get("live") === "1" });
+      const cap = globalThis.__tgCap.map((c) => ({ ...c, t: c.t - t0 }));
+      globalThis.__tgCap = null;
+      return json({ ok: okA, total_ms: Date.now() - t0, calls: cap });
+    }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-web") {
+      const t0 = Date.now();
+      const f = await webFacts(env, url.searchParams.get("q") || "", [url.searchParams.get("q") || ""],
+        { model: url.searchParams.get("model"), timeoutMs: 40000 });
+      return json({ ms: Date.now() - t0, n: f.length, facts: f, err: JSON.parse((await meta(env, "ai_errors")) || "[]")[0] });
+    }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-adj") {
+      globalThis.__tgCap = [];
+      await adjacentMsg(env, "debug", "ru", { niche: url.searchParams.get("niche") || "" });
+      const cap = globalThis.__tgCap; globalThis.__tgCap = null;
+      return json(cap);
+    }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-ask") {
       await ensureTables(env);
       const q = url.searchParams.get("q") || "";
@@ -3207,6 +3594,21 @@ export default {
       } catch (e) {
         return new Response(`не сохранено: ${String(e).slice(0, 300)}`, { status: 503 });
       }
+    }
+
+    // Глубокий поиск: Actions забирает задание по номеру и возвращает находки.
+    if (url.pathname === "/research-job" || url.pathname === "/research-result") {
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) {
+        return new Response("нет", { status: 403 });
+      }
+      if (request.method === "GET") {
+        const job = await meta(env, "rjob_" + (url.searchParams.get("id") || ""));
+        return job ? new Response(job, { headers: { "content-type": "application/json" } }) : new Response("нет задания", { status: 404 });
+      }
+      const body = await request.json().catch(() => null);
+      if (!body || !body.id) return new Response("нет id", { status: 400 });
+      ctx.waitUntil(researchAnswer(env, body).catch((e) => console.log("research:", e)));
+      return new Response("ok");
     }
 
     if (request.method === "POST" && url.pathname === "/ingest-rounds") {
