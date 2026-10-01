@@ -331,6 +331,7 @@ const EXTRA = {
     why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
+    list_hint: "Нажмите номер — откроется полная карточка.",
     fb_ask: "🐞 Расскажите, что не работает или чего не хватает — текстом или голосом. Это бесплатно, передам владельцу.", fb_thanks: "🙏 Спасибо! Передал владельцу — это правда помогает делать бота лучше.", kb_feedback: "🐞 Проблема или идея", kb_invite: "🤝 Пригласить друга", ref_text: "🤝 <b>Приглашайте друзей</b>\n\nКогда друг оформит любую подписку, вы оба получите <b>+%d LS</b> — они не сгорают.\n\nВаша ссылка:\n%s\n\nПриглашено: %d · оформили подписку: %d", ref_share: "📤 Отправить другу", ref_share_text: "Launch Scout — ИИ-аналитик рынка стартапов: куда идут деньги и какие ниши свободны", ref_paid_inviter: "🎉 Ваш друг оформил подписку — вам +%d LS, они не сгорают.", ref_paid_friend: "🎉 Вы пришли по приглашению — вам +%d LS в подарок, они не сгорают.", ex_3_answer: "🧪 <b>Как проверить идею</b>\n\nНапишите /check и одной фразой идею, например:\n<code>/check сервис доставки воды по подписке в Алматы</code>\n\nБот сначала попробует её <b>опровергнуть</b> фактами: конкуренты и их цены, жалобы клиентов, куда идут деньги в этой нише — и честно скажет, делать, делать узко или не делать. Потом — 3 шага проверки за 7 дней.",
     about: "ℹ️ <b>Что умеет Launch Scout</b>\n\n<blockquote>💰 <b>Деньги — из первоисточников</b>\nSEC Form D (официальные заявки о раундах в США), Crunchbase News, TechCrunch, EU-Startups, пресс-релизы PR Newswire, Business Wire и GlobeNewswire, Google News на русском и английском.</blockquote>\n\n<blockquote>🚀 <b>Запуски и спрос</b>\nY Combinator, Product Hunt, Hacker News, GitHub, X; интерес людей — Google Trends; задачи компаний Казахстана — Astana Hub; найм и хакатоны.</blockquote>\n\n<blockquote>🧷 <b>Почему цифрам можно верить</b>\nКаждая цифра в ответе — со ссылкой. Ответ сверяется с фактами: строка с числом или компанией, которых нет в источниках, вырезается. Оценку компании не путаем с суммой раунда, новые находки проверяем по странице-источнику.</blockquote>\n\n<blockquote>🛠 <b>Что можно сделать</b>\nСпросить про любую компанию или нишу · /check — проверить идею · карта идеи и конкуренты одной кнопкой · следить за нишей и получать её новые раунды · /radar — ниши под ваш профиль · сводка дня.</blockquote>\n\n💳 Бесплатно — 300 LS в месяц (~30 вопросов). Тарифы — /balance.", small_talk: "👋 Я отвечаю на вопросы о рынке стартапов — цифрами и со ссылками. Спросите о компании, нише или идее, или нажмите вопрос ниже.", kb_about: "ℹ️ Что умеет",
     rq_market: "🎯 Подберу ниши под вас — два коротких вопроса.\n\n<b>1/2. Где запускаете?</b>", rq_model: "<b>2/2. Что строите?</b>", rq_kz: "🇰🇿 Казахстан", rq_cis: "🌍 СНГ", rq_global: "🌐 Весь мир", rq_unsure: "🤷 Пока не знаю", pf_title: "👤 <b>Ваш профиль</b> — по нему радар подбирает ниши, а чат — советы.", pf_chat: "<b>Из разговора бот понял:</b>", pf_hint: "Профиль сам пополняется из чата. Поправить — кнопками ниже.", pf_edit_m: "✏️ Рынок", pf_edit_t: "✏️ Что строю", pf_full: "⚙️ Подробнее", pf_reset: "🧹 Сбросить",
@@ -389,6 +390,7 @@ const EXTRA = {
     why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
+    list_hint: "Нөмірді басыңыз — толық карта ашылады.",
     fb_ask: "🐞 Не жұмыс істемейтінін не неге жетпейтінін жазыңыз — мәтінмен не дауыспен. Бұл тегін, иесіне жеткіземін.", fb_thanks: "🙏 Рахмет! Иесіне жеткіздім — бұл ботты жақсартуға шын көмектеседі.", kb_feedback: "🐞 Қате не ұсыныс", kb_invite: "🤝 Досты шақыру", ref_text: "🤝 <b>Достарыңызды шақырыңыз</b>\n\nДосыңыз кез келген жазылымды рәсімдегенде, екеуіңіз де <b>+%d LS</b> аласыздар — олар күймейді.\n\nСіздің сілтемеңіз:\n%s\n\nШақырылды: %d · жазылым рәсімдеді: %d", ref_share: "📤 Досқа жіберу", ref_share_text: "Launch Scout — стартаптар нарығының ЖИ-талдаушысы", ref_paid_inviter: "🎉 Досыңыз жазылым рәсімдеді — сізге +%d LS, олар күймейді.", ref_paid_friend: "🎉 Сіз шақыру бойынша келдіңіз — сізге +%d LS сыйлық, олар күймейді.", ex_3_answer: "🧪 <b>Идеяны қалай тексеру</b>\n\n/check деп жазып, идеяны бір сөйлеммен қосыңыз, мысалы:\n<code>/check Алматыда жазылыммен су жеткізу</code>\n\nБот алдымен оны фактілермен <b>жоққа шығаруға</b> тырысады: бәсекелестер мен бағалар, клиент шағымдары, тауашаға ақша қайда барады — және адал айтады: жасау, тар жасау не жасамау. Кейін — 7 күнде тексерудің 3 қадамы.",
     about: "ℹ️ <b>Launch Scout не істей алады</b>\n\n<blockquote>💰 <b>Ақша — бастапқы көздерден</b>\nSEC Form D (АҚШ-тағы раундтар туралы ресми өтінімдер), Crunchbase News, TechCrunch, EU-Startups, PR Newswire, Business Wire, GlobeNewswire баспасөз релиздері, орыс және ағылшын тіліндегі Google News.</blockquote>\n\n<blockquote>🚀 <b>Іске қосулар және сұраныс</b>\nY Combinator, Product Hunt, Hacker News, GitHub, X; адамдардың қызығушылығы — Google Trends; Қазақстан компанияларының тапсырмалары — Astana Hub; жалдау және хакатондар.</blockquote>\n\n<blockquote>🧷 <b>Неге сандарға сенуге болады</b>\nЖауаптағы әр сан — сілтемемен. Жауап фактілермен тексеріледі: дереккөзде жоқ сан не компания бар жол алынып тасталады. Компания бағасын раунд сомасымен шатастырмаймыз.</blockquote>\n\n<blockquote>🛠 <b>Не істеуге болады</b>\nКез келген компания не тауаша туралы сұрау · /check — идеяны тексеру · идея картасы және бәсекелестер · тауашаны бақылау · /radar — профиліңізге тауашалар · күнделікті шолу.</blockquote>\n\n💳 Тегін — айына 300 LS (~30 сұрақ). Тарифтер — /balance.", small_talk: "👋 Мен стартаптар нарығы туралы сұрақтарға сандармен және сілтемелермен жауап беремін. Компания, тауаша не идея туралы сұраңыз немесе төмендегі сұрақты басыңыз.", kb_about: "ℹ️ Не істей алады",
     rq_market: "🎯 Сізге тауашаларды таңдаймын — екі қысқа сұрақ.\n\n<b>1/2. Қай жерде іске қосасыз?</b>", rq_model: "<b>2/2. Не жасап жатырсыз?</b>", rq_kz: "🇰🇿 Қазақстан", rq_cis: "🌍 ТМД", rq_global: "🌐 Бүкіл әлем", rq_unsure: "🤷 Әзірге білмеймін", pf_title: "👤 <b>Сіздің профиліңіз</b> — радар тауашаларды, чат кеңестерді осы бойынша таңдайды.", pf_chat: "<b>Әңгімеден бот түсінгені:</b>", pf_hint: "Профиль чаттан өзі толығады. Түзету — төмендегі батырмалармен.", pf_edit_m: "✏️ Нарық", pf_edit_t: "✏️ Не жасаймын", pf_full: "⚙️ Толығырақ", pf_reset: "🧹 Тазарту",
@@ -447,6 +449,7 @@ const EXTRA = {
     why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
+    list_hint: "Tap a number to open the full card.",
     fb_ask: "🐞 Tell me what is broken or missing — by text or voice. It's free; I'll pass it to the owner.", fb_thanks: "🙏 Thanks! Passed to the owner — it really helps make the bot better.", kb_feedback: "🐞 Bug or idea", kb_invite: "🤝 Invite a friend", ref_text: "🤝 <b>Invite friends</b>\n\nWhen a friend subscribes to any plan, you both get <b>+%d LS</b> — they never expire.\n\nYour link:\n%s\n\nInvited: %d · subscribed: %d", ref_share: "📤 Send to a friend", ref_share_text: "Launch Scout — an AI analyst of the startup market", ref_paid_inviter: "🎉 Your friend subscribed — you get +%d LS, they never expire.", ref_paid_friend: "🎉 You came by invitation — here are +%d LS, they never expire.", ex_3_answer: "🧪 <b>How to check an idea</b>\n\nType /check and your idea in one sentence, e.g.:\n<code>/check water delivery subscription in Almaty</code>\n\nThe bot first tries to <b>disprove</b> it with facts: competitors and prices, customer complaints, where the money goes in the niche — then says honestly: do it, do it narrow, or don't. Then 3 steps to test it in 7 days.",
     about: "ℹ️ <b>What Launch Scout can do</b>\n\n<blockquote>💰 <b>Money — from primary sources</b>\nSEC Form D (official US round filings), Crunchbase News, TechCrunch, EU-Startups, press releases from PR Newswire, Business Wire and GlobeNewswire, Google News in Russian and English.</blockquote>\n\n<blockquote>🚀 <b>Launches and demand</b>\nY Combinator, Product Hunt, Hacker News, GitHub, X; what people search — Google Trends; tasks from Kazakhstan companies — Astana Hub; hiring and hackathons.</blockquote>\n\n<blockquote>🧷 <b>Why you can trust the numbers</b>\nEvery number links to its source. Answers are checked against the facts: a line with a number or company not found in the sources is removed. We never mistake a valuation for a round; new findings are verified on the source page.</blockquote>\n\n<blockquote>🛠 <b>What you can do</b>\nAsk about any company or niche · /check — test an idea · idea map and competitors in one tap · follow a niche and get its new rounds · /radar — niches for your profile · daily brief.</blockquote>\n\n💳 Free — 300 LS a month (~30 questions). Plans — /balance.", small_talk: "👋 I answer questions about the startup market — with numbers and links. Ask about a company, niche or idea, or tap a question below.", kb_about: "ℹ️ What it can do",
     rq_market: "🎯 I'll pick niches for you — two quick questions.\n\n<b>1/2. Where are you launching?</b>", rq_model: "<b>2/2. What are you building?</b>", rq_kz: "🇰🇿 Kazakhstan", rq_cis: "🌍 CIS", rq_global: "🌐 Worldwide", rq_unsure: "🤷 Not sure yet", pf_title: "👤 <b>Your profile</b> — the radar picks niches and the chat tailors advice from it.", pf_chat: "<b>From the conversation the bot understood:</b>", pf_hint: "The profile updates itself from the chat. Fix it with the buttons below.", pf_edit_m: "✏️ Market", pf_edit_t: "✏️ What I build", pf_full: "⚙️ More", pf_reset: "🧹 Reset",
@@ -625,7 +628,7 @@ function card(row, lang = "ru") {
   return lines.join("\n");
 }
 
-async function listTop(env, chatId, offset, windowHours, title, topic = null, lang = "ru", sector = null) {
+async function listTop(env, chatId, offset, windowHours, title, topic = null, lang = "ru", sector = null, editMsg = null) {
   const s = L(lang);
   const cutoff = Math.floor(Date.now() / 1000) - windowHours * 3600;
   const snap = await loadSnapshot(env);
@@ -650,23 +653,42 @@ async function listTop(env, chatId, offset, windowHours, title, topic = null, la
     await tg(env, "sendMessage", { chat_id: chatId, text: offset === 0 ? s.empty : s.no_more, reply_markup: keyboardFor(lang) });
     return;
   }
-  await tg(env, "sendMessage", { chat_id: chatId, text: `<b>${esc(title)}</b> — ${results.length}`, parse_mode: "HTML" });
-  for (const row of results) {
-    await sendWithLinks(env, { chat_id: chatId, text: card(row, lang), parse_mode: "HTML", disable_web_page_preview: true },
-      linkRow(row, s), [[{ text: s.btn_idea, callback_data: `idea:${row.id}` }, { text: s.btn_fav, callback_data: `fav:${row.id}` }]]);
-  }
+  // Одно сообщение-список вместо 11–12 подряд (отзыв владельца 2026-10-02:
+  // «похоже на спам»). Полная карточка — по кнопке с номером, листание —
+  // правкой того же сообщения.
+  const lines = [`<b>${esc(title)}</b> · ${offset + 1}–${offset + results.length}`, ""];
+  results.forEach((row, i) => {
+    const head = row.tier === "hot" ? "🔥" : "•";
+    const gist = textFor(row, lang) || (row.body || "").trim();
+    const src = (SRC_RU[row.source] || row.source) + (row.author ? ` @${row.author}` : "");
+    lines.push(`${offset + i + 1}. ${head} <a href="${esc(row.url || "")}">${esc(String(row.title || "—").slice(0, 80))}</a> · <code>${row.score}</code>`);
+    if (gist && gist !== (row.title || "").trim()) lines.push(`   ${esc(gist.replace(/\s+/g, " ").slice(0, 120))}${gist.length > 120 ? "…" : ""}`);
+    lines.push(`   <i>${esc(src)}</i>`, "");
+  });
+  lines.push(s.list_hint);
+  const nums = results.map((row, i) => ({ text: String(offset + i + 1), callback_data: `it:${row.id}` }));
   const more = offset + PAGE;
   const key = sector ? `sf:${sector}` : topic ? `cat:${topic}` : windowHours === 24 ? "fresh" : "top";
-  await tg(env, "sendMessage", {
-    chat_id: chatId,
-    text: s.next,
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: s.more10, callback_data: `${key}:${more}` }, { text: s.start_over, callback_data: `${key}:0` }],
-        [{ text: s.kb_app, web_app: { url: APP_URL } }],
-      ],
-    },
-  });
+  const kb = [nums.slice(0, 5), nums.slice(5, 10)].filter((r) => r.length);
+  kb.push(pool.length > more ? [{ text: s.more10, callback_data: `${key}:${more}` }, ...(offset ? [{ text: s.start_over, callback_data: `${key}:0` }] : [])]
+    : offset ? [{ text: s.start_over, callback_data: `${key}:0` }] : []);
+  kb.push([{ text: s.kb_app, web_app: { url: APP_URL } }]);
+  const payload = { chat_id: chatId, text: lines.join("\n").slice(0, 4000), parse_mode: "HTML", disable_web_page_preview: true,
+    reply_markup: { inline_keyboard: kb.filter((r) => r.length) } };
+  if (editMsg) {
+    const r = await tg(env, "editMessageText", { ...payload, message_id: editMsg });
+    if (r && r.ok) return;
+  }
+  await tg(env, "sendMessage", payload);
+}
+
+/** Полная карточка находки из списка — по кнопке с номером. */
+async function itemCard(env, chatId, id, lang) {
+  const s = L(lang);
+  const row = await findFinding(env, id);
+  if (!row) { await tg(env, "sendMessage", { chat_id: chatId, text: s.gone }); return; }
+  await sendWithLinks(env, { chat_id: chatId, text: card(row, lang), parse_mode: "HTML", disable_web_page_preview: true },
+    linkRow(row, s), [[{ text: s.btn_idea, callback_data: `idea:${row.id}` }, { text: s.btn_fav, callback_data: `fav:${row.id}` }]]);
 }
 
 function topicName(snap, t, lang) {
@@ -1124,6 +1146,8 @@ function isOwner(env, chatId) {
 
 async function hasAccess(env, chatId) {
   if (isOwner(env, chatId)) return true;
+  // Открытый доступ (старт продаж 2026-10-02); /close в служебном боте — снова по ID.
+  if ((await meta(env, "access_mode")) !== "closed") return true;
   const row = await env.DB.prepare("SELECT 1 FROM access WHERE chat_id = ?1")
     .bind(String(chatId))
     .first()
@@ -1416,7 +1440,7 @@ async function handleUpdate(env, update) {
   if (data.startsWith("sf:")) {
     const [, sid, off] = data.split(":");
     const snap = await loadSnapshot(env);
-    await listTop(env, chatId, Number(off) || 0, 72, sectorLabel(snap, sid, lang), null, lang, sid);
+    await listTop(env, chatId, Number(off) || 0, 72, sectorLabel(snap, sid, lang), null, lang, sid, off !== undefined ? msgId : null);
     return;
   }
   if (data === "set" || text.startsWith("/settings")) {
@@ -1441,11 +1465,13 @@ async function handleUpdate(env, update) {
     const off = Number(parts.pop()) || 0;
     const topic = parts.slice(1).join(":");
     const snap = await loadSnapshot(env);
-    await listTop(env, chatId, off, 72, topicName(snap, topic, lang), topic, lang);
+    await listTop(env, chatId, off, 72, topicName(snap, topic, lang), topic, lang, null, msgId);
   } else if (data.startsWith("top:")) {
-    await listTop(env, chatId, Number(data.split(":")[1]) || 0, 72, s.top_title, null, lang);
+    await listTop(env, chatId, Number(data.split(":")[1]) || 0, 72, s.top_title, null, lang, null, msgId);
   } else if (data.startsWith("fresh:")) {
-    await listTop(env, chatId, Number(data.split(":")[1]) || 0, 24, s.fresh_title, null, lang);
+    await listTop(env, chatId, Number(data.split(":")[1]) || 0, 24, s.fresh_title, null, lang, null, msgId);
+  } else if (data.startsWith("it:")) {
+    await itemCard(env, chatId, data.slice(3), lang);
   } else if (data === "status") {
     await status(env, chatId);
   } else if (data === "refresh" || text.startsWith("/refresh")) {
@@ -3177,7 +3203,7 @@ async function handleAdminUpdate(env, update) {
   if (text.startsWith("/start") || text.startsWith("/help")) {
     await tg(aenv, "sendMessage", { chat_id: chatId, parse_mode: "HTML", reply_markup: adminKb(),
       text: "🛠 <b>Dashboard Launch Scout</b>\n\nСюда приходят служебные уведомления: сбор молчит, токены, баланс OpenRouter, оплаты, новые пользователи, /paysupport.\n\n" +
-        "/report — сводка · /costs — себестоимость действий за неделю\n/users — у кого доступ · /allow &lt;id&gt; · /deny &lt;id&gt;\n/grant &lt;id&gt; &lt;free|pro|max|promax&gt; · /credit &lt;id&gt; &lt;LS&gt; · /refund &lt;id&gt; &lt;charge_id&gt;\n\nИли спросите текстом/голосом: «как дела за неделю?», «сколько новых пользователей?»." });
+        "/report — сводка · /costs — себестоимость действий за неделю\n/users — у кого доступ · /allow &lt;id&gt; · /deny &lt;id&gt; · /open или /close — открыть бот всем или закрыть\n/grant &lt;id&gt; &lt;free|pro|max|promax&gt; · /credit &lt;id&gt; &lt;LS&gt; · /refund &lt;id&gt; &lt;charge_id&gt;\n\nИли спросите текстом/голосом: «как дела за неделю?», «сколько новых пользователей?»." });
     return;
   }
   // Доступ к публичному боту: кнопки на запрос и команды.
@@ -3199,6 +3225,12 @@ async function handleAdminUpdate(env, update) {
     const id = (raw.split(/\s+/)[1] || "").replace(/\D/g, "");
     await env.DB.prepare("DELETE FROM access WHERE chat_id = ?1").bind(id).run().catch(() => null);
     await tg(aenv, "sendMessage", { chat_id: chatId, text: `✖️ Доступ закрыт: ${id}` });
+    return;
+  }
+  if (/^\/(open|close)\b/.test(text) && isOwner(env, chatId)) {
+    const closed = text.startsWith("/close");
+    await setMeta(env, "access_mode", closed ? "closed" : "open");
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: closed ? "🔒 Бот закрыт: доступ только по ID (/allow)." : "🌐 Бот открыт для всех." });
     return;
   }
   if (/^\/users\b/.test(text)) {
@@ -4217,7 +4249,10 @@ async function setPrefs(env, uid, patch) {
 async function subscribers(env) {
   const owners = (env.LS_BOT_ALLOW || "").split(",").map((s) => s.trim()).filter(Boolean);
   const { results } = await env.DB.prepare("SELECT chat_id FROM access").all().catch(() => ({ results: [] }));
-  return [...new Set([...owners, ...(results || []).map((r) => String(r.chat_id))])];
+  // Открытый бот: рассылки — всем, кто выбрал язык (prefs), а не только списку доступа.
+  const open = (await meta(env, "access_mode")) !== "closed";
+  const users = open ? (((await env.DB.prepare("SELECT user_id FROM prefs WHERE lang IS NOT NULL").all().catch(() => ({ results: [] }))).results) || []) : [];
+  return [...new Set([...owners, ...(results || []).map((r) => String(r.chat_id)), ...users.map((r) => String(r.user_id))])];
 }
 
 const wants = (topics, filter) => !filter || (topics || []).some((t) => filter.includes(t));
