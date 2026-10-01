@@ -3133,11 +3133,11 @@ const STAR_ITEMS = {
 const PROMOS = { aipreneurs: { title: "AIPRENEURS", off: 0.3, days: 7 } };
 const promoStars = (stars, off) => Math.round(stars * (1 - off));
 const PROMO_TEXT = {
-  ru: { on: "🎟 Промокод <b>%s</b> активирован: <b>−%s%%</b> на первую покупку — любой тариф или пакет LS. Действует до %s.\n\nPro — <b>%s ⭐</b> вместо %s · Max — <b>%s ⭐</b> вместо %s · Pro Max — <b>%s ⭐</b> вместо %s.\nПервый месяц по скидке, дальше — обычная подписка, если захотите.",
+  ru: { head: "🎟 <b>Промокод %s активирован</b>\n−%s%% на первую покупку · действует до %s", foot: "Тариф по скидке — на 30 дней, без автопродления.",
     used: "Промокод действует только на первую покупку — у вас она уже была.", late: "Срок промокода истёк.", paid: "🎟 Скидка по промокоду %s применена. Это месяц без автопродления: когда он закончится, продлить можно в /balance." },
-  kk: { on: "🎟 <b>%s</b> промокоды қосылды: алғашқы сатып алуға <b>−%s%%</b> — кез келген тариф не LS пакеті. %s дейін жарамды.\n\nPro — %s орнына <b>%s ⭐</b> · Max — %s орнына <b>%s ⭐</b> · Pro Max — %s орнына <b>%s ⭐</b>.",
+  kk: { head: "🎟 <b>%s промокоды қосылды</b>\nАлғашқы сатып алуға −%s%% · %s дейін", foot: "Жеңілдікпен тариф — 30 күнге, автоұзартусыз.",
     used: "Промокод тек алғашқы сатып алуға жарамды — сізде ол болған.", late: "Промокод мерзімі бітті.", paid: "🎟 %s промокоды бойынша жеңілдік қолданылды. Бұл автоұзартусыз ай: біткен соң /balance арқылы ұзартуға болады." },
-  en: { on: "🎟 Promo code <b>%s</b> is on: <b>−%s%%</b> off your first purchase — any plan or LS pack. Valid until %s.\n\nPro — <b>%s ⭐</b> instead of %s · Max — <b>%s ⭐</b> instead of %s · Pro Max — <b>%s ⭐</b> instead of %s.\nFirst month at the discount, then a regular plan if you like.",
+  en: { head: "🎟 <b>Promo code %s is on</b>\n−%s%% off your first purchase · until %s", foot: "The discounted plan lasts 30 days and does not auto-renew.",
     used: "The promo code works only for a first purchase — you already have one.", late: "This promo code has expired.", paid: "🎟 Promo %s applied. This month does not auto-renew: when it ends, renew in /balance." },
 };
 
@@ -3167,10 +3167,13 @@ async function promoActivate(env, uid, code, lang, show = true) {
   if (!show) { await setMeta(env, "promo_show_" + uid, "1"); return; }
   if (Math.floor(Date.now() / 1000) > pr.until) { await tg(env, "sendMessage", { chat_id: uid, text: t.late }); return; }
   const d = new Date(pr.until * 1000).toISOString().slice(0, 10).split("-").reverse().join(".");
-  const st = (k) => [promoStars(STAR_ITEMS[k].stars, P.off), STAR_ITEMS[k].stars];
-  const args = lang === "kk" ? ["pro", "max", "promax"].flatMap((k) => st(k).reverse()) : ["pro", "max", "promax"].flatMap(st);
-  await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.on, P.title, Math.round(P.off * 100), d, ...args),
-    reply_markup: starsButtons(L(lang), { ...P, code }) });
+  const n = (v) => v.toLocaleString("ru-RU").replace(/\u00a0/g, " ");
+  const rows = [["pro", "Pro"], ["max", "Max"], ["promax", "Pro Max"], ["pack", "+1 000 LS"]].map(([k, name]) =>
+    `${name} — <b>${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐</b>  <s>${n(STAR_ITEMS[k].stars)}</s>`);
+  const btn = (k, name) => ({ text: `${name} · ${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐`, callback_data: "buy:" + k });
+  await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML",
+    text: `${fmt(t.head, P.title, Math.round(P.off * 100), d)}\n\n<blockquote>${rows.join("\n")}</blockquote>\n\n<i>${t.foot}</i>`,
+    reply_markup: { inline_keyboard: [[btn("pro", "Pro"), btn("max", "Max")], [btn("promax", "Pro Max"), btn("pack", "+1 000 LS")]] } });
 }
 
 /** Отложенный показ: человек пришёл по ссылке с кодом и сначала выбирал язык. */
