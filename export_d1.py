@@ -145,6 +145,30 @@ def snapshot(conn, now, window_hours=168, top_all=200, top_day=150):
     return picked
 
 
+def source_health(conn, now, days=7):
+    """
+    По каждому источнику: когда последний раз работал, сколько прогонов
+    подряд с ошибкой, последняя ошибка. Бот по этому предупреждает, что
+    источник отвалился, и сообщает, когда он вернулся.
+    """
+    out = {}
+    rows = conn.execute("SELECT ts, source, found, ok, note FROM runs WHERE ts >= ? ORDER BY ts DESC",
+                        (now - days * 86400,)).fetchall()
+    for r in rows:
+        h = out.setdefault(r["source"], {"last_ts": r["ts"], "last_ok": None, "fails": 0, "err": "", "found": r["found"], "_streak": True})
+        if r["ok"]:
+            if h["last_ok"] is None:
+                h["last_ok"] = r["ts"]
+            h["_streak"] = False
+        elif h["_streak"]:
+            h["fails"] += 1
+            if not h["err"]:
+                h["err"] = (r["note"] or "")[:200]
+    for h in out.values():
+        h.pop("_streak", None)
+    return out
+
+
 def market_block(conn, now):
     """
     Рынок для бота: отчёт в цифрах, готовый текст на трёх языках, названия
@@ -347,6 +371,12 @@ def main():
         # — market_block ниже. Остались только названия тем для фильтров.
         import trends
         data["trends"] = {"topic_names": trends.TOPIC_NAMES, "topic_ru": trends.TOPIC_RU}
+        try:
+            data["health"] = source_health(conn, now)
+            data["pipeline_errors"] = [e for e in json.loads(db.kv_get(conn, "pipeline_errors", "[]") or "[]")
+                                       if e[0] >= now - 86400]
+        except Exception as e:  # здоровье — надстройка
+            print("здоровье источников не выгружено: %s" % e)
         try:
             data["market"] = market_block(conn, now)
         except Exception as e:  # рынок — тоже надстройка

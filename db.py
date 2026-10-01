@@ -227,6 +227,17 @@ def log_run(conn, ts, source, found, new_rows, ok, note=""):
         "VALUES (?,?,?,?,?,?)", (ts, source, found, new_rows, 1 if ok else 0, note))
 
 
+def log_error(conn, ts, where, text):
+    """Ошибка шага пайплайна — в kv (последние 100): бот собирает их в ежедневную сводку."""
+    import json
+    try:
+        lst = json.loads(kv_get(conn, "pipeline_errors", "[]") or "[]")
+    except ValueError:
+        lst = []
+    lst.append([int(ts), str(where)[:60], str(text)[:300]])
+    kv_set(conn, "pipeline_errors", json.dumps(lst[-100:], ensure_ascii=False))
+
+
 def kv_get(conn, k, default=None):
     row = conn.execute("SELECT v FROM kv WHERE k = ?", (k,)).fetchone()
     return row["v"] if row else default

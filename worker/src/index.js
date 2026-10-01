@@ -1748,6 +1748,7 @@ const OR_CHAT_MODEL = "google/gemini-3.8-flash";
 async function noteAiError(env, provider, status, text) {
   const e = { ts: Math.floor(Date.now() / 1000), provider, status, text: String(text || "").slice(0, 300) };
   console.log("ai error", JSON.stringify(e));
+  await logError(env, "ИИ: " + provider + (status ? " " + status : ""), e.text);
   try {
     const cur = JSON.parse((await meta(env, "ai_errors")) || "[]");
     await setMeta(env, "ai_errors", JSON.stringify([e, ...cur].slice(0, 10)));
@@ -3574,6 +3575,94 @@ async function inviteMsg(env, chatId, lang) {
     reply_markup: { inline_keyboard: [[{ text: s.ref_share, url: `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(s.ref_share_text)}` }]] } });
 }
 
+// ---------------------------------------------------------------------------
+// 🩺 Здоровье источников и ежедневная сводка ошибок (2026-10-02)
+//
+// Пайплайн пишет каждый источник в журнал runs и отдаёт сводку в срезе
+// (health). Источник «отвалился», если подряд 3 прогона с ошибкой или он
+// дольше своего нормального интервала не давал данных; когда вернётся —
+// тоже сообщаем. Ошибки бота (ИИ, обработка сообщений) пишутся в таблицу
+// errors, ошибки шагов пайплайна приходят в срезе; раз в сутки — сводка.
+// ---------------------------------------------------------------------------
+const SRC_NAME = { x: "X", hn: "Hacker News", yc: "Y Combinator", gh: "GitHub", ph: "Product Hunt", gnews: "Google News",
+  sec: "SEC Form D", astanahub: "Astana Hub", hn_hiring: "HN «Who is hiring»", devpost: "Devpost", gtrends: "Google Trends" };
+// Нормальный интервал успеха, часов: чаще не ругаемся.
+const SRC_STALE_H = { x: 3, hn: 3, yc: 8, gh: 8, ph: 8, gnews: 14, sec: 50, astanahub: 50, hn_hiring: 50, devpost: 50, gtrends: 6 };
+const srcName = (k) => SRC_NAME[k] || (k.startsWith("feed:") ? k.slice(5) : k);
+
+async function logError(env, kind, text) {
+  await env.DB.prepare("INSERT INTO errors (ts, kind, text) VALUES (?1, ?2, ?3)")
+    .bind(Math.floor(Date.now() / 1000), String(kind).slice(0, 60), String(text || "").slice(0, 400)).run().catch(() => null);
+}
+
+function badSources(health, now) {
+  const bad = {};
+  for (const [k, h] of Object.entries(health || {})) {
+    const staleH = SRC_STALE_H[k] || (k.startsWith("feed:") ? 14 : 12);
+    const since = h.last_ok ? (now - h.last_ok) / 3600 : null;
+    if (h.fails >= 3 || (since !== null && since > staleH) || (since === null && h.fails >= 2)) {
+      bad[k] = { fails: h.fails, since: since === null ? null : Math.round(since), err: h.err || "" };
+    }
+  }
+  return bad;
+}
+
+/** При каждом запуске расписания: новые поломки и восстановления — админам. */
+async function healthCheck(env, snap) {
+  if (!snap || !snap.health) return;
+  const now = Math.floor(Date.now() / 1000);
+  const bad = badSources(snap.health, now);
+  let prev = {};
+  try { prev = JSON.parse((await meta(env, "src_bad")) || "{}") || {}; } catch { prev = {}; }
+  const broke = Object.keys(bad).filter((k) => !prev[k]);
+  const fixed = Object.keys(prev).filter((k) => !bad[k]);
+  await setMeta(env, "src_bad", JSON.stringify(bad));
+  for (const k of broke) {
+    const b = bad[k];
+    await ownerNotify(env, { parse_mode: "HTML", text: `⚠️ <b>Источник не работает: ${esc(srcName(k))}</b>\n` +
+      (b.fails ? `прогонов подряд с ошибкой: ${b.fails}\n` : "") +
+      (b.since !== null ? `последний успех: ${b.since} ч назад\n` : "успешных прогонов за неделю нет\n") +
+      (b.err ? `<i>${esc(b.err.slice(0, 200))}</i>` : "") });
+  }
+  for (const k of fixed) await ownerNotify(env, { text: `✅ Источник снова работает: ${srcName(k)}` });
+}
+
+/** Раз в сутки (после 09:00 по Алматы): ошибки бота и пайплайна + состояние источников. */
+async function errorDigest(env, snap) {
+  const d = new Date();
+  if (d.getUTCHours() < 4) return;
+  const day = d.toISOString().slice(0, 10);
+  if ((await meta(env, "err_digest")) === day) return;
+  await setMeta(env, "err_digest", day);
+  const since = Math.floor(Date.now() / 1000) - 86400;
+  const { results } = await env.DB.prepare("SELECT kind, COUNT(*) n, MAX(ts) last, (SELECT text FROM errors e2 WHERE e2.kind = e.kind ORDER BY ts DESC LIMIT 1) text FROM errors e WHERE ts >= ?1 GROUP BY kind ORDER BY n DESC LIMIT 12")
+    .bind(since).all().catch(() => ({ results: [] }));
+  const pipe = {};
+  for (const [ts, where, text] of (snap && snap.pipeline_errors) || []) {
+    if (ts < since) continue;
+    const p = pipe[where] || (pipe[where] = { n: 0, text: "" });
+    p.n++; p.text = text;
+  }
+  const bad = badSources((snap && snap.health) || {}, Math.floor(Date.now() / 1000));
+  const lines = ["🩺 <b>Сводка ошибок за сутки</b>"];
+  if ((results || []).length) {
+    lines.push("", "<b>Бот</b>");
+    for (const r of results) lines.push(`• ${esc(r.kind)} — ${r.n} раз\n   <i>${esc(String(r.text || "").slice(0, 160))}</i>`);
+  }
+  if (Object.keys(pipe).length) {
+    lines.push("", "<b>Пайплайн</b>");
+    for (const [w, p] of Object.entries(pipe)) lines.push(`• ${esc(w)} — ${p.n} раз\n   <i>${esc(p.text.slice(0, 160))}</i>`);
+  }
+  if (Object.keys(bad).length) {
+    lines.push("", "<b>Источники не работают</b>");
+    for (const [k, b] of Object.entries(bad)) lines.push(`• ${esc(srcName(k))}${b.since !== null ? ` — успех ${b.since} ч назад` : ""}${b.err ? `: <i>${esc(b.err.slice(0, 120))}</i>` : ""}`);
+  }
+  if (lines.length === 1) lines.push("", "✅ Ошибок нет, все источники работают.");
+  await ownerNotify(env, { parse_mode: "HTML", text: lines.join("\n").slice(0, 3900) });
+  // Старые ошибки не копим: месяц хватает для разбора.
+  await env.DB.prepare("DELETE FROM errors WHERE ts < ?1").bind(since - 30 * 86400).run().catch(() => null);
+}
+
 let lastUnsupported = null;   // для /debug-chat
 const INVESTOR_Q = /инвест|инвестор|фонд|венчур|ангел|\bvc\b|investor|\bfunds?\b|backer|кто вкладыва|кто финансир/iu;
 
@@ -4321,6 +4410,8 @@ async function ensureTables(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_balance (user_id TEXT PRIMARY KEY, plan TEXT, paid_until INTEGER, period_end INTEGER, sub_ls INTEGER, credits INTEGER, warned INTEGER, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS users_seen (user_id TEXT PRIMARY KEY, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS admins (user_id TEXT PRIMARY KEY, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS errors (ts INTEGER, kind TEXT, text TEXT)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS errors_ts ON errors (ts)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS referrals (user_id TEXT PRIMARY KEY, inviter TEXT, ts INTEGER, rewarded INTEGER, rewarded_at INTEGER)"),
     // Первое появление — для «новых за неделю»; прошлых пользователей берём из настроек.
     env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) SELECT user_id, ts FROM prefs"),
@@ -4861,6 +4952,16 @@ export default {
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-briefkb") {
       return json(await briefKb(env, { founder: { markets: ["kz"], models: ["saas"] } }, "ru"));
     }
+    if (env.LS_DEBUG === "1" && request.method === "POST" && url.pathname === "/debug-health") {
+      await ensureTables(env);
+      const snapT = await request.json();
+      globalThis.__tgCap = [];
+      if (url.searchParams.get("reset")) { await setMeta(env, "src_bad", "{}"); await setMeta(env, "err_digest", ""); }
+      await healthCheck(env, snapT);
+      if (url.searchParams.get("digest")) await errorDigest(env, snapT);
+      const cap = globalThis.__tgCap; globalThis.__tgCap = null;
+      return json(cap);
+    }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-invoice") {
       return json({ link: await starsLink(env, url.searchParams.get("uid") || "1", url.searchParams.get("item") || "pro", "ru") });
     }
@@ -4946,7 +5047,7 @@ export default {
       }
       const body = await request.json().catch(() => null);
       if (!body || !body.id) return new Response("нет id", { status: 400 });
-      ctx.waitUntil(researchAnswer(env, body).catch((e) => console.log("research:", e)));
+      ctx.waitUntil(researchAnswer(env, body).catch((e) => { console.log("research:", e); return logError(env, "глубокий поиск", String(e && e.stack || e)); }));
       return new Response("ok");
     }
 
@@ -4969,7 +5070,7 @@ export default {
         return new Response("нет", { status: 403 });
       }
       const update = await request.json();
-      ctx.waitUntil(handleAdminUpdate(env, update).catch((e) => console.log("admin:", e)));
+      ctx.waitUntil(handleAdminUpdate(env, update).catch((e) => { console.log("admin:", e); return logError(env, "служебный бот", String(e && e.stack || e)); }));
       return new Response("ok");
     }
 
@@ -4984,7 +5085,7 @@ export default {
       const update = await request.json();
       // Telegram считает доставку успешной по коду ответа и повторяет
       // апдейт, если ждать долго. Отвечаем сразу, работу доделываем следом.
-      ctx.waitUntil(handleUpdate(env, update).catch((e) => console.log("ошибка:", e)));
+      ctx.waitUntil(handleUpdate(env, update).catch((e) => { console.log("ошибка:", e); return logError(env, "обработка сообщения", String(e && e.stack || e).slice(0, 400)); }));
       return new Response("ok");
     }
 
@@ -5002,6 +5103,9 @@ export default {
     await setMeta(env, "last_dispatch_error", err || "");
     await watchdog(env, now);
     await quotaCheck(env).catch((e) => console.log("quota:", e));
+    const snapH = await loadSnapshot(env).catch(() => null);
+    await healthCheck(env, snapH).catch((e) => console.log("health:", e));
+    await errorDigest(env, snapH).catch((e) => console.log("digest:", e));
     // Расход OpenRouter на начало месяца — для затрат в дашборде; при остатке
     // меньше $3 — напоминание владельцу раз в сутки (иначе бот замолчит).
     const orc = await orCredits(env).catch(() => null);

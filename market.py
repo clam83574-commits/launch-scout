@@ -518,6 +518,9 @@ def refresh_deals(conn, now, verbose=True):
                         analysis.setdefault(sid, []).append(
                             {"title": _clean_title(title)[:200], "url": url, "outlet": outlet, "ts": ts})
             time.sleep(0.8)
+    # Здоровье источников — в журнал runs: бот предупредит, если источник отвалился.
+    raw_total = sum(v["raw"] for v in stats.values())
+    db.log_run(conn, now, "gnews", raw_total, 0, raw_total > 0, (errors[0] if errors else "")[:200])
     for q in GENERAL_QUERIES:
         rows, err = fetch_gnews(q)
         if err:
@@ -536,6 +539,7 @@ def refresh_deals(conn, now, verbose=True):
         time.sleep(0.8)
     for outlet, url in FEEDS:
         rows, err = fetch_feed(url, full=True)
+        db.log_run(conn, now, "feed:" + outlet, len(rows), 0, not err and len(rows) > 0, (err or ("пусто" if not rows else ""))[:200])
         if err:
             errors.append("%s: %s" % (outlet, err))
             continue
@@ -2291,6 +2295,7 @@ def signals_step(conn, now, verbose=True):
     db.kv_set(conn, "signals_ts", now)
     notes = []
     tasks, err = sg.astanahub_tasks(pages=5)
+    db.log_run(conn, now, "astanahub", len(tasks), 0, not err and len(tasks) > 0, (err or ("пусто" if not tasks else ""))[:200])
     for t in tasks:
         conn.execute("INSERT OR IGNORE INTO local_tasks (url, first_seen, title, descr, company, area, deadline, bids) "
                      "VALUES (?,?,?,?,?,?,?,?)", (t["url"], now, t["title"], t["desc"], t["company"], t["area"],
@@ -2306,6 +2311,7 @@ def signals_step(conn, now, verbose=True):
         for r in todo:
             conn.execute("UPDATE local_tasks SET niche = ? WHERE url = ?", (found.get(r["url"], ""), r["url"]))
     month, jobs, err = sg.hn_hiring()
+    db.log_run(conn, now, "hn_hiring", len(jobs), 0, not err and len(jobs) > 0, (err or ("пусто" if not jobs else ""))[:200])
     idx = {}
     for r in rounds(conn, now - HISTORY_WEEKS * 7 * 86400):
         k = company_norm(r["company"])
@@ -2320,6 +2326,7 @@ def signals_step(conn, now, verbose=True):
                      (j["id"], month, j["company"], j["text"], j["url"], niche, now))
     notes.append("вакансии HN %d, из них у компаний с раундами %d%s" % (len(jobs), matched, (" (" + err + ")") if err else ""))
     hacks, err = sg.devpost_hackathons()
+    db.log_run(conn, now, "devpost", len(hacks), 0, not err and len(hacks) > 0, (err or ("пусто" if not hacks else ""))[:200])
     for h in hacks:
         conn.execute("INSERT OR IGNORE INTO hackathons (url, first_seen, title, org, themes, prize, dates, location) "
                      "VALUES (?,?,?,?,?,?,?,?)", (h["url"], now, h["title"], h["org"], json.dumps(h["themes"]),
@@ -2686,6 +2693,9 @@ def trends_step(conn, now, verbose=True):
     if done:
         db.kv_set(conn, "niche_gtrends", json.dumps(gt, ensure_ascii=False))
     conn.commit()
+    # 429 при уже собранных нишах — не поломка (Google притормозил), поломка — ни одной за прогон.
+    if todo[:GT_PER_RUN]:
+        db.log_run(conn, now, "gtrends", done, done, done > 0, (err or "")[:200])
     if verbose and (done or err):
         print("  Google Trends: ниш %d, всего с данными %d, в очереди %d%s"
               % (done, len(gt), max(0, len(todo) - done), (" (" + err + ")") if err else ""))

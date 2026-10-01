@@ -709,11 +709,11 @@ def run(sources, dry=False, digest=False, digest_auto=False):
     try:
         market_step(conn, now, dry=dry)
     except Exception as e:          # рынок — надстройка: его сбой не должен ронять прогон
-        print("  рынок: ошибка %s" % e)
+        _fail(conn, now, "рынок", e)
     try:
         brief.maybe_send(conn, now, dry=dry)
     except Exception as e:          # сводка — тоже надстройка
-        print("  сводка дня: ошибка %s" % e)
+        _fail(conn, now, "сводка дня", e)
     conn.close()
     return 0
 
@@ -726,6 +726,16 @@ def _due(conn, key, now, hours, windows=((7, 9),), weekday=None):
     if not any(a <= g.tm_hour < b for a, b in windows):
         return False
     return now - int(db.kv_get(conn, key, 0) or 0) >= hours * 3600
+
+
+def _fail(conn, now, where, e):
+    """Ошибка шага: в лог прогона и в журнал — бот пришлёт её в ежедневной сводке ошибок."""
+    print("  %s: ошибка %s" % (where, e))
+    try:
+        db.log_error(conn, now, where, e)
+        conn.commit()
+    except Exception:       # журнал — не повод ронять прогон
+        pass
 
 
 def market_step(conn, now, dry=False):
@@ -759,41 +769,42 @@ def market_step(conn, now, dry=False):
         if now - int(db.kv_get(conn, key, 0) or 0) >= 86400 and now - last_try >= 3600:
             db.kv_set(conn, "formd_try_ts", now)
             _added, errs = market.refresh_formd(conn, now)
+            db.log_run(conn, now, "sec", _added, _added, not errs, "; ".join(str(x) for x in errs[:2]))
             if not errs:
                 db.kv_set(conn, key, now)
         fd = market.process_formd(conn, now)
     except Exception as e:              # SEC — надстройка: его сбой не роняет рынок
-        print("  SEC Form D: ошибка %s" % e)
+        _fail(conn, now, "SEC Form D", e)
     # История за полгода — понемногу каждый прогон, пока не наберётся.
     try:
         market.backfill_deals(conn, now)
     except Exception as e:
-        print("  история: ошибка %s" % e)
+        _fail(conn, now, "история", e)
     # Очередь разбора раундов — каждый прогон понемногу: ниши и стадии
     # появляются по мере разбора, и отчёт пересчитывается без сети.
     try:
         market.signals_step(conn, now)
     except Exception as e:          # сигналы — надстройка
-        print("  сигналы: ошибка %s" % e)
+        _fail(conn, now, "сигналы", e)
     try:
         market.learn_step(conn, now)
     except Exception as e:          # раунды из чата — надстройка
-        print("  раунды из чата: ошибка %s" % e)
+        _fail(conn, now, "раунды из чата", e)
     enriched = market.enrich_deals(conn, now)
     try:
         if market.split_step(conn, now):
             enriched = True
     except Exception as e:
-        print("  дробление ниш: ошибка %s" % e)
+        _fail(conn, now, "дробление ниш", e)
     try:
         market.tag_demand_step(conn, now)
     except Exception as e:
-        print("  «боль»: ошибка %s" % e)
+        _fail(conn, now, "«боль»", e)
     try:
         if market.trends_step(conn, now):
             enriched = True
     except Exception as e:          # Google Trends — надстройка
-        print("  Google Trends: ошибка %s" % e)
+        _fail(conn, now, "Google Trends", e)
     if enriched or fd:
         rep = market.update_report(conn, now)
     rep = rep or market.last_report(conn)
@@ -802,11 +813,11 @@ def market_step(conn, now, dry=False):
             if market.gap_step(conn, now, rep):
                 rep = market.update_report(conn, now)
         except Exception as e:
-            print("  аналоги в СНГ: ошибка %s" % e)
+            _fail(conn, now, "аналоги в СНГ", e)
         try:
             market.web_step(conn, now, rep)
         except Exception as e:
-            print("  сеть по нише: ошибка %s" % e)
+            _fail(conn, now, "сеть по нише", e)
         broadcast += market.niche_alerts(conn, rep, now)
         # Вывод модели — не чаще раза в 12 часов на язык (кэш в story).
         market.render_all(conn, rep, now)
