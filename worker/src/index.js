@@ -2974,7 +2974,7 @@ At most 8 competitors and 5 complaints, only ones you actually found with real U
 // ---------------------------------------------------------------------------
 const PLANS = {
   free: { ls: 300, usd: 0 },
-  pro: { ls: 1500, usd: 3.99 },
+  pro: { ls: 1500, usd: 4.99 },
   max: { ls: 3500, usd: 9.99 },
   promax: { ls: 7000, usd: 19.99 },
 };
@@ -3118,7 +3118,7 @@ async function lsAdmin(env, chatId, text, userEnv = null) {
 // покупатель с телефона платит за звёзды дороже из-за комиссии App Store / Google.
 // ---------------------------------------------------------------------------
 const STAR_ITEMS = {
-  pro: { stars: 300, plan: "pro", sub: true },
+  pro: { stars: 385, plan: "pro", sub: true },
   max: { stars: 750, plan: "max", sub: true },
   promax: { stars: 1500, plan: "promax", sub: true },
   pack: { stars: 270, ls: 1000, sub: false },
