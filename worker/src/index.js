@@ -825,24 +825,31 @@ function nicheName(rep, n, lang) {
 const GAP_ICON = { free: "🟢", partly: "🟡", crowded: "🔴" };
 
 /** Строки ниши: цифры, мегараунд, инвесторы, «боль», свобода в КЗ/СНГ. */
-function nicheLines(rep, n, lang, s, snap) {
+function nicheLines(rep, n, lang, s, snap, num = null) {
   const emo = sectorMeta(snap, n.sector);
   const o = n.opp || {};
-  const out = [`${emo ? emo.emoji + " " : ""}<b>${esc(nicheName(rep, n, lang))}</b> — ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}`];
+  // В списке — компактно и с номером, совпадающим с кнопкой «🔬 N»: ссылки
+  // Google News по ~300 символов съедали лимит, и в текст влезали 2 ниши из 6
+  // при кнопках на все шесть (2026-10-02). Цитата «Просят» — в разборе.
+  const compact = num !== null;
+  const out = [`${compact ? num + ". " : ""}${emo ? emo.emoji + " " : ""}<b>${esc(nicheName(rep, n, lang))}</b> — ${fmt(s.niche_line, n.n, n.early, usd(n.usd, s))}`];
   if (o.type) out.push(`   ${s["opp_" + o.type] || o.type} · ${s.opp_score} <b>${o.score}</b>/100`);
-  for (const r of (n.companies || []).filter((r) => !(r.usd >= 1e9)).slice(0, 3)) out.push("   • " + roundLine(r, lang, s));
+  // В списке — без ссылок: ссылка Google News ~300 символов; ссылки — в разборе ниши.
+  for (const r of (n.companies || []).filter((r) => !(r.usd >= 1e9)).slice(0, compact ? 2 : 3)) {
+    out.push("   • " + (compact ? roundLine(r, lang, s).replace(/<a [^>]*>|<\/a>/g, "") : roundLine(r, lang, s)));
+  }
   for (const r of (n.mega || []).slice(0, 1)) out.push("   " + fmt(s.mega, roundLine(r, lang, s)));
   if ((n.investors || []).length) out.push("   " + s.investors + " " + esc(n.investors.join(", ")));
   const sr = n.search;
   if (sr && sr.rel) out.push("   " + (sr.pct >= 50 ? fmt(s.search_fast, esc(sr.term), sr.pct) : fmt(s.search_slow, esc(sr.term), 100 - sr.pct)));
-  const p = (n.pain || [])[0];
+  const p = compact ? null : (n.pain || [])[0];
   if (p) out.push(`   ${s.pain} <a href="${esc(p.url || "")}">«${esc(String(p.text || "").slice(0, 120))}»</a>${p.likes ? " · ♥ " + p.likes : ""}`);
   const g = n.gap;
   if (g && (g.kz || g.cis)) {
     const note = (g.note || {})[lang] || (g.note || {}).ru || "";
     out.push(`   ${GAP_ICON[g.kz] || "⚪"} ${s.gap_kz} ${s["gap_" + g.kz] || "?"} · ${GAP_ICON[g.cis] || "⚪"} ${s.gap_cis} ${s["gap_" + g.cis] || "?"}` +
       ((g.analogs || []).length ? " — " + g.analogs.slice(0, 3).map((a) => `<a href="${esc(a.url)}">${esc(a.name)}</a>`).join(", ") : "") +
-      (note ? `\n   <i>${esc(note)}</i>` : ""));
+      (note && !compact ? `\n   <i>${esc(note)}</i>` : ""));
   }
   return out;
 }
@@ -858,10 +865,19 @@ async function nichesMsg(env, chatId, lang, sid = null, prefs = null, editMsg = 
     await tg(env, "sendMessage", { chat_id: chatId, text: s.niches_empty, reply_markup: keyboardFor(lang) });
     return;
   }
+  // Ниши добавляются целиком, пока влезают (с запасом под теги цитат), —
+  // кнопки строятся ровно по показанным.
   const lines = [fmt(s.niches_title, rep.niche_days || 28)];
-  for (const n of list) lines.push("", ...nicheLines(rep, n, lang, s, snap));
+  const shown = [];
+  for (const n of list) {
+    const block = ["", ...nicheLines(rep, n, lang, s, snap, shown.length + 1)];
+    if ([...lines, ...block].join("\n").length > 3500 && shown.length) break;
+    lines.push(...block);
+    shown.push(n);
+  }
+  list.length = 0;
+  list.push(...shown);
   let text = lines.join("\n");
-  while (text.length > 3900 && lines.length > 3) { lines.pop(); text = lines.join("\n"); }
   // Кнопка «Следить» на каждую нишу: номер в списке отчёта, а не имя —
   // callback_data у Telegram не длиннее 64 байт.
   const mine = new Set((prefs && prefs.niches) || []);
