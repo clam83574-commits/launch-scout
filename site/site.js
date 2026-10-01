@@ -202,7 +202,7 @@
       }
       chat.insertAdjacentHTML("beforeend", KB.replace('class="kb"', 'class="kb wait"'));
       await sleep(60); const kb = chat.querySelector(".kb"); if (kb) kb.classList.remove("wait");
-      status.textContent = "ИИ-аналитик";
+      status.textContent = "венчурный радар";
       tabs[i].style.setProperty("--dur", "6.3s");
       const prog = tabs[i].querySelector(".prog"); void prog.offsetWidth; prog.classList.add("run");
       clearTimeout(autoT); autoT = setTimeout(() => { if (id === run) play((i + 1) % DEMOS.length); }, 6300);
