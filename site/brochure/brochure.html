@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Launch Scout × Digital Bridge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Брошюра A5, две стороны: лист чертежа, как сайт. Печать — PDF из Chrome. */
+:root { --paper: #fff; --ink: #0f1d3a; --muted: #56647f; --line: #e6ecf5; --line-2: #c9d5ea; --blue: #1d4fd8; --blue-soft: #eaf0fd; }
+@page { size: 148mm 210mm; margin: 0; }
+* { box-sizing: border-box; margin: 0; }
+html, body { background: #d9dee8; }
+body { font-family: "Golos Text", sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page {
+  width: 148mm; height: 210mm; position: relative; overflow: hidden; background: var(--paper); page-break-after: always; margin: 0 auto 8mm;
+  background-image: linear-gradient(var(--line) .3mm, transparent .3mm), linear-gradient(90deg, var(--line) .3mm, transparent .3mm);
+  background-size: 6mm 6mm;
+}
+@media print { html, body { background: #fff; } .page { margin: 0; } }
+.frame { position: absolute; inset: 6mm; border: .5mm solid var(--ink); pointer-events: none; }
+.mono { font-family: "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- лицевая ---------- */
+.top { position: absolute; left: 12mm; right: 12mm; top: 12mm; display: flex; justify-content: space-between; align-items: center; }
+.brand { display: flex; align-items: center; gap: 2.5mm; font: 500 5.2mm "Unbounded", sans-serif; letter-spacing: -.01em; }
+.brand svg { width: 9mm; height: 9mm; }
+.partner { display: flex; align-items: center; gap: 2mm; font-size: 2.6mm; color: var(--muted); }
+.partner .x { font: 500 4mm "Unbounded", sans-serif; color: var(--ink); }
+.logo-slot { height: 9mm; min-width: 26mm; display: flex; align-items: center; justify-content: center; }
+.logo-slot img { max-height: 9mm; max-width: 34mm; display: block; }
+.logo-slot .ph { border: .3mm dashed var(--line-2); padding: 1.5mm 2.5mm; font: 600 3mm "Golos Text", sans-serif; color: var(--ink); letter-spacing: .02em; white-space: nowrap; }
+h1 { position: absolute; left: 12mm; right: 12mm; top: 30mm; font: 500 10.5mm/1.04 "Unbounded", sans-serif; letter-spacing: -.035em; }
+h1 em { font-style: normal; color: var(--blue); }
+.sub { position: absolute; left: 12mm; right: 16mm; top: 55mm; font-size: 3.7mm; line-height: 1.4; color: var(--muted); }
+#radar { position: absolute; left: 8mm; right: 8mm; top: 72mm; height: 72mm; width: calc(100% - 16mm); }
+.corner { position: absolute; font-size: 2.2mm; color: var(--muted); }
+.stats { position: absolute; left: 6mm; right: 6mm; top: 146mm; display: grid; grid-template-columns: repeat(4, 1fr); border-top: .5mm solid var(--ink); border-bottom: .5mm solid var(--ink); background: var(--paper); }
+.stats div { padding: 2.6mm 3mm; border-left: .5mm solid var(--ink); display: flex; flex-direction: column; gap: .6mm; }
+.stats div:first-child { border-left: 0; padding-left: 6mm; }
+.stats small { font-size: 1.9mm; color: var(--muted); }
+.stats b { font: 500 4.4mm "Unbounded", sans-serif; letter-spacing: -.02em; white-space: nowrap; }
+.offer { position: absolute; left: 12mm; right: 12mm; bottom: 12mm; height: 38mm; display: grid; grid-template-columns: 1fr 38mm; gap: 5mm; align-items: center; }
+.offer .card { background: var(--blue); color: #fff; border-radius: 3mm; padding: 4mm 5mm; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 1.5mm; }
+.offer .card .k { font-size: 2.2mm; opacity: .8; }
+.offer .card b { font: 700 11mm/1 "Unbounded", sans-serif; letter-spacing: -.03em; }
+.offer .card span { font-size: 3.1mm; line-height: 1.35; }
+.offer .card code { font: 500 3.2mm "JetBrains Mono", monospace; background: rgba(255,255,255,.18); padding: .4mm 1.6mm; border-radius: .8mm; letter-spacing: .06em; }
+.qr { position: relative; width: 38mm; height: 38mm; border: .4mm solid var(--ink); border-radius: 2.4mm; background: #fff; padding: 1.6mm; }
+.qr svg { width: 100%; height: 100%; display: block; }
+
+/* ---------- оборот ---------- */
+.p2 h2 { position: absolute; left: 12mm; right: 12mm; top: 12.5mm; font: 500 6.6mm/1.1 "Unbounded", sans-serif; letter-spacing: -.03em; }
+.p2 h2 em { font-style: normal; color: var(--blue); }
+.flow { position: absolute; left: 12mm; right: 12mm; top: 24mm; display: grid; gap: 2mm; }
+.step { display: grid; grid-template-columns: 7mm 1fr; gap: 3mm; align-items: start; background: var(--paper); border: .3mm solid var(--line-2); border-radius: 2mm; padding: 2.2mm 3mm; }
+.step i { font: 500 2.6mm "JetBrains Mono", monospace; font-style: normal; color: var(--blue); background: var(--blue-soft); border-radius: 1mm; height: 6mm; display: grid; place-items: center; }
+.step b { display: block; font-size: 3.3mm; margin-bottom: .6mm; }
+.step span { font-size: 2.6mm; line-height: 1.35; color: var(--muted); }
+.step.deep { border-color: var(--blue); background: var(--blue-soft); }
+.feats { position: absolute; left: 12mm; right: 12mm; top: 99mm; display: grid; grid-template-columns: 1fr 1fr; border-top: .3mm solid var(--line-2); border-left: .3mm solid var(--line-2); background: var(--paper); }
+.feat { border-right: .3mm solid var(--line-2); border-bottom: .3mm solid var(--line-2); padding: 2.4mm 3mm; display: grid; grid-template-columns: 6mm 1fr auto; gap: 2mm; align-items: center; }
+.feat svg { width: 5.4mm; height: 5.4mm; color: var(--blue); }
+.feat b { font-size: 2.9mm; font-weight: 600; }
+.feat small { font: 500 2.1mm "JetBrains Mono", monospace; border: .25mm solid var(--line-2); border-radius: .8mm; padding: .5mm 1mm; white-space: nowrap; }
+.feat small.free { color: #0e9f6a; }
+.plans { position: absolute; left: 12mm; right: 12mm; top: 136mm; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; }
+.plan { border: .3mm solid var(--line-2); border-radius: 2mm; background: var(--paper); padding: 2.4mm 2.6mm; display: flex; flex-direction: column; gap: .8mm; position: relative; }
+.plan.main { border-color: var(--blue); box-shadow: 0 0 0 .3mm var(--blue); }
+.plan .n { font: 500 2.9mm "Unbounded", sans-serif; }
+.plan .p { font: 500 4.4mm "Unbounded", sans-serif; letter-spacing: -.02em; }
+.plan s { font-size: 2.4mm; color: var(--muted); }
+.plan .l { font: 400 2.2mm "JetBrains Mono", monospace; color: var(--muted); }
+.plans-note { position: absolute; left: 12mm; right: 12mm; top: 160mm; font-size: 2.5mm; color: var(--muted); }
+.foot { position: absolute; left: 12mm; right: 12mm; bottom: 12mm; height: 24mm; display: grid; grid-template-columns: 24mm 1fr; gap: 4mm; align-items: center; }
+.foot .qr { width: 24mm; height: 24mm; padding: 1mm; border-radius: 1.6mm; }
+.foot b { font: 500 3.8mm "Unbounded", sans-serif; display: block; margin-bottom: 1mm; }
+.foot span { font-size: 2.8mm; color: var(--muted); line-height: 1.4; display: block; }
+.foot code { font: 500 2.8mm "JetBrains Mono", monospace; color: var(--blue); }
+</style>
+</head>
+<body>
+
+<!-- ЛИЦЕВАЯ -->
+<section class="page">
+  <div class="frame"></div>
+  <div class="top">
+    <div class="brand"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#0f1d3a" stroke-width="1.6"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#0f1d3a" stroke-width="1.2" opacity=".5"/><path d="M16 16 L27 8.5" stroke="#0f1d3a" stroke-width="1.8" stroke-linecap="round"/><circle cx="22.6" cy="11.4" r="2.2" fill="#1d4fd8"/></svg>Launch Scout</div>
+    <div class="partner"><span class="x">×</span><div class="logo-slot">__PARTNER__</div></div>
+  </div>
+  <h1>Венчурный радар <em>вашего стартапа</em></h1>
+  <p class="sub">Свой датасет из 17 источников, который пополняется каждые 10&nbsp;минут. За&nbsp;10&nbsp;секунд в&nbsp;Telegram: куда идут деньги, кто конкуренты и&nbsp;взлетит&nbsp;ли идея.</p>
+  <span class="corner mono" style="right:12mm;top:73mm">Деньги по секторам · 90 дней</span>
+  <svg id="radar" viewBox="0 0 520 250"></svg>
+  <div class="stats mono">
+    <div><small>Вложено · 90 дней</small><b id="usd">$102 млрд</b></div>
+    <div><small>Раундов</small><b id="rounds">1 619</b></div>
+    <div><small>Источников</small><b>17</b></div>
+    <div><small>Обновление</small><b>10 мин</b></div>
+  </div>
+  <div class="offer">
+    <div class="card">
+      <span class="k mono">Для участников Digital Bridge</span>
+      <b>−30%</b>
+      <span>на первую покупку по коду <code>__CODE__</code><br>+ 300 LS бесплатно на старте</span>
+    </div>
+    <div class="qr">__QR__</div>
+  </div>
+</section>
+
+<!-- ОБОРОТ -->
+<section class="page p2">
+  <div class="frame"></div>
+  <h2>Как это <em>работает</em></h2>
+  <div class="flow">
+    <div class="step"><i>01</i><div><b>Собирает рынок каждые 10 минут</b><span>Раунды, запуски, пресс-релизы, X, Google Trends, SEC, Astana Hub — 17 источников.</span></div></div>
+    <div class="step"><i>02</i><div><b>Чистит и сверяет</b><span>Склеивает дубли, отсеивает сомнительные суммы, раскладывает по 1 147 нишам.</span></div></div>
+    <div class="step deep"><i>03</i><div><b>Не хватает данных — глубокий поиск</b><span>Ищет и парсит все источники в реальном времени и запоминает найденное.</span></div></div>
+    <div class="step"><i>04</i><div><b>Отвечает с источниками</b><span>Каждая цифра со ссылкой. Без источника строка удаляется.</span></div></div>
+  </div>
+  <div class="feats">
+    <div class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="6"/><path d="M16 16 25 9" stroke-linecap="round"/></svg><b>Радар ниш под вас</b><small class="free">0 LS</small></div>
+    <div class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="12" y="4" width="8" height="15" rx="4"/><path d="M8 15a8 8 0 0 0 16 0M16 23v5" stroke-linecap="round"/></svg><b>Вопрос текстом или голосом</b><small>10 LS</small></div>
+    <div class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 4 27 8v8c0 6-5 10-11 12C10 26 5 22 5 16V8z" stroke-linejoin="round"/><path d="m11 16 4 4 6-8" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Проверка идеи /check</b><small>30 LS</small></div>
+    <div class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 27V9M6 9h14l-3 4 3 4H6" stroke-linejoin="round"/><path d="M24 27v-8M16 27v-5" stroke-linecap="round"/></svg><b>Конкуренты и цены</b><small>20 LS</small></div>
+    <div class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 8l8-3 8 3 8-3v19l-8 3-8-3-8 3z"/><path d="M12 5v19M20 8v19"/></svg><b>Карта идеи</b><small>20 LS</small></div>
+    <div class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="16" cy="16" r="12"/><path d="M4 16h24M16 4c4 3.5 4 20.5 0 24M16 4c-4 3.5-4 20.5 0 24"/></svg><b>Живой поиск</b><small>40 LS</small></div>
+  </div>
+  <div class="plans">__PLANS__</div>
+  <p class="plans-note">Цены по коду <b>__CODE__</b> — на первую покупку, 7 дней после активации. Оплата звёздами Telegram.</p>
+  <div class="foot">
+    <div class="qr">__QR__</div>
+    <div><b>Откройте за 10 секунд</b><span>Наведите камеру на QR или найдите в Telegram <code>@Launch_Scout_bot</code><br>Сайт: <code>launch-scout-site.pages.dev</code></span></div>
+  </div>
+</section>
+
+<script>
+const D = __PULSE__;
+const nf = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+document.getElementById("usd").textContent = "$" + Math.round(D.usd90 / 1e9) + " млрд";
+document.getElementById("rounds").textContent = nf(D.rounds90);
+// Изометрический радар — реальные суммы по секторам (как на сайте и в превью).
+const svg = document.getElementById("radar"), NS = "http://www.w3.org/2000/svg";
+const CX = 260, CY = 140, S = 11.5, C30 = Math.cos(Math.PI / 6);
+const P = (x, z, y = 0) => [CX + (x - z) * C30 * S, CY + (x + z) * 0.5 * S - y * S];
+const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
+const poly = (pts, a) => el("polygon", { points: pts.map((p) => p.join(",")).join(" "), ...a });
+for (let i = -11; i <= 11; i++) {
+  el("line", { x1: P(i, -11)[0], y1: P(i, -11)[1], x2: P(i, 11)[0], y2: P(i, 11)[1], stroke: "#c9d5ea", "stroke-width": 0.6 });
+  el("line", { x1: P(-11, i)[0], y1: P(-11, i)[1], x2: P(11, i)[0], y2: P(11, i)[1], stroke: "#c9d5ea", "stroke-width": 0.6 });
+}
+for (const r of [3.5, 7, 10.5]) el("ellipse", { cx: CX, cy: CY, rx: 1.2247 * S * r, ry: 0.7071 * S * r, fill: "none", stroke: "#1d4fd8", "stroke-width": 0.9, "stroke-dasharray": "4 3", opacity: 0.6 });
+const A = 2.15;
+for (let k = 0; k < 8; k++) { const pts = [P(0, 0)], a0 = A - (k + 1) * 0.07, a1 = A - k * 0.07; for (let t = a0; t <= a1 + 1e-6; t += (a1 - a0) / 10) pts.push(P(Math.cos(t) * 10.5, Math.sin(t) * 10.5)); poly(pts, { fill: "#1d4fd8", opacity: 0.16 * (1 - k / 8) }); }
+el("line", { x1: CX, y1: CY, x2: P(Math.cos(A) * 10.5, Math.sin(A) * 10.5)[0], y2: P(Math.cos(A) * 10.5, Math.sin(A) * 10.5)[1], stroke: "#1d4fd8", "stroke-width": 1.6 });
+const secs = (D.sectors || []).slice(0, 16), maxU = Math.max(...secs.map((s) => s.usd));
+const bars = secs.map((s, i) => { const ring = i % 2 ? 7.7 : 4.4 + (i % 3) * 0.9, a = i / secs.length * Math.PI * 2 + 0.3;
+  return { x: Math.cos(a) * ring, z: Math.sin(a) * ring, h: 0.6 + Math.sqrt(s.usd / maxU) * 6.6, hot: Math.abs(((a - A) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)) < 0.6 }; });
+bars.sort((a, b) => (a.x + a.z) - (b.x + b.z));
+const w = 0.33;
+for (const b of bars) {
+  const { x, z, h } = b, at = { stroke: b.hot ? "#1d4fd8" : "#0f1d3a", "stroke-width": 1, "stroke-linejoin": "round" };
+  poly([P(x - w, z + w), P(x + w, z + w), P(x + w, z + w, h), P(x - w, z + w, h)], { fill: b.hot ? "#eaf0fd" : "#fff", ...at });
+  poly([P(x + w, z - w), P(x + w, z + w), P(x + w, z + w, h), P(x + w, z - w, h)], { fill: b.hot ? "#dfe8fd" : "#f5f8fd", ...at });
+  poly([P(x - w, z - w, h), P(x + w, z - w, h), P(x + w, z + w, h), P(x - w, z + w, h)], { fill: b.hot ? "#eaf0fd" : "#fff", ...at });
+}
+for (let i = 0; i < 17; i++) { const a = i / 17 * Math.PI * 2, p = P(Math.cos(a) * 11.6, Math.sin(a) * 11.6); poly([[p[0], p[1] - 4], [p[0] + 3, p[1]], [p[0], p[1] + 4], [p[0] - 3, p[1]]], { fill: "#0f1d3a" }); }
+</script>
+</body>
+</html>
