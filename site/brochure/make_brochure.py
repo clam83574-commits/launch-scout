@@ -1,5 +1,5 @@
 """
-Брошюра A5 (две стороны) под мероприятие: PDF для печати + PNG-превью.
+Брошюра A5 (одна сторона) под мероприятие: PDF для печати + PNG-превью.
   python make_brochure.py digitalbridge
 Логотип партнёра: положите partner_logo.svg или partner_logo.png рядом — он встанет
 в шапку; иначе там будет аккуратная надпись с названием мероприятия.
@@ -74,6 +74,6 @@ pdf = os.path.join(HERE, f"brochure_{CODE}.pdf")
 png = os.path.join(HERE, f"brochure_{CODE}_preview.png")
 common = [CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--virtual-time-budget=8000"]
 subprocess.run(common + ["--no-pdf-header-footer", "--print-to-pdf=" + pdf, url], check=True, capture_output=True)
-subprocess.run(common + ["--force-device-scale-factor=2", "--window-size=600,1650", "--screenshot=" + png, url], check=True, capture_output=True)
+subprocess.run(common + ["--force-device-scale-factor=2", "--window-size=600,820", "--screenshot=" + png, url], check=True, capture_output=True)
 os.remove(tmp)
 print(json.dumps({"pdf": pdf, "png": png, "url": URL}))
