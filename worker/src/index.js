@@ -3133,6 +3133,7 @@ const STAR_ITEMS = {
 const PROMOS = {
   aipreneurs: { title: "AIPRENEURS", off: 0.3, days: 7 },
   tomorrowschool: { title: "TOMORROWSCHOOL", off: 0.3, days: 7 },
+  digitalbridge: { title: "DIGITALBRIDGE", off: 0.3, days: 7 },
 };
 const promoStars = (stars, off) => Math.round(stars * (1 - off));
 const PROMO_TEXT = {

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Экран телефона 1080×1920: лист чертежа, в центре QR в рамке с размерными засечками. */
+:root { --paper: #fff; --ink: #0f1d3a; --muted: #56647f; --line: #e6ecf5; --line-2: #c9d5ea; --blue: #1d4fd8; --blue-soft: #eaf0fd; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; }
+body {
+  background: var(--paper); color: var(--ink); font-family: "Golos Text", sans-serif;
+  background-image: linear-gradient(var(--line) 2px, transparent 2px), linear-gradient(90deg, var(--line) 2px, transparent 2px);
+  background-size: 54px 54px; position: relative;
+}
+.frame { position: absolute; inset: 40px; border: 3px solid var(--ink); }
+.top { position: absolute; left: 100px; right: 100px; top: 120px; display: flex; flex-direction: column; gap: 36px; }
+.brand { display: flex; align-items: center; gap: 22px; font: 500 46px "Unbounded", sans-serif; letter-spacing: -.01em; }
+.brand svg { width: 78px; height: 78px; }
+h1 { font: 500 86px/1.04 "Unbounded", sans-serif; letter-spacing: -.035em; }
+h1 em { font-style: normal; color: var(--blue); }
+.qrbox { position: absolute; left: 50%; top: 560px; transform: translateX(-50%); width: 740px; height: 740px; background: #fff; border: 3px solid var(--ink); border-radius: 36px; padding: 34px; }
+.qrbox svg { width: 100%; height: 100%; display: block; }
+/* размерные засечки по углам, как на чертеже */
+.tick { position: absolute; width: 60px; height: 60px; border-color: var(--blue); border-style: solid; }
+.tick.a { left: -28px; top: -28px; border-width: 5px 0 0 5px; }
+.tick.b { right: -28px; top: -28px; border-width: 5px 5px 0 0; }
+.tick.c { left: -28px; bottom: -28px; border-width: 0 0 5px 5px; }
+.tick.d { right: -28px; bottom: -28px; border-width: 0 5px 5px 0; }
+.scan { position: absolute; left: 0; right: 0; top: 1338px; text-align: center; font: 500 30px "JetBrains Mono", monospace; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+.offer { position: absolute; left: 100px; right: 100px; top: 1410px; background: var(--blue); color: #fff; border-radius: 28px; padding: 40px 48px; display: flex; flex-direction: column; gap: 14px; }
+.offer b { font: 700 84px/1 "Unbounded", sans-serif; letter-spacing: -.03em; }
+.offer span { font-size: 34px; line-height: 1.3; }
+.offer code { font: 500 34px "JetBrains Mono", monospace; letter-spacing: .08em; background: rgba(255,255,255,.18); padding: 4px 16px; border-radius: 10px; }
+.foot { position: absolute; left: 43px; right: 43px; bottom: 43px; height: 110px; display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 3px solid var(--ink); background: var(--paper); }
+.foot div { border-left: 3px solid var(--ink); padding: 14px 28px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.foot div:first-child { border-left: 0; }
+.foot small { font: 400 20px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.foot b { font: 500 36px "Unbounded", sans-serif; letter-spacing: -.02em; }
+</style>
+</head>
+<body>
+<div class="frame"></div>
+<div class="top">
+  <div class="brand"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#0f1d3a" stroke-width="1.6"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#0f1d3a" stroke-width="1.2" opacity=".5"/><path d="M16 16 L27 8.5" stroke="#0f1d3a" stroke-width="1.8" stroke-linecap="round"/><circle cx="22.6" cy="11.4" r="2.2" fill="#1d4fd8"/></svg>Launch Scout</div>
+  <h1>ИИ-аналитик рынка <em>для стартапов</em></h1>
+</div>
+<div class="qrbox"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i>__QR__</div>
+<div class="scan">Наведите камеру телефона</div>
+<div class="offer">
+  <b>−30%</b>
+  <span>на первую покупку по коду <code>__CODE__</code> — подключится сам</span>
+</div>
+<div class="foot">
+  <div><small>Источников</small><b>17</b></div>
+  <div><small>Обновление</small><b>10 мин</b></div>
+  <div><small>На старте</small><b>300 LS</b></div>
+</div>
+</body>
+</html>

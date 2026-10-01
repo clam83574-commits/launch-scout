@@ -84,7 +84,7 @@
   // ---------- промокод из ссылки (?promo=aipreneurs) ----------
   safe("promo", () => {
     const code = (new URLSearchParams(location.search).get("promo") || "").toLowerCase();
-    if (!["aipreneurs", "tomorrowschool"].includes(code)) return;   // только известные коды: иначе плашка обещала бы скидку, которой нет
+    if (!["aipreneurs", "tomorrowschool", "digitalbridge"].includes(code)) return;   // только известные коды: иначе плашка обещала бы скидку, которой нет
     document.querySelectorAll('a[href*="t.me/Launch_Scout_bot"]').forEach((a) => { a.href = "https://t.me/Launch_Scout_bot?start=" + code; });
     document.getElementById("promoCode").textContent = code.toUpperCase();
     document.getElementById("promoNote").hidden = false;
