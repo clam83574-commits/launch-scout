@@ -14,7 +14,7 @@ import urllib.request
 import segno
 
 CODE = (sys.argv[1] if len(sys.argv) > 1 else "digitalbridge").lower()
-PARTNER = {"digitalbridge": "Digital Bridge"}.get(CODE, CODE)
+PARTNER = {"digitalbridge": "AI & Digital Bridge"}.get(CODE, CODE)
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 URL = "https://launch-scout-site.pages.dev/?promo=" + CODE
@@ -45,6 +45,11 @@ def qr_svg(url):
 
 
 def partner_html():
+    top = os.path.join(HERE, "partner_logo_top.png")
+    if CODE == "digitalbridge" and os.path.exists(top):
+        # Нижнее слово в исходнике частично закрыто шаром — набираем его шрифтом.
+        return (f'<div class="ptile"><img alt="AI &amp; Digital Bridge" src="data:image/png;base64,{base64.b64encode(open(top, "rb").read()).decode()}">'
+                '<b>BRIDGE</b></div>')
     for name, mime in (("partner_logo.svg", "image/svg+xml"), ("partner_logo.png", "image/png")):
         p = os.path.join(HERE, name)
         if os.path.exists(p):
@@ -66,7 +71,7 @@ pulse = urllib.request.urlopen(urllib.request.Request("https://launch-scout-bot.
                                                       headers={"User-Agent": "curl/8"}), timeout=30).read().decode()
 html = open(os.path.join(HERE, "brochure.html"), encoding="utf-8").read()
 html = (html.replace("__QR__", qr_svg(URL)).replace("__PARTNER__", partner_html()).replace("__PLANS__", plans_html())
-        .replace("__CODE__", CODE.upper()).replace("__PULSE__", pulse))
+        .replace("__CODE__", CODE.upper()).replace("__PARTNER_NAME__", PARTNER).replace("__PULSE__", pulse))
 tmp = os.path.join(HERE, f"_brochure_{CODE}.html")
 open(tmp, "w", encoding="utf-8").write(html)
 url = "file:///" + tmp.replace("\\", "/")

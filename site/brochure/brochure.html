@@ -21,18 +21,21 @@ body { font-family: "Golos Text", sans-serif; color: var(--ink); -webkit-print-c
 .mono { font-family: "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
 
 /* ---------- лицевая ---------- */
-.top { position: absolute; left: 12mm; right: 12mm; top: 12mm; display: flex; justify-content: space-between; align-items: center; }
+.top { position: absolute; left: 12mm; right: 12mm; top: 11mm; display: flex; justify-content: space-between; align-items: center; }
 .brand { display: flex; align-items: center; gap: 2.5mm; font: 500 5.2mm "Unbounded", sans-serif; letter-spacing: -.01em; }
 .brand svg { width: 9mm; height: 9mm; }
 .partner { display: flex; align-items: center; gap: 2mm; font-size: 2.6mm; color: var(--muted); }
 .partner .x { font: 500 4mm "Unbounded", sans-serif; color: var(--ink); }
-.logo-slot { height: 9mm; min-width: 26mm; display: flex; align-items: center; justify-content: center; }
+.logo-slot { display: flex; align-items: center; justify-content: center; }
 .logo-slot img { max-height: 9mm; max-width: 34mm; display: block; }
+.ptile { background: #0f1d3a; border-radius: 2mm; padding: 2.2mm 3mm 2mm; display: flex; flex-direction: column; align-items: center; gap: .3mm; }
+.ptile img { width: 30mm; max-width: none; max-height: none; display: block; }
+.ptile b { font: 700 5.15mm/1 "Unbounded", sans-serif; color: #fff; letter-spacing: -.01em; }
 .logo-slot .ph { border: .3mm dashed var(--line-2); padding: 1.5mm 2.5mm; font: 600 3mm "Golos Text", sans-serif; color: var(--ink); letter-spacing: .02em; white-space: nowrap; }
-h1 { position: absolute; left: 12mm; right: 12mm; top: 30mm; font: 500 10.5mm/1.04 "Unbounded", sans-serif; letter-spacing: -.035em; }
+h1 { position: absolute; left: 12mm; right: 12mm; top: 33mm; font: 500 10.5mm/1.04 "Unbounded", sans-serif; letter-spacing: -.035em; }
 h1 em { font-style: normal; color: var(--blue); }
-.sub { position: absolute; left: 12mm; right: 16mm; top: 55mm; font-size: 3.7mm; line-height: 1.4; color: var(--muted); }
-#radar { position: absolute; left: 8mm; right: 8mm; top: 74mm; height: 46mm; width: calc(100% - 16mm); }
+.sub { position: absolute; left: 12mm; right: 16mm; top: 57.5mm; font-size: 3.7mm; line-height: 1.4; color: var(--muted); }
+#radar { position: absolute; left: 8mm; right: 8mm; top: 75mm; height: 45mm; width: calc(100% - 16mm); }
 .corner { position: absolute; font-size: 2.2mm; color: var(--muted); }
 .stats { position: absolute; left: 6mm; right: 6mm; top: 143mm; display: grid; grid-template-columns: repeat(4, 1fr); border-top: .5mm solid var(--ink); border-bottom: .5mm solid var(--ink); background: var(--paper); }
 .stats div { padding: 2.6mm 3mm; border-left: .5mm solid var(--ink); display: flex; flex-direction: column; gap: .6mm; }
@@ -55,6 +58,23 @@ h1 em { font-style: normal; color: var(--blue); }
 .how i { font: 500 2.2mm "JetBrains Mono", monospace; font-style: normal; color: var(--blue); }
 .how b { font-size: 2.9mm; }
 .how span { font-size: 2.3mm; line-height: 1.32; color: var(--muted); }
+.voucher { position: absolute; left: 12mm; right: 12mm; bottom: 11mm; height: 40mm; display: grid; grid-template-columns: 1fr 37mm; filter: drop-shadow(0 .6mm 1.2mm rgba(15,29,58,.18)); }
+.v-main { background: var(--blue); color: #fff; border-radius: 3mm 0 0 3mm; padding: 3.6mm 4.6mm; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+.v-tag { font-size: 2.3mm; letter-spacing: .1em; opacity: .9; }
+.v-row { display: flex; align-items: center; gap: 3.5mm; }
+.v-row b { font: 700 13mm/1 "Unbounded", sans-serif; letter-spacing: -.04em; }
+.v-row span { font-size: 3.3mm; line-height: 1.25; }
+.v-code { display: flex; align-items: center; gap: 2mm; flex-wrap: wrap; }
+.v-code .mono { font-size: 2.2mm; opacity: .85; }
+.v-code code { font: 500 3.9mm "JetBrains Mono", monospace; letter-spacing: .1em; background: #fff; color: var(--blue); padding: .9mm 2.2mm; border-radius: 1mm; }
+.v-code .plus { font-size: 2.7mm; opacity: .9; }
+.v-qr { background: #fff; border: .4mm solid var(--blue); border-left: 0; border-radius: 0 3mm 3mm 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2mm; position: relative; }
+.v-qr .qr { width: 29mm; height: 29mm; border: 0; padding: 0; border-radius: 0; }
+.v-qr .mono { font-size: 2mm; color: var(--muted); }
+/* линия отрыва и вырезы, как у билета */
+.v-qr::before { content: ""; position: absolute; left: -.2mm; top: 3mm; bottom: 3mm; border-left: .5mm dashed var(--blue); }
+.voucher::before, .voucher::after { content: ""; position: absolute; right: calc(37mm - 2.4mm); width: 4.8mm; height: 4.8mm; border-radius: 50%; background: #fff; border: .4mm solid var(--blue); }
+.voucher::before { top: -2.4mm; } .voucher::after { bottom: -2.4mm; }
 /* ---------- оборот ---------- */
 .p2 h2 { position: absolute; left: 12mm; right: 12mm; top: 12.5mm; font: 500 6.6mm/1.1 "Unbounded", sans-serif; letter-spacing: -.03em; }
 .p2 h2 em { font-style: normal; color: var(--blue); }
@@ -96,7 +116,7 @@ h1 em { font-style: normal; color: var(--blue); }
   </div>
   <h1>Венчурный радар <em>вашего стартапа</em></h1>
   <p class="sub">Свой датасет из 17 источников, который пополняется каждые 10&nbsp;минут. За&nbsp;10&nbsp;секунд в&nbsp;Telegram: куда идут деньги, кто конкуренты и&nbsp;взлетит&nbsp;ли идея.</p>
-  <span class="corner mono" style="right:12mm;top:73mm">Деньги по секторам · 90 дней</span>
+  <span class="corner mono" style="right:12mm;top:75.5mm">Деньги по секторам · 90 дней</span>
   <svg id="radar" viewBox="0 0 520 250"></svg>
   <div class="how">
     <div><i>01</i><b>17 источников</b><span>Раунды, запуски, X, Google Trends — пополняется каждые 10 минут</span></div>
@@ -109,14 +129,13 @@ h1 em { font-style: normal; color: var(--blue); }
     <div><small>Источников</small><b>17</b></div>
     <div><small>Обновление</small><b>10 мин</b></div>
   </div>
-  <div class="offer">
-    <div class="card">
-      <span class="k mono">Для участников Digital Bridge</span>
-      <b>−30%</b>
-      <span>на первую покупку по коду <code>__CODE__</code><br>+ 300 LS бесплатно на старте</span>
-      <span class="go">Наведите камеру на QR → сайт за 2 минуты</span>
+  <div class="voucher">
+    <div class="v-main">
+      <span class="v-tag mono">Ваучер · для участников __PARTNER_NAME__</span>
+      <div class="v-row"><b>−30%</b><span>на первую покупку<br>любого тарифа</span></div>
+      <div class="v-code"><span class="mono">Код</span><code>__CODE__</code><span class="plus">+ 300 LS бесплатно на старте</span></div>
     </div>
-    <div class="qr">__QR__</div>
+    <div class="v-qr"><div class="qr">__QR__</div><span class="mono">Сканируйте → сайт</span></div>
   </div>
 </section>
 
