@@ -19,7 +19,8 @@
   const usd = (v) => v >= 1e9 ? "$" + (v / 1e9).toFixed(v >= 1e11 ? 0 : 1).replace(".", ",").replace(",0", "") + " млрд"
     : "$" + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1).replace(".", ",").replace(",0", "") + " млн";
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const SOURCES = ["X", "Hacker News", "Y Combinator", "GitHub", "Product Hunt", "Google News", "SEC Form D", "Astana Hub", "Devpost", "Google Trends", "Пресс-релизы"];
+  const SOURCES = ["X", "Hacker News", "Y Combinator", "GitHub", "Product Hunt", "Google News", "TechCrunch", "Crunchbase News", "EU-Startups",
+    "SEC Form D", "PR Newswire", "GlobeNewswire", "Business Wire", "Astana Hub", "Devpost", "HN Hiring", "Google Trends"];
   const DEMOS = [
     { q: "Куда идут деньги в ИИ-агентах?", a: [
       ["v", "<b>Горячо.</b> 148 раундов и $11,5 млрд за 90 дней — четвёртое место из 16 секторов."],
@@ -78,6 +79,15 @@
   }
   safe("data", () => {
     fetch(PULSE_URL).then((r) => r.ok ? r.json() : null).then((j) => { if (j && j.rounds90) { DATA = j; safe("bind", bind); } }).catch(() => {});
+  });
+
+  // ---------- промокод из ссылки (?promo=aipreneurs) ----------
+  safe("promo", () => {
+    const code = (new URLSearchParams(location.search).get("promo") || "").toLowerCase();
+    if (code !== "aipreneurs") return;   // только известные коды: иначе плашка обещала бы скидку, которой нет
+    document.querySelectorAll('a[href*="t.me/Launch_Scout_bot"]').forEach((a) => { a.href = "https://t.me/Launch_Scout_bot?start=" + code; });
+    document.getElementById("promoCode").textContent = code.toUpperCase();
+    document.getElementById("promoNote").hidden = false;
   });
 
   // ---------- прожектор под курсором ----------
@@ -287,7 +297,7 @@
     });
 
     // источники по краю и сигналы от них
-    const SRC_N = 11, srcPos = [], srcMat = new THREE.MeshBasicMaterial({ color: INK });
+    const SRC_N = 17, srcPos = [], srcMat = new THREE.MeshBasicMaterial({ color: INK });
     for (let i = 0; i < SRC_N; i++) { const a = i / SRC_N * Math.PI * 2, p = new THREE.Vector3(Math.cos(a) * 12.3, 0, Math.sin(a) * 12.3); srcPos.push(p);
       const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.24), srcMat); m.position.copy(p).setY(0.3); world.add(m); }
     const PK = 18, pkArr = new Float32Array(PK * 3), pkGeo = new THREE.BufferGeometry(); pkGeo.setAttribute("position", new THREE.BufferAttribute(pkArr, 3));

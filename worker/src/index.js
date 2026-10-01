@@ -2913,7 +2913,14 @@ function groundAnswer(text, facts, extra = "") {
     line = line.replace(/(<a href="([^"]+)">[^<]+<\/a>)(?:\s*<a href="\2">[^<]+<\/a>)+/g, "$1");
     lines.push(line.replace(/\s+$/, ""));
   }
-  return { html: lines.join("\n").replace(/\n{3,}/g, "\n\n").trim(), dropped, unsupported };
+  return { html: lines.join("\n").replace(/\n{3,}/g, "\n\n").trim(), dropped, unsupported, sources: [...order.keys()] };
+}
+
+// Отзыв 2026-10-01: «не понял, что номера — это источники». Под ответом со
+// сносками — одна короткая строка-подсказка, без списка (минимализм).
+const SRC_LABEL = { ru: "<i>¹ ² ³ — ссылки на источники, нажмите на номер</i>", kk: "<i>¹ ² ³ — дереккөз сілтемелері, нөмірді басыңыз</i>", en: "<i>¹ ² ³ — links to sources, tap a number</i>" };
+function sourcesLine(urls, lang) {
+  return urls && urls.length ? `\n\n${SRC_LABEL[lang] || SRC_LABEL.ru}` : "";
 }
 
 /** Поиск в сети: статус в чате на время поиска, потом он удаляется. */
@@ -4264,7 +4271,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   full = full.replace(/【(F[^】]{0,40})】/g, "[$1]").replace(/\[F[^\]]{0,40}\]/g, (m) => m.replace(/[\u2010-\u2015]/g, "-"));
   const prof = /\nPROFILE:\s*(.+)$/s.exec(full);
   const body = full.replace(/\nPROFILE:.*$/s, "").trim();
-  const { html, unsupported } = groundAnswer(body, fx.facts, question + " " + profile);
+  const { html, unsupported, sources } = groundAnswer(body, fx.facts, question + " " + profile);
   lastUnsupported = { unsupported, raw: body, facts: fx.facts.length };
   // Списание: живой поиск — по цене поиска, иначе по режиму ответа.
   const charge = free ? { spent: 0, left: null } : await lsSpend(env, chatId, liveRes ? (upgrade ? "live_up" : "live") : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
@@ -4275,9 +4282,11 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
     if (l.trim()) n = 0;
     return l; }).join("\n"); };
   let finalText = (html ? (env.LS_CARDS === "0" ? renum(html) : cardify(renum(html))) : esc(body));
+  const srcLine = html ? sourcesLine(sources, lang) : "";
+  const room = 3900 - srcLine.length;
   // Обрезка не должна разрывать плашку: выкидываем последние блоки целиком.
-  while (finalText.length > 3900 && finalText.includes("<blockquote>")) finalText = finalText.slice(0, finalText.lastIndexOf("<blockquote>")).trim();
-  finalText = finalText.replace(/[ \u00a0]+([.,;:!?])/g, "$1").slice(0, 3900);
+  while (finalText.length > room && finalText.includes("<blockquote>")) finalText = finalText.slice(0, finalText.lastIndexOf("<blockquote>")).trim();
+  finalText = finalText.replace(/[ \u00a0]+([.,;:!?])/g, "$1").slice(0, room) + srcLine;
   // Кнопки под ответом: что можно сделать с этой нишей дальше.
   const prevCtx = mode === "chat" || mode === "check" ? {} : await loadCtx(env, chatId);
   const top = fx.niches[0];

@@ -90,6 +90,8 @@ p { margin: 0; }
 @keyframes shine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
 @keyframes wiggle { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-12deg); } 82% { transform: rotate(10deg); } 89% { transform: rotate(-6deg); } }
 .gift-sub { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.promo-note { border: 1px dashed var(--blue); background: var(--blue-soft); padding: 10px 12px; font-size: 14px; line-height: 1.45; max-width: 34em; }
+.promo-note b { font-family: var(--f-mono); font-weight: 500; color: var(--blue); letter-spacing: .04em; }
 .gift-sub span + span::before { content: "/"; margin-right: 14px; color: var(--line-2); }
 
 /* ---------- герой ---------- */
@@ -479,6 +481,7 @@ section.sheet { padding-block: 76px; }
         <div style="display:grid;gap:12px;justify-items:start">
           <a class="btn gift" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener"><span class="box"><svg><use href="#giftic"/></svg></span><span>Нажмите и получите <b>300 LS бесплатно</b></span></a>
           <div class="gift-sub mono"><span>≈ 30 ответов</span><span>без карты</span><span>прямо в Telegram</span></div>
+          <div class="promo-note" id="promoNote" hidden>Промокод <b id="promoCode">AIPRENEURS</b> — −30% на первую покупку. Подключится сам, когда откроете Launch Scout по любой кнопке на этой странице.</div>
         </div>
       </div>
       <div class="stage" id="stage" aria-label="3D-схема: столбики — сектора рынка, высота — сколько денег вложили за 90 дней; луч радара проходит по ним, сигналы из источников стекаются к нишам">
@@ -602,7 +605,7 @@ section.sheet { padding-block: 76px; }
       <div class="sheet-head">
         <div>
           <div class="k mono"><i></i>Под капотом</div>
-          <h2>11 источников, один ответ</h2>
+          <h2>17 источников, один ответ</h2>
         </div>
         <p>Launch Scout не пересказывает интернет: у него своя база сделок и ниш, которая пересчитывается круглые сутки.</p>
       </div>
