@@ -94,6 +94,16 @@
   .busy .orb { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
     background: radial-gradient(circle at 35% 35%, #9fd0ff, var(--btn)); animation: breathe 1.6s ease-in-out infinite; }
   .busy small { display: block; color: var(--hint); font-size: 12px; margin-top: 2px; }
+  /* Баланс LS: тонкая полоса расхода месячного лимита. */
+  .lsbox { background: var(--bg2); border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px; }
+  .lsbox .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .lsbox .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 8px 0 6px; }
+  .lsbox .bar i { display: block; height: 100%; background: var(--btn); border-radius: 3px; }
+  .lsbox .bar i.low { background: var(--hot); }
+  .lsbox small { color: var(--hint); font-size: 12px; }
+  .lsbuy { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .lsbuy button { border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 10px; padding: 8px 6px; font-size: 13px; cursor: pointer; }
+  .lsbuy button b { display: block; font-size: 14px; }
   @keyframes breathe { 0%, 100% { transform: scale(.75); opacity: .55; box-shadow: 0 0 0 0 color-mix(in srgb, var(--btn) 45%, transparent); }
     50% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 10px transparent; } }
   @media (prefers-reduced-motion: reduce) { .busy .orb { animation: none; } }
@@ -309,7 +319,7 @@
       tap_topic: "Нажмите на тему — откроется лента по ней.", topics_pending: "Темы ещё проставляются.",
       rising: "Растут", prelim: " (предварительно)", history_note: "История {d} дн. — надёжно после 14.", was: "было",
       new_topics: "Новое, чего нет в привычных темах", story: "🧠 Выводы", other: "прочее", day_col: "День", total_col: "Всего",
-      s_lang: "Язык", s_notify: "Уведомления в чате",
+      s_lang: "Язык", ls_renew: "обновится %s", ls_credits: "докупленные: %d — не сгорают", s_notify: "Уведомления в чате",
       n_brief: "☀️ Сводка дня", n_brief_d: "Одно короткое сообщение: новые стартапы и ниши, куда пошли деньги",
       n_hot: "🔥 Горячие находки — сразу", n_hot_d: "Запуск быстро набирает внимание",
       n_digest: "📋 Сводка — дважды в день", n_digest_d: "До 12 заметных находок за полдня",
@@ -347,7 +357,7 @@
       tap_topic: "Тақырыпты басыңыз — сол бойынша лента ашылады.", topics_pending: "Тақырыптар әлі қойылып жатыр.",
       rising: "Өсіп жатқандар", prelim: " (алдын ала)", history_note: "Тарих {d} күн — 14 күннен кейін сенімді.", was: "бұрын",
       new_topics: "Әдеттегі тақырыптарда жоқ жаңалар", story: "🧠 Қорытынды", other: "басқа", day_col: "Күн", total_col: "Барлығы",
-      s_lang: "Тіл", s_notify: "Чаттағы хабарламалар",
+      s_lang: "Тіл", ls_renew: "%s жаңарады", ls_credits: "сатып алынған: %d — күймейді", s_notify: "Чаттағы хабарламалар",
       n_brief: "☀️ Күн шолуы", n_brief_d: "Бір қысқа хабарлама: жаңа стартаптар және ақша келген тауашалар",
       n_hot: "🔥 Ыстық табылымдар — бірден", n_hot_d: "Іске қосылым тез назар жинап жатыр",
       n_digest: "📋 Шолу — күніне екі рет", n_digest_d: "Жарты күндегі 12-ге дейін байқалған табылым",
@@ -385,7 +395,7 @@
       tap_topic: "Tap a topic to open its feed.", topics_pending: "Topics are still being assigned.",
       rising: "Rising", prelim: " (preliminary)", history_note: "{d} days of history — reliable after 14.", was: "was",
       new_topics: "New, outside the usual topics", story: "🧠 Takeaways", other: "other", day_col: "Day", total_col: "Total",
-      s_lang: "Language", s_notify: "Chat notifications",
+      s_lang: "Language", ls_renew: "renews %s", ls_credits: "purchased: %d — never expire", s_notify: "Chat notifications",
       n_brief: "☀️ Daily brief", n_brief_d: "One short message: new startups and the niches money went into",
       n_hot: "🔥 Hot findings — instantly", n_hot_d: "A launch is gaining attention fast",
       n_digest: "📋 Digest — twice a day", n_digest_d: "Up to 12 notable findings per half-day",
@@ -680,7 +690,7 @@
     const sw = (k) => `<label class="sw"><span><b>${esc(tr("n_" + k))}</b><small>${esc(tr("n_" + k + "_d"))}</small></span>
       <input type="checkbox" data-n="${k}"${p.notify[k] !== false ? " checked" : ""}></label>`;
     const secs = sectorList();
-    $("#settings").innerHTML = `
+    $("#settings").innerHTML = `<div class="lsbox" id="lsBox" hidden></div>
       <h2>${esc(tr("s_lang"))}</h2>
       <div class="seg wide" role="group">${LANGS.map((l) => `<button data-set-lang="${l}" aria-pressed="${state.lang === l}">${LANG_LABEL[l]}</button>`).join("")}</div>
       <h2>${esc(tr("s_notify"))}</h2>
@@ -695,7 +705,36 @@
       <h2>${esc(tr("s_aud"))}</h2>
       <div class="note">${esc(tr("s_aud_note"))}</div>
       ${["b2b", "b2c", "b2g"].map((a) => `<label class="pref"><input type="checkbox" data-a="${a}"${mineA.has(a) ? " checked" : ""}>${esc(tr("aud_" + a))}</label>`).join("")}`;
+    loadLs();
   }
+  // --- баланс LS и оплата звёздами ------------------------------------------
+  async function loadLs() {
+    const box = $("#lsBox");
+    if (!box) return;
+    let r;
+    try { r = await api("/api/ls"); } catch (e) { r = null; }
+    if (!r || r.error || r.plan === undefined) return;
+    const total = r.sub_ls, cap = r.plan_ls || 1, used = Math.max(0, cap - total);
+    const pct = Math.min(100, Math.round(used / cap * 100));
+    const name = { free: "Free", pro: "Pro", max: "Max", promax: "Pro Max" }[r.plan] || r.plan;
+    const date = new Date(r.period_end * 1000).toLocaleDateString(state.lang === "en" ? "en-GB" : "ru-RU", { day: "numeric", month: "short" });
+    const btn = (k, label) => `<button data-buy="${k}"><b>${label}</b>${r.stars[k].stars} ⭐</button>`;
+    box.innerHTML = `<div class="top"><b>💳 ${esc(name)}</b><span>${r.owner ? "∞" : `${total} / ${cap} LS`}</span></div>
+      ${r.owner ? "" : `<div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i class="${pct >= 90 ? "low" : ""}" style="width:${pct}%"></i></div>`}
+      <small>${esc(tr("ls_renew").replace("%s", date))}${r.credits ? " · " + esc(tr("ls_credits").replace("%d", r.credits)) : ""}</small>
+      <div class="lsbuy">${r.plan !== "pro" ? btn("pro", "Pro") : ""}${r.plan !== "max" ? btn("max", "Max") : ""}${r.plan !== "promax" ? btn("promax", "Pro Max") : ""}${btn("pack", "+1000 LS")}</div>`;
+    box.hidden = false;
+  }
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-buy]");
+    if (!b) return;
+    let r;
+    try { r = await api("/api/buy?item=" + b.dataset.buy); } catch (err) { r = null; }
+    if (!r || !r.link) { toast(tr("save_err")); return; }
+    // Оплата звёздами прямо в мини-приложении; после оплаты баланс обновится.
+    if (tg && tg.openInvoice) tg.openInvoice(r.link, (status) => { if (status === "paid") { haptic("success"); setTimeout(loadLs, 1500); } });
+    else window.open(r.link, "_blank");
+  });
   $("#settings").addEventListener("click", (e) => {
     const sb = e.target.closest("[data-sens]");
     if (sb) {

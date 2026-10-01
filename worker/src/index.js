@@ -332,7 +332,8 @@ const EXTRA = {
     why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
-    ls_footer: "−%d LS · осталось %d LS", ls_low: "⚠️ Осталось %d LS — меньше 10% месячного лимита.", ls_short: "💳 На это нужно %d LS, а у вас %d.", ls_balance: "💳 <b>Тариф: %s</b>\nПодписочные LS: <b>%d</b> · докупленные: <b>%d</b>\nПодписочные обновятся %s; докупленные не сгорают.", ls_tariffs_title: "<b>Тарифы</b>", ls_plan_free: "Free — $%s · %s LS в месяц", ls_plan_pro: "Pro — $%s · %s LS в месяц", ls_plan_max: "Max — $%s · %s LS в месяц", ls_plan_promax: "Pro Max — $%s · %s LS в месяц", ls_pack: "Докупить: %s LS за $%s — не сгорают", ls_prices: "Цена действий: вопрос 10 · глубже / карта идеи / конкуренты 20 · проверка идеи 30 · живой поиск 40 · X и Google Trends 15 · карточка идеи 10 LS. Сводка, лента и радар — бесплатно.", ls_pay_soon: "💳 Оплата появится в ближайшее время.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS в месяц на вопросы, поиск и разборы. Продление каждые 30 дней, отмена в любой момент.", st_descr_pack: "Докупленные LS не сгорают и тратятся после подписочных.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Счёт готов — оплата в один клик звёздами Telegram.", st_pay_btn: "Оплатить %d ⭐", st_ok_sub: "✅ Тариф <b>%s</b> подключён: %d LS до %s.", st_ok_pack: "✅ +%d LS. Докупленных теперь %d — они не сгорают.", st_support_hint: "Опишите проблему одним сообщением: /paysupport <текст>. Передам владельцу.", st_support_ok: "Передал — ответим здесь же.", ls_pay_soon: "Оплата — звёздами Telegram, кнопки ниже. Условия — /terms.", st_terms: "<b>Условия Launch Scout</b>\n\n1. Сервис даёт аналитику рынка и ответы ИИ по открытым данным. Это не инвестиционная рекомендация; решения вы принимаете сами.\n2. Действия оплачиваются внутренними единицами LS. Подписочные LS действуют один расчётный месяц и сгорают при продлении; докупленные LS не сгорают.\n3. Подписка оплачивается Telegram Stars и продлевается каждые 30 дней, пока вы её не отмените в настройках Telegram.\n4. Возврат: если за оплаченный месяц потрачено меньше 10% LS — напишите /paysupport в течение 7 дней, вернём звёзды.\n5. Вопросы об оплате — /paysupport.",
+    ls_footer: "−%d LS · осталось %d LS", ls_low: "⚠️ Осталось %d LS — меньше 10% месячного лимита.", ls_short: "💳 На это нужно %d LS, а у вас %d.", ls_balance: "💳 <b>Тариф: %s</b>\nПодписочные LS: <b>%d</b> · докупленные: <b>%d</b>\nПодписочные обновятся %s; докупленные не сгорают.", ls_tariffs_title: "<b>Тарифы</b>", ls_plan_free: "Free — $%s · %s LS в месяц", ls_plan_pro: "Pro — $%s · %s LS в месяц", ls_plan_max: "Max — $%s · %s LS в месяц", ls_plan_promax: "Pro Max — $%s · %s LS в месяц", ls_pack: "Докупить: %s LS за $%s — не сгорают", ls_prices: "Цена действий: вопрос 10 · глубже / карта идеи / конкуренты 20 · проверка идеи 30 · живой поиск 40 · X и Google Trends 15 · карточка идеи 10 LS. Сводка, лента и радар — бесплатно.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "База раундов", src_web: "Веб и новости", live_head: "🔎 Ищу вживую: %s", research_started: "📡 Запустил глубокий поиск по X и Google Trends — дополнение придёт отдельным сообщением через 1–2 минуты.", research_limit: "📡 Глубокий поиск — до %d раз в сутки, лимит на сегодня исчерпан.", research_err: "📡 Глубокий поиск сейчас не запустился — попробуйте позже.", research_head: "📡 <b>Дополнение: X и Google Trends</b>", research_empty: "📡 В X и Google Trends по этому запросу ничего заметного.", ab_deep: "🔬 Глубже", ab_map: "🗺 Карта идеи", ab_wide: "🧭 Смежные ниши", ab_comp: "⚔️ Конкуренты", ab_follow: "🔔 Следить", ab_unfollow: "✅ Слежу", ab_live: "📡 Искать везде", ctx_gone: "Контекст устарел — задайте вопрос заново", adj_title: "🧭 <b>Рядом с «%s»</b>", adj_line: "компаний за 6 мес: %d, ранних %d, %s", onboard: "👋 Пять быстрых вопросов — и я буду подбирать ниши и инсайты под вас. Отметьте, что подходит, и нажмите «Показать радар».",
     opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
     opp_overheated: "⚠️ Перегрев: вход только с сильным отличием", opp_local_gap: "🕳 Пусто у нас: доказано деньгами, в КЗ свободно",
@@ -385,7 +386,8 @@ const EXTRA = {
     why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
-    ls_footer: "−%d LS · қалды %d LS", ls_low: "⚠️ %d LS қалды — айлық лимиттің 10%-нан аз.", ls_short: "💳 Бұған %d LS керек, сізде %d.", ls_balance: "💳 <b>Тариф: %s</b>\nЖазылым LS: <b>%d</b> · сатып алынған: <b>%d</b>\nЖазылым LS %s жаңарады; сатып алынғандары күймейді.", ls_tariffs_title: "<b>Тарифтер</b>", ls_plan_free: "Free — $%s · айына %s LS", ls_plan_pro: "Pro — $%s · айына %s LS", ls_plan_max: "Max — $%s · айына %s LS", ls_plan_promax: "Pro Max — $%s · айына %s LS", ls_pack: "Қосымша: %s LS — $%s, күймейді", ls_prices: "Әрекет бағасы: сұрақ 10 · тереңірек / идея картасы / бәсекелестер 20 · идеяны тексеру 30 · тікелей іздеу 40 · X және Google Trends 15 · идея картасы 10 LS. Шолу, лента және радар — тегін.", ls_pay_soon: "💳 Төлем жақын арада қосылады.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "Айына %d LS: сұрақтар, іздеу және талдаулар. 30 күн сайын ұзартылады, кез келген уақытта тоқтатуға болады.", st_descr_pack: "Сатып алынған LS күймейді және жазылым LS-тен кейін жұмсалады.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Шот дайын — Telegram жұлдыздарымен бір рет басып төлеңіз.", st_pay_btn: "%d ⭐ төлеу", st_ok_sub: "✅ <b>%s</b> тарифі қосылды: %d LS, %s дейін.", st_ok_pack: "✅ +%d LS. Сатып алынғандары енді %d — күймейді.", st_support_hint: "Мәселені бір хабарламамен жазыңыз: /paysupport <мәтін>.", st_support_ok: "Жіберілді — осында жауап береміз.", ls_pay_soon: "Төлем — Telegram жұлдыздарымен, батырмалар төменде. Шарттар — /terms.", st_terms: "<b>Launch Scout шарттары</b>\n\n1. Сервис ашық деректер бойынша нарық аналитикасын және ЖИ жауаптарын береді. Бұл инвестициялық кеңес емес.\n2. Әрекеттер LS бірліктерімен төленеді. Жазылым LS бір есеп айы жарамды және ұзартқанда күйеді; сатып алынған LS күймейді.\n3. Жазылым Telegram Stars арқылы төленеді және 30 күн сайын ұзартылады.\n4. Қайтару: төленген айда LS-тің 10%-нан азы жұмсалса — 7 күн ішінде /paysupport жазыңыз.\n5. Төлем сұрақтары — /paysupport.",
+    ls_footer: "−%d LS · қалды %d LS", ls_low: "⚠️ %d LS қалды — айлық лимиттің 10%-нан аз.", ls_short: "💳 Бұған %d LS керек, сізде %d.", ls_balance: "💳 <b>Тариф: %s</b>\nЖазылым LS: <b>%d</b> · сатып алынған: <b>%d</b>\nЖазылым LS %s жаңарады; сатып алынғандары күймейді.", ls_tariffs_title: "<b>Тарифтер</b>", ls_plan_free: "Free — $%s · айына %s LS", ls_plan_pro: "Pro — $%s · айына %s LS", ls_plan_max: "Max — $%s · айына %s LS", ls_plan_promax: "Pro Max — $%s · айына %s LS", ls_pack: "Қосымша: %s LS — $%s, күймейді", ls_prices: "Әрекет бағасы: сұрақ 10 · тереңірек / идея картасы / бәсекелестер 20 · идеяны тексеру 30 · тікелей іздеу 40 · X және Google Trends 15 · идея картасы 10 LS. Шолу, лента және радар — тегін.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Раундтар базасы", src_web: "Веб және жаңалықтар", live_head: "🔎 Тікелей іздеп жатырмын: %s", research_started: "📡 X және Google Trends бойынша терең іздеу басталды — толықтыру 1–2 минуттан кейін бөлек хабарламамен келеді.", research_limit: "📡 Терең іздеу — тәулігіне %d рет, бүгінгі лимит бітті.", research_err: "📡 Терең іздеу қазір басталмады — кейінірек көріңіз.", research_head: "📡 <b>Толықтыру: X және Google Trends</b>", research_empty: "📡 Бұл сұрау бойынша X пен Google Trends-те елеулі ештеңе жоқ.", ab_deep: "🔬 Тереңірек", ab_map: "🗺 Идея картасы", ab_wide: "🧭 Көршілес тауашалар", ab_comp: "⚔️ Бәсекелестер", ab_follow: "🔔 Бақылау", ab_unfollow: "✅ Бақылаудамын", ab_live: "📡 Барлық жерден іздеу", ctx_gone: "Контекст ескірді — сұрақты қайта қойыңыз", adj_title: "🧭 <b>«%s» маңында</b>", adj_line: "6 айда компаниялар: %d, ерте %d, %s", onboard: "👋 Бес жылдам сұрақ — сонда тауашалар мен инсайттарды сізге қарай таңдаймын. Сәйкесін белгілеп, «Радарды көрсету» батырмасын басыңыз.",
     opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
     opp_overheated: "⚠️ Қызып кеткен: кіру тек күшті ерекшелікпен", opp_local_gap: "🕳 Бізде бос: ақшамен дәлелденген, ҚЗ-да бос",
@@ -438,7 +440,8 @@ const EXTRA = {
     why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
-    ls_footer: "−%d LS · %d LS left", ls_low: "⚠️ %d LS left — under 10% of the monthly allowance.", ls_short: "💳 This needs %d LS, you have %d.", ls_balance: "💳 <b>Plan: %s</b>\nPlan LS: <b>%d</b> · purchased: <b>%d</b>\nPlan LS renew on %s; purchased LS never expire.", ls_tariffs_title: "<b>Plans</b>", ls_plan_free: "Free — $%s · %s LS a month", ls_plan_pro: "Pro — $%s · %s LS a month", ls_plan_max: "Max — $%s · %s LS a month", ls_plan_promax: "Pro Max — $%s · %s LS a month", ls_pack: "Top up: %s LS for $%s — never expire", ls_prices: "Prices: question 10 · deeper / idea map / competitors 20 · idea check 30 · live search 40 · X and Google Trends 15 · idea card 10 LS. Brief, feed and radar are free.", ls_pay_soon: "💳 Payments are coming soon.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS a month for questions, search and deep dives. Renews every 30 days, cancel anytime.", st_descr_pack: "Purchased LS never expire and are spent after plan LS.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Invoice ready — one-tap payment with Telegram Stars.", st_pay_btn: "Pay %d ⭐", st_ok_sub: "✅ Plan <b>%s</b> is on: %d LS until %s.", st_ok_pack: "✅ +%d LS. Purchased LS now %d — they never expire.", st_support_hint: "Describe the problem in one message: /paysupport <text>.", st_support_ok: "Sent — we will reply here.", ls_pay_soon: "Pay with Telegram Stars — buttons below. Terms — /terms.", st_terms: "<b>Launch Scout terms</b>\n\n1. The service provides market analytics and AI answers based on public data. It is not investment advice.\n2. Actions are paid in internal LS units. Plan LS are valid for one billing month and expire on renewal; purchased LS never expire.\n3. Plans are paid in Telegram Stars and renew every 30 days until you cancel in Telegram settings.\n4. Refunds: if under 10% of the month's LS were used, write /paysupport within 7 days and we refund the Stars.\n5. Payment questions — /paysupport.",
+    ls_footer: "−%d LS · %d LS left", ls_low: "⚠️ %d LS left — under 10% of the monthly allowance.", ls_short: "💳 This needs %d LS, you have %d.", ls_balance: "💳 <b>Plan: %s</b>\nPlan LS: <b>%d</b> · purchased: <b>%d</b>\nPlan LS renew on %s; purchased LS never expire.", ls_tariffs_title: "<b>Plans</b>", ls_plan_free: "Free — $%s · %s LS a month", ls_plan_pro: "Pro — $%s · %s LS a month", ls_plan_max: "Max — $%s · %s LS a month", ls_plan_promax: "Pro Max — $%s · %s LS a month", ls_pack: "Top up: %s LS for $%s — never expire", ls_prices: "Prices: question 10 · deeper / idea map / competitors 20 · idea check 30 · live search 40 · X and Google Trends 15 · idea card 10 LS. Brief, feed and radar are free.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Rounds database", src_web: "Web and news", live_head: "🔎 Searching live: %s", research_started: "📡 Started a deep search on X and Google Trends — the follow-up arrives as a separate message in 1–2 minutes.", research_limit: "📡 Deep search is limited to %d a day — today's limit is used up.", research_err: "📡 Deep search did not start — try again later.", research_head: "📡 <b>Follow-up: X and Google Trends</b>", research_empty: "📡 Nothing notable on X or Google Trends for this query.", ab_deep: "🔬 Deeper", ab_map: "🗺 Idea map", ab_wide: "🧭 Adjacent niches", ab_comp: "⚔️ Competitors", ab_follow: "🔔 Follow", ab_unfollow: "✅ Following", ab_live: "📡 Search everywhere", ctx_gone: "Context expired — ask again", adj_title: "🧭 <b>Next to “%s”</b>", adj_line: "companies in 6 months: %d, early %d, %s", onboard: "👋 Five quick questions — and I'll pick niches and insights for you. Tick what fits and tap “Show radar”.",
     opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
     opp_overheated: "⚠️ Overheated: enter only with strong differentiation", opp_local_gap: "🕳 Empty here: proven by money, free in KZ",
@@ -1019,15 +1022,15 @@ async function settingsAction(env, chatId, msgId, data, prefs, lang) {
  * Меню команд в Telegram — один раз на версию (помечается в kv). Раньше
  * команд в меню не было вовсе: /trends, /lang знали только те, кому сказали.
  */
-const COMMANDS_VERSION = "2026-10-01b";
+const COMMANDS_VERSION = "2026-10-01c";
 async function setupCommands(env) {
   if ((await meta(env, "commands_version")) === COMMANDS_VERSION) return;
   const list = {
-    ru: [["market", "🧭 Куда движется рынок"], ["radar", "🎯 Возможности под меня"], ["profile", "✏️ Мой профиль"],  ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"], ["balance", "💳 Баланс LS и тарифы"], ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
+    ru: [["market", "🧭 Куда движется рынок"], ["radar", "🎯 Возможности под меня"], ["profile", "✏️ Мой профиль"],  ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"], ["balance", "💳 Баланс LS и тарифы"], ["terms", "📄 Условия"], ["paysupport", "🆘 Помощь с оплатой"], ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
       ["sectors", "🗂 Секторы"], ["settings", "⚙️ Настройки уведомлений"], ["lang", "🌐 Язык"]],
-    en: [["market", "🧭 Where the market is heading"], ["radar", "🎯 Opportunities for me"], ["profile", "✏️ My profile"],  ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"], ["balance", "💳 LS balance and plans"], ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
+    en: [["market", "🧭 Where the market is heading"], ["radar", "🎯 Opportunities for me"], ["profile", "✏️ My profile"],  ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"], ["balance", "💳 LS balance and plans"], ["terms", "📄 Terms"], ["paysupport", "🆘 Payment support"], ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
       ["sectors", "🗂 Sectors"], ["settings", "⚙️ Notification settings"], ["lang", "🌐 Language"]],
-    kk: [["market", "🧭 Нарық қайда бет алды"], ["radar", "🎯 Маған арналған мүмкіндіктер"], ["profile", "✏️ Профилім"],  ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"], ["balance", "💳 LS балансы мен тарифтер"], ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
+    kk: [["market", "🧭 Нарық қайда бет алды"], ["radar", "🎯 Маған арналған мүмкіндіктер"], ["profile", "✏️ Профилім"],  ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"], ["balance", "💳 LS балансы мен тарифтер"], ["terms", "📄 Шарттар"], ["paysupport", "🆘 Төлем бойынша көмек"], ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
       ["sectors", "🗂 Салалар"], ["settings", "⚙️ Хабарлама баптаулары"], ["lang", "🌐 Тіл"]],
   };
   const cmd = (arr) => arr.map(([command, description]) => ({ command, description }));
@@ -1166,6 +1169,10 @@ async function tryCode(env, chatId, text, who) {
 }
 
 async function handleUpdate(env, update) {
+  if (update.pre_checkout_query) {
+    await starsPreCheckout(env, update.pre_checkout_query);
+    return;
+  }
   const msg = update.message || update.edited_message;
   const cb = update.callback_query;
   const chatId = msg ? msg.chat.id : cb ? cb.message.chat.id : null;
@@ -1254,6 +1261,41 @@ async function handleUpdate(env, update) {
   }
   if (data === "niches" || text.startsWith("/niches")) {
     await nichesMsg(env, chatId, lang, null, prefs);
+    return;
+  }
+  if (msg && msg.successful_payment) {
+    await starsPaid(env, chatId, msg, lang);
+    return;
+  }
+  if (data.startsWith("buy:")) {
+    const link = await starsLink(env, chatId, data.slice(4), lang);
+    const it = STAR_ITEMS[data.slice(4)];
+    await tg(env, "sendMessage", link
+      ? { chat_id: chatId, text: L(lang).st_pay_hint, reply_markup: { inline_keyboard: [[{ text: fmt(L(lang).st_pay_btn, it.stars), url: link }]] } }
+      : { chat_id: chatId, text: L(lang).research_err });
+    return;
+  }
+  if (text.startsWith("/terms")) {
+    await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).st_terms, parse_mode: "HTML" });
+    return;
+  }
+  if (text.startsWith("/paysupport")) {
+    // Вопрос об оплате — владельцу; без текста — подсказка, как написать.
+    const body = raw.replace(/^\/paysupport(@\S+)?\s*/i, "").trim();
+    if (!body) {
+      await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).st_support_hint });
+    } else {
+      for (const owner of (env.LS_BOT_ALLOW || "").split(",").map((x) => x.trim()).filter(Boolean)) {
+        await tg(env, "sendMessage", { chat_id: owner, text: `💳 /paysupport от ${chatId}:\n${body.slice(0, 2000)}` });
+      }
+      await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).st_support_ok });
+    }
+    return;
+  }
+  if (isOwner(env, chatId) && /^\/refund\b/.test(text)) {
+    const [, uid, charge] = raw.split(/\s+/);
+    const r = await tg(env, "refundStarPayment", { user_id: Number(uid), telegram_payment_charge_id: charge });
+    await tg(env, "sendMessage", { chat_id: chatId, text: r && r.ok ? `✅ возврат ${uid} ${charge}` : `не вышло: ${JSON.stringify(r).slice(0, 200)}` });
     return;
   }
   if (data === "ls" || text.startsWith("/balance")) {
@@ -2776,9 +2818,9 @@ function lsFooter(s, res) {
 }
 
 function lsTariffs(s) {
-  const row = (k) => fmt(s["ls_plan_" + k], PLANS[k].usd.toFixed(2), PLANS[k].ls.toLocaleString("ru-RU").replace(/,/g, " "));
+  const row = (k) => fmt(s["ls_plan_" + k], PLANS[k].usd.toFixed(2), PLANS[k].ls.toLocaleString("ru-RU").replace(/,/g, " ")) + (STAR_ITEMS[k] ? ` · ${STAR_ITEMS[k].stars} ⭐` : "");
   return [s.ls_tariffs_title, row("free"), row("pro"), row("max"), row("promax"), "",
-    fmt(s.ls_pack, CREDIT_PACK.ls.toLocaleString("ru-RU").replace(/,/g, " "), CREDIT_PACK.usd.toFixed(2)), "",
+    fmt(s.ls_pack, CREDIT_PACK.ls.toLocaleString("ru-RU").replace(/,/g, " "), CREDIT_PACK.usd.toFixed(2)) + ` · ${STAR_ITEMS.pack.stars} ⭐`, "",
     s.ls_prices, s.ls_pay_soon].join("\n");
 }
 
@@ -2787,14 +2829,14 @@ async function lsBalanceMsg(env, chatId, lang) {
   const r = await lsGet(env, chatId);
   const text = [fmt(s.ls_balance, s["ls_name_" + r.plan] || r.plan, r.sub_ls, r.credits,
     new Date(r.period_end * 1000).toISOString().slice(0, 10)), "", lsTariffs(s)].join("\n");
-  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML" });
+  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", reply_markup: starsButtons(s) });
 }
 
 async function lsShortMsg(env, chatId, lang, action) {
   const s = L(lang);
   const r = await lsGet(env, chatId);
   await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML",
-    text: fmt(s.ls_short, LS_PRICE[action] || 10, r.sub_ls + r.credits) + "\n\n" + lsTariffs(s) });
+    text: fmt(s.ls_short, LS_PRICE[action] || 10, r.sub_ls + r.credits) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s) });
 }
 
 /** Владелец: /grant <id> <free|pro|max|promax>, /credit <id> <LS>, /costs — сверка прайса с фактом. */
@@ -2827,6 +2869,81 @@ async function lsAdmin(env, chatId, text) {
     return tg(env, "sendMessage", { chat_id: chatId, text: lines.join("\n") });
   }
   return tg(env, "sendMessage", { chat_id: chatId, text: "/grant <id> <free|pro|max|promax> · /credit <id> <LS> · /costs" });
+}
+
+// ---------------------------------------------------------------------------
+// ⭐ Оплата Telegram Stars (2026-10-01)
+//
+// Подписки — createInvoiceLink с subscription_period 30 дней (Telegram сам
+// продлевает и присылает successful_payment каждый месяц), пакет LS — разовый
+// счёт. Цена в звёздах ≈ цене в $ при выплате ~$0,013 за звезду через Fragment;
+// покупатель с телефона платит за звёзды дороже из-за комиссии App Store / Google.
+// ---------------------------------------------------------------------------
+const STAR_ITEMS = {
+  pro: { stars: 300, plan: "pro", sub: true },
+  max: { stars: 750, plan: "max", sub: true },
+  promax: { stars: 1500, plan: "promax", sub: true },
+  pack: { stars: 270, ls: 1000, sub: false },
+};
+
+async function starsLink(env, uid, item, lang) {
+  const s = L(lang);
+  const it = STAR_ITEMS[item];
+  if (!it) return null;
+  const title = it.sub ? fmt(s.st_title_sub, s["ls_name_" + it.plan]) : fmt(s.st_title_pack, it.ls);
+  const descr = it.sub ? fmt(s.st_descr_sub, PLANS[it.plan].ls) : s.st_descr_pack;
+  const r = await tg(env, "createInvoiceLink", {
+    title: title.slice(0, 32), description: descr.slice(0, 255), payload: `${item}:${uid}`, currency: "XTR", provider_token: "",
+    prices: [{ label: title.slice(0, 32), amount: it.stars }], ...(it.sub ? { subscription_period: 2592000 } : {}),
+  });
+  return r && r.ok ? r.result : null;
+}
+
+function starsButtons(s) {
+  return { inline_keyboard: [
+    [{ text: `⭐ Pro — ${STAR_ITEMS.pro.stars}`, callback_data: "buy:pro" }, { text: `⭐ Max — ${STAR_ITEMS.max.stars}`, callback_data: "buy:max" }],
+    [{ text: `⭐ Pro Max — ${STAR_ITEMS.promax.stars}`, callback_data: "buy:promax" }, { text: fmt(s.st_pack_btn, STAR_ITEMS.pack.stars), callback_data: "buy:pack" }],
+  ] };
+}
+
+/** Проверка перед списанием звёзд: товар существует и счёт выставлен этому человеку. */
+async function starsPreCheckout(env, q) {
+  const [item, uid] = String(q.invoice_payload || "").split(":");
+  const ok = !!STAR_ITEMS[item] && String(uid) === String(q.from.id) && q.currency === "XTR" && q.total_amount === STAR_ITEMS[item].stars;
+  await tg(env, "answerPreCheckoutQuery", { pre_checkout_query_id: q.id, ok, ...(ok ? {} : { error_message: "Счёт устарел — откройте /balance и оплатите заново." }) });
+}
+
+/** Оплата прошла: тариф или пакет LS, запись в payments. */
+async function starsPaid(env, chatId, msg, lang) {
+  const p = msg.successful_payment;
+  const s = L(lang);
+  const [item] = String(p.invoice_payload || "").split(":");
+  const it = STAR_ITEMS[item];
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.prepare("INSERT OR IGNORE INTO payments (charge_id, user_id, ts, item, stars, sub_exp, recurring) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")
+    .bind(p.telegram_payment_charge_id, String(chatId), now, item || "?", p.total_amount, p.subscription_expiration_date || 0, p.is_recurring ? 1 : 0).run();
+  if (!it) return;
+  const r = await lsGet(env, chatId);
+  if (it.sub) {
+    // Новый месяц подписки: лимит тарифа заново, докупленные LS не трогаем.
+    Object.assign(r, { plan: it.plan, paid_until: p.subscription_expiration_date || now + LS_PERIOD, period_end: p.subscription_expiration_date || now + LS_PERIOD,
+      sub_ls: PLANS[it.plan].ls, warned: 0 });
+    await lsSave(env, r);
+    // Перешёл на другой тариф — старую подписку не продлеваем, чтобы не платил дважды.
+    if (!p.is_recurring || p.is_first_recurring) {
+      const { results } = await env.DB.prepare("SELECT charge_id FROM payments WHERE user_id = ?1 AND item != ?2 AND item IN ('pro','max','promax') AND sub_exp > ?3")
+        .bind(String(chatId), item, now).all().catch(() => ({ results: [] }));
+      for (const old of results || []) {
+        await tg(env, "editUserStarSubscription", { user_id: Number(chatId), telegram_payment_charge_id: old.charge_id, is_canceled: true });
+      }
+    }
+    await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.st_ok_sub, s["ls_name_" + it.plan], PLANS[it.plan].ls,
+      new Date(r.period_end * 1000).toISOString().slice(0, 10)) });
+  } else {
+    r.credits += it.ls;
+    await lsSave(env, r);
+    await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.st_ok_pack, it.ls, r.credits) });
+  }
 }
 
 let lastUnsupported = null;   // для /debug-chat
@@ -3274,7 +3391,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   // Списание: живой поиск — по цене поиска, иначе по режиму ответа.
   const charge = await lsSpend(env, chatId, liveRes ? "live" : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
   // Плашки-«посты» — после одобрения владельцем (переменная LS_CARDS=1).
-  let finalText = (html ? (env.LS_CARDS === "1" ? cardify(html) : html) : esc(body)) + lsFooter(s, charge);
+  let finalText = (html ? (env.LS_CARDS === "1" ? cardify(html) : html) : esc(body));
   // Обрезка не должна разрывать плашку: выкидываем последние блоки целиком.
   while (finalText.length > 3900 && finalText.includes("<blockquote>")) finalText = finalText.slice(0, finalText.lastIndexOf("<blockquote>")).trim();
   finalText = finalText.slice(0, 3900);
@@ -3292,7 +3409,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   } else {
     await tg(env, "sendMessage", { chat_id: chatId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb });
   }
-  if (charge.warn) await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.ls_low, charge.left) + "\n\n" + lsTariffs(s) });
+  if (charge.warn) await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.ls_low, charge.left) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s) });
   if (liveRes) await learnRounds(env, liveRes.facts);
   // «Искать везде»: X и Google Trends — в GitHub Actions, дополнение придёт следом.
   if (research && plan && !(await lsCanAfford(env, chatId, "research"))) {
@@ -3441,6 +3558,7 @@ async function ensureTables(env) {
     // Матрица ниш — готовые цифры для быстрого ответа (fastAnswer).
     env.DB.prepare("CREATE TABLE IF NOT EXISTS niche_matrix (niche TEXT PRIMARY KEY, name_ru TEXT, sector TEXT, data TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_balance (user_id TEXT PRIMARY KEY, plan TEXT, paid_until INTEGER, period_end INTEGER, sub_ls INTEGER, credits INTEGER, warned INTEGER, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS payments (charge_id TEXT PRIMARY KEY, user_id TEXT, ts INTEGER, item TEXT, stars INTEGER, sub_exp INTEGER, recurring INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_log (user_id TEXT, ts INTEGER, action TEXT, ls INTEGER, cost_usd REAL)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS ls_log_ts ON ls_log (ts)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS found_rounds (url TEXT, company TEXT, usd REAL, stage TEXT, date TEXT, investors TEXT, fact TEXT, ts INTEGER, status TEXT, PRIMARY KEY (company, url))"),
@@ -3762,6 +3880,17 @@ export default {
         return json(snap || { findings: [] });
       }
       if (url.pathname === "/api/fav") return favorites(env, request, user, url);
+      if (url.pathname === "/api/ls") {
+        await ensureTables(env);
+        const r = await lsGet(env, user.id);
+        return json({ plan: r.plan, sub_ls: r.sub_ls, credits: r.credits, plan_ls: (PLANS[r.plan] || PLANS.free).ls, period_end: r.period_end,
+          owner: isOwner(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE });
+      }
+      if (url.pathname === "/api/buy") {
+        const lang = (await getPrefs(env, user.id)).lang || "ru";
+        const link = await starsLink(env, user.id, url.searchParams.get("item"), lang);
+        return link ? json({ link }) : json({ error: "no link" }, 400);
+      }
       if (url.pathname === "/api/idea" && request.method === "GET") {
         await ensureTables(env);
         const f = await findFinding(env, url.searchParams.get("id"));
