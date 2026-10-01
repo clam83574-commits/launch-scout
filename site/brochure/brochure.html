@@ -17,50 +17,58 @@ body { font-family: "Golos Text", sans-serif; color: var(--ink); -webkit-print-c
 
 /* ---------- ваучер: рамка листа с вырезами по линии отрыва ---------- */
 .ticket { position: absolute; inset: 6mm; border: .5mm solid var(--ink); border-radius: 4mm; overflow: hidden; background: #fff; }
-.cut { position: absolute; left: 6mm; right: 6mm; top: 84mm; height: 0; border-top: .5mm dashed var(--line-2); z-index: 2; }
-.notch { position: absolute; top: calc(84mm - 4mm); width: 8mm; height: 8mm; border-radius: 50%; background: #fff; border: .5mm solid var(--ink); z-index: 3; }
+.cut { position: absolute; left: 6mm; right: 6mm; top: 70mm; height: 0; border-top: .5mm dashed var(--line-2); z-index: 2; }
+.notch { position: absolute; top: calc(70mm - 4mm); width: 8mm; height: 8mm; border-radius: 50%; background: #fff; border: .5mm solid var(--ink); z-index: 3; }
 .notch.l { left: calc(6mm - 4mm); } .notch.r { right: calc(6mm - 4mm); }
 
 /* ---------- верх: сам ваучер ---------- */
-.head { position: absolute; left: 0; right: 0; top: 0; height: 78mm; background: var(--ink); color: #fff; overflow: hidden;
+.head { position: absolute; left: 0; right: 0; top: 0; height: 64mm; background: var(--ink); color: #fff; overflow: hidden;
   background-image: linear-gradient(rgba(255,255,255,.05) .3mm, transparent .3mm), linear-gradient(90deg, rgba(255,255,255,.05) .3mm, transparent .3mm); background-size: 6mm 6mm; }
 .head .glow { position: absolute; right: -30mm; top: -30mm; width: 110mm; height: 110mm; border-radius: 50%; background: radial-gradient(circle, rgba(29,79,216,.55), transparent 65%); }
-.h-top { position: absolute; left: 7mm; right: 7mm; top: 7mm; display: flex; justify-content: space-between; align-items: flex-start; }
+.h-top { position: absolute; left: 7mm; right: 7mm; top: 6mm; display: flex; justify-content: space-between; align-items: flex-start; }
 .h-top .lbl { font-size: 2.6mm; color: #9fb4e8; }
-.h-top .lbl b { display: block; font: 700 6.2mm/1 "Unbounded", sans-serif; letter-spacing: .02em; color: #fff; margin-top: 1.4mm; text-transform: uppercase; }
+.h-top .lbl b { display: block; font: 700 5.6mm/1 "Unbounded", sans-serif; letter-spacing: .02em; color: #fff; margin-top: 1.4mm; text-transform: uppercase; }
 .plogo { display: flex; flex-direction: column; align-items: center; gap: .3mm; }
-.plogo img { width: 34mm; display: block; }
-.plogo b { font: 700 5.85mm/1 "Unbounded", sans-serif; color: #fff; letter-spacing: -.01em; }
-.big { position: absolute; left: 7mm; top: 32mm; display: flex; align-items: flex-end; gap: 4mm; }
-.big b { font: 700 21mm/.85 "Unbounded", sans-serif; letter-spacing: -.05em; }
-.big span { font-size: 3.6mm; line-height: 1.25; padding-bottom: 1mm; max-width: 46mm; }
+.plogo img { width: 30mm; display: block; }
+.plogo b { font: 700 5.15mm/1 "Unbounded", sans-serif; color: #fff; letter-spacing: -.01em; }
+.big { position: absolute; left: 7mm; top: 25mm; display: flex; align-items: flex-end; gap: 4mm; }
+.big b { font: 700 18mm/.85 "Unbounded", sans-serif; letter-spacing: -.05em; }
+.big span { font-size: 3.3mm; line-height: 1.25; padding-bottom: 1mm; max-width: 46mm; }
 .big span em { font-style: normal; color: #9fb4e8; }
-.h-bot { position: absolute; left: 7mm; right: 7mm; bottom: 6mm; display: flex; align-items: center; gap: 3mm; flex-wrap: wrap; }
+.h-bot { position: absolute; left: 7mm; right: 7mm; bottom: 5mm; display: flex; align-items: center; gap: 3mm; flex-wrap: wrap; }
 .h-bot .k { font-size: 2.3mm; color: #9fb4e8; }
-.h-bot code { font: 500 4.6mm "JetBrains Mono", monospace; letter-spacing: .14em; background: #fff; color: var(--ink); padding: 1.2mm 3mm; border-radius: 1.2mm; }
+.h-bot code { font: 500 4.2mm "JetBrains Mono", monospace; letter-spacing: .14em; background: #fff; color: var(--ink); padding: 1.2mm 3mm; border-radius: 1.2mm; }
 .h-bot .t { font-size: 2.9mm; color: #c9d5ea; }
 
-/* ---------- низ: о проекте ---------- */
-.brand { position: absolute; left: 7mm; top: 82mm; display: flex; align-items: center; gap: 2mm; font: 500 4.2mm "Unbounded", sans-serif; }
-.brand svg { width: 7mm; height: 7mm; }
-h1 { position: absolute; left: 7mm; right: 7mm; top: 90.5mm; font: 500 7.6mm/1.05 "Unbounded", sans-serif; letter-spacing: -.035em; }
+/* ---------- низ: о проекте — колонка, блоки не наезжают друг на друга ---------- */
+.body { position: absolute; left: 7mm; right: 7mm; top: 67.5mm; bottom: 5mm; display: flex; flex-direction: column; gap: 2.6mm; }
+.intro { display: grid; grid-template-columns: 1fr 52mm; gap: 2mm; align-items: center; }
+.brand { display: flex; align-items: center; gap: 2mm; font: 500 3.9mm "Unbounded", sans-serif; }
+.brand svg { width: 6.5mm; height: 6.5mm; }
+h1 { font: 500 6.2mm/1.06 "Unbounded", sans-serif; letter-spacing: -.035em; margin-top: 1.6mm; }
 h1 em { font-style: normal; color: var(--blue); }
-.sub { position: absolute; left: 7mm; right: 62mm; top: 108mm; font-size: 3.15mm; line-height: 1.4; color: var(--muted); }
-#radar { position: absolute; right: 2mm; top: 101mm; width: 62mm; height: 37mm; }
-.how { position: absolute; left: 7mm; right: 7mm; top: 133mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; }
-.how div { border: .3mm solid var(--line-2); border-radius: 2mm; padding: 2mm 2.4mm; display: flex; flex-direction: column; gap: .6mm; background: #fff; }
+.sub { font-size: 2.75mm; line-height: 1.4; color: var(--muted); margin-top: 1.4mm; }
+#radar { width: 52mm; height: 36mm; display: block; }
+.how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; }
+.how div { border: .3mm solid var(--line-2); border-radius: 2mm; padding: 1.8mm 2.2mm; display: flex; flex-direction: column; gap: .5mm; background: #fff; }
 .how div.deep { border-color: var(--blue); background: var(--blue-soft); }
-.how i { font: 500 2.1mm "JetBrains Mono", monospace; font-style: normal; color: var(--blue); }
-.how b { font-size: 2.85mm; }
-.how span { font-size: 2.25mm; line-height: 1.3; color: var(--muted); }
-.foot { position: absolute; left: 7mm; right: 7mm; bottom: 5mm; height: 34mm; display: grid; grid-template-columns: 34mm 1fr; gap: 5mm; align-items: center; }
-.qr { width: 34mm; height: 34mm; border: .4mm solid var(--ink); border-radius: 2.4mm; padding: 1.4mm; background: #fff; }
+.how i { font: 500 2mm "JetBrains Mono", monospace; font-style: normal; color: var(--blue); }
+.how b { font-size: 2.75mm; }
+.how span { font-size: 2.15mm; line-height: 1.3; color: var(--muted); }
+.feats { display: grid; grid-template-columns: 1fr 1fr; border-top: .3mm solid var(--line-2); border-left: .3mm solid var(--line-2); }
+.feats div { border-right: .3mm solid var(--line-2); border-bottom: .3mm solid var(--line-2); padding: 1.5mm 2.4mm; display: flex; align-items: center; gap: 2.2mm; }
+.feats svg { width: 4.6mm; height: 4.6mm; color: var(--blue); flex: none; }
+.feats p { display: flex; flex-direction: column; gap: .2mm; }
+.feats b { font-size: 2.6mm; font-weight: 600; }
+.feats span { font-size: 2.1mm; color: var(--muted); }
+.foot { margin-top: auto; display: grid; grid-template-columns: 27mm 1fr; gap: 5mm; align-items: center; }
+.qr { width: 27mm; height: 27mm; border: .4mm solid var(--ink); border-radius: 2mm; padding: 1.2mm; background: #fff; }
 .qr svg { width: 100%; height: 100%; display: block; }
-.foot b { font: 500 4.2mm/1.2 "Unbounded", sans-serif; letter-spacing: -.02em; display: block; }
-.foot p { font-size: 2.8mm; line-height: 1.4; color: var(--muted); margin-top: 1.4mm; }
-.foot .stats { display: flex; gap: 4mm; margin-top: 2.4mm; }
+.foot b.t { font: 500 3.7mm/1.2 "Unbounded", sans-serif; letter-spacing: -.02em; display: block; }
+.foot p { font-size: 2.6mm; line-height: 1.35; color: var(--muted); margin-top: .8mm; }
+.foot .stats { display: flex; gap: 4mm; margin-top: 1.4mm; }
 .foot .stats span { font-size: 2mm; color: var(--muted); }
-.foot .stats span b { font: 500 3.6mm "Unbounded", sans-serif; color: var(--ink); display: block; margin-top: .4mm; }
+.foot .stats span b { font: 500 3.1mm "Unbounded", sans-serif; color: var(--ink); display: block; margin-top: .4mm; }
 </style>
 </head>
 <body>
@@ -78,22 +86,35 @@ h1 em { font-style: normal; color: var(--blue); }
     </div>
 
     <!-- О ПРОЕКТЕ -->
+    <div class="body">
+    <div class="intro"><div>
     <div class="brand"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#0f1d3a" stroke-width="1.6"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#0f1d3a" stroke-width="1.2" opacity=".5"/><path d="M16 16 L27 8.5" stroke="#0f1d3a" stroke-width="1.8" stroke-linecap="round"/><circle cx="22.6" cy="11.4" r="2.2" fill="#1d4fd8"/></svg>Launch Scout</div>
     <h1>Венчурный радар <em>вашего стартапа</em></h1>
     <p class="sub">Свой датасет из 17 источников, пополняется каждые 10&nbsp;минут. За&nbsp;10&nbsp;секунд в&nbsp;Telegram: куда идут деньги, кто конкуренты и&nbsp;взлетит&nbsp;ли идея.</p>
+    </div>
     <svg id="radar" viewBox="0 0 520 300"></svg>
+    </div>
     <div class="how">
-      <div><i>01</i><b>17 источников</b><span>Раунды, запуски, X, Google Trends — каждые 10 минут</span></div>
-      <div class="deep"><i>02</i><b>Глубокий поиск</b><span>Данных мало — ищет по всем источникам в реальном времени</span></div>
-      <div><i>03</i><b>Ответ за 10 секунд</b><span>У каждой цифры — ссылка на источник</span></div>
+      <div><i>01</i><b>Свой датасет</b><span>17 источников: раунды, пресс-релизы, запуски, X, Google Trends, SEC. Обновление каждые 10 минут</span></div>
+      <div class="deep"><i>02</i><b>Глубокий поиск</b><span>Данных в базе мало — ищет по вебу, Hacker News и GitHub в реальном времени и запоминает</span></div>
+      <div><i>03</i><b>Без выдумок</b><span>Ответ за 10 секунд. У каждой цифры ссылка, без источника строка удаляется</span></div>
+    </div>
+    <div class="feats">
+      <div><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="6"/><path d="M16 16 25 9" stroke-linecap="round"/></svg><p><b>Радар ниш под вас</b><span>под ваш рынок и бизнес-модель</span></p></div>
+      <div><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="12" y="4" width="8" height="15" rx="4"/><path d="M8 15a8 8 0 0 0 16 0M16 23v5" stroke-linecap="round"/></svg><p><b>Вопрос текстом или голосом</b><span>про нишу, компанию или инвестора</span></p></div>
+      <div><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 4 27 8v8c0 6-5 10-11 12C10 26 5 22 5 16V8z" stroke-linejoin="round"/><path d="m11 16 4 4 6-8" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Проверка идеи /check</b><span>сначала пытается её опровергнуть</span></p></div>
+      <div><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 27V9M6 9h14l-3 4 3 4H6" stroke-linejoin="round"/><path d="M24 27v-8M16 27v-5" stroke-linecap="round"/></svg><p><b>Конкуренты и цены</b><span>кто привлёк и где слабое место</span></p></div>
+      <div><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 8l8-3 8 3 8-3v19l-8 3-8-3-8 3z"/><path d="M12 5v19M20 8v19"/></svg><p><b>Карта идеи</b><span>сегменты, деньги, первый шаг</span></p></div>
+      <div><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 22V14a7 7 0 0 1 14 0v8l2 3H7z"/><path d="M13 28h6"/></svg><p><b>Следить за нишей</b><span>новый раунд — напишет сам</span></p></div>
     </div>
     <div class="foot">
       <div class="qr">__QR__</div>
       <div>
-        <b>Сканируйте — ваучер подключится сам</b>
+        <b class="t">Сканируйте — ваучер подключится сам</b>
         <p>Откроется сайт: за 2 минуты покажет, как всё работает. Кнопка там ведёт в Telegram уже с кодом.</p>
         <div class="stats mono"><span>Вложено · 90 дн<b id="usd">$102 млрд</b></span><span>Раундов<b id="rounds">1 620</b></span><span>Ниш<b id="niches">1 147</b></span></div>
       </div>
+    </div>
     </div>
   </div>
   <div class="cut"></div><i class="notch l"></i><i class="notch r"></i>
