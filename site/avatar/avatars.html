@@ -1,0 +1,66 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+/* Варианты аватарки 640×640 (Telegram обрезает в круг). Рендер по ?v=a|b|c|d. */
+html, body { margin: 0; width: 640px; height: 640px; overflow: hidden; }
+svg { display: block; width: 640px; height: 640px; }
+</style></head>
+<body>
+<svg id="s" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const v = new URLSearchParams(location.search).get("v") || "a";
+const INK = "#0f1d3a", BLUE = "#1d4fd8", SOFT = "#eaf0fd", GRID = "#e6ecf5", WHITE = "#ffffff";
+const s = document.getElementById("s");
+const add = (h) => s.insertAdjacentHTML("beforeend", h);
+const grid = (col, step = 40, op = 1) => { let g = `<g stroke="${col}" stroke-width="2" opacity="${op}">`; for (let i = 0; i <= 640; i += step) g += `<line x1="${i}" y1="0" x2="${i}" y2="640"/><line x1="0" y1="${i}" x2="640" y2="${i}"/>`; return g + "</g>"; };
+// радар-знак: кольца, луч со шлейфом, точка-сигнал
+const mark = (cx, cy, r, ink, accent, sweepFill, sweepOp) => {
+  let h = "";
+  const a1 = -0.62, a0 = a1 - 0.9;          // луч смотрит вправо-вверх, шлейф позади
+  const p = (a, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
+  const [x0, y0] = p(a0, r * 0.94), [x1, y1] = p(a1, r * 0.94);
+  h += `<path d="M${cx},${cy} L${x0},${y0} A${r * 0.94},${r * 0.94} 0 0 1 ${x1},${y1} Z" fill="${sweepFill}" opacity="${sweepOp}"/>`;
+  h += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ink}" stroke-width="${r * 0.085}"/>`;
+  h += `<circle cx="${cx}" cy="${cy}" r="${r * 0.6}" fill="none" stroke="${ink}" stroke-width="${r * 0.055}" opacity=".45"/>`;
+  h += `<circle cx="${cx}" cy="${cy}" r="${r * 0.24}" fill="none" stroke="${ink}" stroke-width="${r * 0.05}" opacity=".45"/>`;
+  h += `<line x1="${cx}" y1="${cy}" x2="${x1}" y2="${y1}" stroke="${ink}" stroke-width="${r * 0.1}" stroke-linecap="round"/>`;
+  const [dx, dy] = p(a1 + 0.02, r * 0.62);
+  h += `<circle cx="${dx}" cy="${dy}" r="${r * 0.13}" fill="${accent}"/>`;
+  return h;
+};
+// изометрические столбики (как на сайте)
+const iso = (cx, cy, S, stroke, fill, side, hot) => {
+  const C30 = Math.cos(Math.PI / 6);
+  const P = (x, z, y = 0) => [cx + (x - z) * C30 * S, cy + (x + z) * 0.5 * S - y * S];
+  const poly = (pts, f) => `<polygon points="${pts.map((q) => q.join(",")).join(" ")}" fill="${f}" stroke="${stroke}" stroke-width="${S * 0.09}" stroke-linejoin="round"/>`;
+  const bars = [[-1.6, 0.4, 2.2], [0, -1.2, 3.6], [1.4, 0.2, 5.2], [-0.2, 1.5, 1.4], [1.6, -1.6, 2.8]].map(([x, z, h], i) => ({ x, z, h, hot: i === 2 }));
+  bars.sort((a, b) => (a.x + a.z) - (b.x + b.z));
+  let h = "", w = 0.42;
+  for (const b of bars) {
+    const f = b.hot ? hot : fill, sd = b.hot ? hot : side;
+    h += poly([P(b.x - w, b.z + w), P(b.x + w, b.z + w), P(b.x + w, b.z + w, b.h), P(b.x - w, b.z + w, b.h)], f);
+    h += poly([P(b.x + w, b.z - w), P(b.x + w, b.z + w), P(b.x + w, b.z + w, b.h), P(b.x + w, b.z - w, b.h)], sd);
+    h += poly([P(b.x - w, b.z - w, b.h), P(b.x + w, b.z - w, b.h), P(b.x + w, b.z + w, b.h), P(b.x - w, b.z + w, b.h)], f);
+  }
+  return h;
+};
+if (v === "a") {           // белый лист чертежа, тёмный знак — как шапка сайта
+  add(`<rect width="640" height="640" fill="${WHITE}"/>` + grid(GRID));
+  add(mark(320, 320, 200, INK, BLUE, BLUE, 0.16));
+} else if (v === "b") {    // тёмно-синий, белый знак, синий луч — контрастно в списке чатов
+  add(`<rect width="640" height="640" fill="${INK}"/>` + grid("#ffffff", 40, 0.06));
+  add(`<defs><radialGradient id="gl" cx="62%" cy="36%" r="62%"><stop offset="0" stop-color="${BLUE}" stop-opacity=".75"/><stop offset="1" stop-color="${BLUE}" stop-opacity="0"/></radialGradient></defs><rect width="640" height="640" fill="url(#gl)"/>`);
+  add(mark(320, 320, 200, WHITE, "#5b84f0", "#5b84f0", 0.35));
+} else if (v === "c") {    // синий фон, белые изометрические столбики — «деньги по секторам»
+  add(`<rect width="640" height="640" fill="${BLUE}"/>` + grid("#ffffff", 40, 0.08));
+  add(`<ellipse cx="320" cy="430" rx="230" ry="132" fill="none" stroke="#ffffff" stroke-width="4" stroke-dasharray="14 10" opacity=".5"/>`);
+  add(iso(320, 430, 58, BLUE, WHITE, "#dfe8fd", INK));
+} else {                   // белый лист, радар-кольца + столбики внутри, тёмный ободок
+  add(`<rect width="640" height="640" fill="${WHITE}"/>` + grid(GRID));
+  add(`<circle cx="320" cy="320" r="238" fill="none" stroke="${INK}" stroke-width="18"/>`);
+  add(`<path d="M320,320 L512,180 A238,238 0 0 1 551,300 Z" fill="${BLUE}" opacity=".16"/>`);
+  add(`<ellipse cx="320" cy="400" rx="170" ry="98" fill="none" stroke="${BLUE}" stroke-width="4" stroke-dasharray="12 9" opacity=".6"/>`);
+  add(iso(320, 405, 44, INK, WHITE, "#f5f8fd", BLUE));
+}
+</script>
+</body></html>
