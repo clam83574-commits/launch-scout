@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Экран телефона 1080×1920, подробный: ваучер сверху, крупный QR с промокодом и шаги. */
+:root { --ink: #0f1d3a; --muted: #56647f; --line: #e6ecf5; --line-2: #c9d5ea; --blue: #1d4fd8; --blue-soft: #eaf0fd; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: #fff; font-family: "Golos Text", sans-serif; color: var(--ink); }
+.mono { font-family: "JetBrains Mono", monospace; letter-spacing: .1em; text-transform: uppercase; }
+.head { position: absolute; left: 0; right: 0; top: 0; height: 800px; background: var(--ink); color: #fff; overflow: hidden;
+  background-image: linear-gradient(rgba(255,255,255,.05) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,.05) 2px, transparent 2px); background-size: 54px 54px;
+  display: flex; flex-direction: column; padding: 80px 80px 64px; }
+.glow { position: absolute; inset: 0; background: radial-gradient(circle at 78% 22%, rgba(29,79,216,.75), transparent 55%); }
+.head > *:not(.glow) { position: relative; }
+.h-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.lbl { font-size: 28px; color: #9fb4e8; }
+.lbl b { display: block; font: 700 66px/1 "Unbounded", sans-serif; letter-spacing: .02em; color: #fff; margin-top: 16px; text-transform: uppercase; }
+.plogo { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.plogo img { width: 300px; display: block; }
+.plogo b { font: 700 52px/1 "Unbounded", sans-serif; color: #fff; letter-spacing: -.01em; }
+.big { margin-top: 22px; font: 700 200px/.9 "Unbounded", sans-serif; letter-spacing: -.05em; }
+.desc { margin-top: 14px; font-size: 40px; line-height: 1.3; }
+.desc em { font-style: normal; color: #9fb4e8; }
+.h-bot { margin-top: auto; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.h-bot .k { font-size: 26px; color: #9fb4e8; }
+.h-bot code { font: 500 52px "JetBrains Mono", monospace; letter-spacing: .14em; background: #fff; color: var(--ink); padding: 12px 30px; border-radius: 14px; }
+.h-bot .t { flex-basis: 100%; font-size: 30px; line-height: 1.35; color: #c9d5ea; margin-top: 2px; }
+.body { position: absolute; left: 80px; right: 80px; top: 845px; bottom: 70px; display: flex; flex-direction: column; align-items: center; }
+.qr { width: 600px; height: 600px; border: 5px solid var(--ink); border-radius: 36px; padding: 22px; background: #fff; }
+.qr svg { width: 100%; height: 100%; display: block; }
+.scan { margin-top: 26px; font-size: 28px; color: var(--muted); }
+.get { list-style: none; padding: 0; margin: 40px 0 0; display: flex; flex-direction: column; gap: 18px; align-self: stretch; }
+.get li { display: grid; grid-template-columns: 56px 1fr; gap: 22px; align-items: center; font-size: 35px; line-height: 1.25; }
+.get i { font: 500 32px "JetBrains Mono", monospace; font-style: normal; width: 56px; height: 56px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; }
+.brand { position: absolute; left: 80px; right: 80px; bottom: 50px; display: flex; justify-content: space-between; align-items: center; font: 500 34px "Unbounded", sans-serif; }
+.brand span { display: flex; align-items: center; gap: 16px; }
+.brand svg { width: 58px; height: 58px; }
+.brand small { font: 400 26px "Golos Text", sans-serif; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="head">
+  <div class="glow"></div>
+  <div class="h-top">
+    <div class="lbl mono">Подарок участнику<b>Ваучер</b></div>
+    <div class="plogo">__PARTNER__</div>
+  </div>
+  <div class="big">−30%</div>
+  <p class="desc">на первую покупку в Launch Scout<br><em>для участников __PARTNER_NAME__</em></p>
+  <div class="h-bot"><span class="k mono">Код</span><code>__CODE__</code><span class="t">Код уже в QR — скидка применится сама · + 300 LS бесплатно</span></div>
+</div>
+<div class="body">
+  <div class="qr">__QR__</div>
+  <div class="scan mono">Наведите камеру телефона</div>
+  <ol class="get">
+    <li><i>1</i><span>Сканируйте QR — откроется сайт</span></li>
+    <li><i>2</i><span>Нажмите «300 LS бесплатно»</span></li>
+    <li><i>3</i><span>Скидка −30% уже подключена</span></li>
+  </ol>
+</div>
+<div class="brand"><span><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#0f1d3a" stroke-width="1.6"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#0f1d3a" stroke-width="1.2" opacity=".5"/><path d="M16 16 L27 8.5" stroke="#0f1d3a" stroke-width="1.8" stroke-linecap="round"/><circle cx="22.6" cy="11.4" r="2.2" fill="#1d4fd8"/></svg>Launch Scout</span><small>венчурный радар вашего стартапа</small></div>
+</body>
+</html>

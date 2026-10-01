@@ -84,14 +84,17 @@ subprocess.run(common + ["--force-device-scale-factor=2", "--window-size=600,820
 os.remove(tmp)
 print(json.dumps({"pdf": pdf, "png": png, "url": URL}))
 
-# Экран для телефона (1080×1920): показывать QR с телефона на мероприятии.
+# Экраны для телефона (1080×1920): показывать QR с телефона на мероприятии.
+# phone.html — простой (заголовок, QR, оффер); phone_full.html — подробный (ваучер, QR, шаги).
+# На экране телефона код уже в ссылке: показали — отсканировали — скидка включилась.
 if "--phone" in sys.argv:
-    ph = open(os.path.join(HERE, "phone.html"), encoding="utf-8").read()
-    # на экране телефона код уже в ссылке: показали — отсканировали — скидка включилась
-    ph = ph.replace("__QR__", qr_svg("https://launch-scout-site.pages.dev/?promo=" + CODE)).replace("__PARTNER__", partner_html()).replace("__CODE__", CODE.upper()).replace("__PARTNER_NAME__", PARTNER)
-    tmp = os.path.join(HERE, f"_phone_{CODE}.html")
-    open(tmp, "w", encoding="utf-8").write(ph)
-    out = os.path.join(HERE, f"phone_{CODE}.png")
-    subprocess.run(common + ["--force-device-scale-factor=1", "--window-size=1080,1920", "--screenshot=" + out, "file:///" + tmp.replace("\\", "/")], check=True, capture_output=True)
-    os.remove(tmp)
-    print(json.dumps({"phone": out}))
+    for tpl, suffix in (("phone.html", ""), ("phone_full.html", "_full")):
+        ph = open(os.path.join(HERE, tpl), encoding="utf-8").read()
+        ph = (ph.replace("__QR__", qr_svg("https://launch-scout-site.pages.dev/?promo=" + CODE)).replace("__PARTNER__", partner_html())
+              .replace("__CODE__", CODE.upper()).replace("__PARTNER_NAME__", PARTNER))
+        tmp = os.path.join(HERE, f"_phone{suffix}_{CODE}.html")
+        open(tmp, "w", encoding="utf-8").write(ph)
+        out = os.path.join(HERE, f"phone{suffix}_{CODE}.png")
+        subprocess.run(common + ["--force-device-scale-factor=1", "--window-size=1080,1920", "--screenshot=" + out, "file:///" + tmp.replace("\\", "/")], check=True, capture_output=True)
+        os.remove(tmp)
+        print(json.dumps({"phone": out}))
