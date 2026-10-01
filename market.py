@@ -2500,7 +2500,7 @@ def trends_step(conn, now, verbose=True):
     known = [x for x in known_niches(conn, now, days=HISTORY_WEEKS * 7, limit=800)
              if x not in JUNK_NICHES and len(x) >= 4]
     # Поисковые фразы — пачкой через ИИ, один раз на нишу.
-    need = [x for x in known if x not in terms][:60]
+    need = [x for x in known if x not in terms][:30]
     if need:
         got, err = ai.gt_terms(need)
         if err and verbose:

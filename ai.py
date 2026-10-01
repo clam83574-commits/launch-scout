@@ -888,13 +888,13 @@ def gt_terms(niches):
         return {}, None
     user = json.dumps({"niches": niches[:60]}, ensure_ascii=False)
     if openrouter_key():
-        data, err = _chat_or(os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL, GT_TERMS_SYSTEM, user, max_tokens=3000)
+        data, err = _chat_or(os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL, GT_TERMS_SYSTEM, user, max_tokens=4000)
     else:
         ok, why = available()
         if not ok:
             return {}, why
         try:
-            data, err = _chat("openai/gpt-oss-20b", GT_TERMS_SYSTEM, user, max_tokens=3000)
+            data, err = _chat("openai/gpt-oss-20b", GT_TERMS_SYSTEM, user, max_tokens=4000)
         except RateLimited as e:
             return {}, "429 (%s)" % e
     if err or not isinstance(data, dict):
