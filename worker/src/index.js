@@ -204,7 +204,7 @@ async function tokenReminder(env, now) {
   const owner = (env.LS_BOT_ALLOW || "").split(",")[0].trim();
   if (!owner) return;
   const when = new Date(t * 1000).toISOString().slice(0, 10);
-  await tg(env, "sendMessage", {
+  await tg(adminEnv(env), "sendMessage", {
     chat_id: owner,
     text:
       `⏳ <b>Токен часов истекает ${daysLeft > 0 ? `через ${Math.ceil(daysLeft)} дн.` : "сегодня"} (${when}).</b>\n\n` +
@@ -1025,7 +1025,7 @@ async function settingsAction(env, chatId, msgId, data, prefs, lang) {
  * Меню команд в Telegram — один раз на версию (помечается в kv). Раньше
  * команд в меню не было вовсе: /trends, /lang знали только те, кому сказали.
  */
-const COMMANDS_VERSION = "2026-10-01c";
+const COMMANDS_VERSION = "2026-10-02";
 async function setupCommands(env) {
   if ((await meta(env, "commands_version")) === COMMANDS_VERSION) return;
   const list = {
@@ -1220,7 +1220,11 @@ async function handleUpdate(env, update) {
     return;
   }
 
-  await env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) VALUES (?1, ?2)").bind(String(chatId), Math.floor(Date.now() / 1000)).run().catch(() => null);
+  const seen = await env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) VALUES (?1, ?2)").bind(String(chatId), Math.floor(Date.now() / 1000)).run().catch(() => null);
+  if (seen && seen.meta && seen.meta.changes && !isOwner(env, chatId)) {
+    const from = (msg && msg.from) || (cb && cb.from) || {};
+    await ownerNotify(env, { text: `👤 Новый пользователь: ${from.first_name || ""}${from.username ? " @" + from.username : ""} (${chatId})` });
+  }
   const prefs = await getPrefs(env, chatId);
   const msgId = cb && cb.message ? cb.message.message_id : null;
   if (data.startsWith("lang:")) {
@@ -1289,9 +1293,7 @@ async function handleUpdate(env, update) {
     if (!body) {
       await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).st_support_hint });
     } else {
-      for (const owner of (env.LS_BOT_ALLOW || "").split(",").map((x) => x.trim()).filter(Boolean)) {
-        await tg(env, "sendMessage", { chat_id: owner, text: `💳 /paysupport от ${chatId}:\n${body.slice(0, 2000)}` });
-      }
+      await ownerNotify(env, { text: `💳 /paysupport от ${chatId}:\n${body.slice(0, 2000)}` });
       await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).st_support_ok });
     }
     return;
@@ -1476,7 +1478,7 @@ async function watchdog(env, now) {
   if (!owner) return;
   const mins = updated ? Math.round((now - updated) / 60) : null;
   const why = (await meta(env, "last_dispatch_error")) || "запуск проходит, а срез не приходит — смотреть лог прогона в Actions";
-  await tg(env, "sendMessage", {
+  await tg(adminEnv(env), "sendMessage", {
     chat_id: owner,
     text:
       `⚠️ <b>Сбор молчит${mins !== null ? ` ${mins} мин` : ""}.</b>\n\n` +
@@ -2929,6 +2931,7 @@ async function starsPaid(env, chatId, msg, lang) {
   const now = Math.floor(Date.now() / 1000);
   await env.DB.prepare("INSERT OR IGNORE INTO payments (charge_id, user_id, ts, item, stars, sub_exp, recurring) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")
     .bind(p.telegram_payment_charge_id, String(chatId), now, item || "?", p.total_amount, p.subscription_expiration_date || 0, p.is_recurring ? 1 : 0).run();
+  await ownerNotify(env, { text: `💰 Оплата: ${item} — ${p.total_amount} ⭐${p.is_recurring && !p.is_first_recurring ? " (продление)" : ""} от ${chatId}` });
   if (!it) return;
   const r = await lsGet(env, chatId);
   if (it.sub) {
@@ -3033,6 +3036,143 @@ async function adminStats(env) {
     daily: { users: series(daily, "users"), actions: series(daily, "actions"), cost: series(daily, "usd"), new: series(dailyNew, "n"), stars: series(dailyPay, "stars") },
     assumptions: { star_usd: STAR_USD, topup_fee: TOPUP_FEE, fixed: FIXED_USD_MONTH },
   };
+}
+
+// ---------------------------------------------------------------------------
+// 🛠 Два бота (решение владельца 2026-10-01)
+//
+// Launch Scout — публичный бот (секрет LS_PUBLIC_BOT_TOKEN). Прежний токен
+// (LS_BOT_TOKEN) становится служебным «Dashboard Launch Scout»: только
+// владелец, уведомления, отчёты, вопросы ИИ о делах и мини-приложение с
+// дашбордом. Пока LS_PUBLIC_BOT_TOKEN не задан, всё работает как раньше —
+// одним ботом.
+// ---------------------------------------------------------------------------
+function botEnv(env) {
+  if (!env.LS_PUBLIC_BOT_TOKEN || env.LS_ADMIN_TOKEN) return env;
+  // Object.create: привязки (DB, AI, VEC, SNAP) остаются доступны через прототип.
+  return Object.create(env, {
+    LS_BOT_TOKEN: { value: env.LS_PUBLIC_BOT_TOKEN, enumerable: true },
+    LS_ADMIN_TOKEN: { value: env.LS_BOT_TOKEN, enumerable: true },
+  });
+}
+const adminEnv = (env) => (env.LS_ADMIN_TOKEN ? Object.create(env, { LS_BOT_TOKEN: { value: env.LS_ADMIN_TOKEN } }) : env);
+const owners = (env) => (env.LS_BOT_ALLOW || "").split(",").map((x) => x.trim()).filter(Boolean);
+
+/** Служебное сообщение владельцу — в служебного бота, если он есть. */
+async function ownerNotify(env, payload) {
+  for (const o of owners(env)) await tg(adminEnv(env), "sendMessage", { chat_id: o, disable_web_page_preview: true, ...payload });
+}
+
+function adminReport(d) {
+  const usd = (v) => (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2);
+  const plans = Object.entries(d.plans || {}).map(([k, v]) => `${k} ${v}`).join(", ") || "—";
+  return [
+    "📊 <b>Launch Scout — сводка</b>",
+    "",
+    `👥 Пользователей: <b>${d.users}</b> (новых за 7 дн: ${d.new7})`,
+    `🔥 Активных: ${d.active7} за 7 дн · ${d.active30} за 30 дн`,
+    `💳 Платных: <b>${d.paid}</b> (${plans}) · доля ${d.conversion}% · не продлили за 30 дн: ${d.churn30}`,
+    "",
+    `💰 Выручка за месяц: <b>${usd(d.revenue_month)}</b> (${d.stars_month} ⭐, оплат ${d.payments_month})`,
+    `🧾 Затраты: ${usd(d.cost_month)} (ИИ ${usd(d.ai_month)} + комиссии)`,
+    `📈 Чистая прибыль: <b>${usd(d.profit_month)}</b>`,
+    `⭐ Баланс звёзд: ${d.stars_balance ?? "—"} · OpenRouter: ${d.or_balance == null ? "—" : usd(d.or_balance)}${d.or_balance != null && d.or_balance < 5 ? " ⚠️" : ""}`,
+  ].join("\n");
+}
+
+const ADMIN_SYSTEM = `You are the business analyst for the owner of Launch Scout, a paid Telegram market-radar bot. Answer the owner's question about how the business is doing using ONLY the STATS JSON (users, activity, plans, revenue in USD and Stars, costs, profit, balances, daily series for the last 30 days — index 0 is 30 days ago, the last item is today) and the RECENT lists. Never invent numbers. Be brief: 3-8 lines, key numbers in <b>bold</b> (Telegram HTML, no markdown), then one practical suggestion if it is useful. Answer in Russian unless asked otherwise.`;
+
+async function adminAsk(env, chatId, question) {
+  const aenv = adminEnv(env);
+  await tg(aenv, "sendChatAction", { chat_id: chatId, action: "typing" });
+  const d = await adminStats(env);
+  const owns = owners(env);
+  const skip = owns.length ? ` WHERE user_id NOT IN (${owns.map((_, i) => "?" + (i + 1)).join(",")})` : "";
+  const recentUsers = ((await env.DB.prepare(`SELECT user_id, ts FROM users_seen${skip} ORDER BY ts DESC LIMIT 15`).bind(...owns).all().catch(() => ({}))).results) || [];
+  const recentPays = ((await env.DB.prepare(`SELECT user_id, ts, item, stars, recurring FROM payments${skip} ORDER BY ts DESC LIMIT 15`).bind(...owns).all().catch(() => ({}))).results) || [];
+  const iso = (t) => new Date(t * 1000).toISOString().slice(0, 16).replace("T", " ");
+  const ctx = `TODAY: ${new Date().toISOString().slice(0, 10)}\nSTATS: ${JSON.stringify(d)}\nRECENT USERS (first seen): ${recentUsers.map((u) => `${u.user_id} ${iso(u.ts)}`).join("; ") || "none"}\nRECENT PAYMENTS: ${recentPays.map((p) => `${p.user_id} ${iso(p.ts)} ${p.item} ${p.stars}⭐${p.recurring ? " renewal" : ""}`).join("; ") || "none"}`;
+  const messages = [{ role: "system", content: ADMIN_SYSTEM }, { role: "user", content: `${ctx}\n\nQUESTION: ${question.slice(0, 1000)}` }];
+  let text = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, async () => {}, 25000, 900, 8000);
+  if (!text) text = await streamOpenRouter(env, FALLBACK_FAST_MODEL, messages, async () => {}, 20000, 900, 8000);
+  const html = (text || "").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").trim() || "ИИ сейчас не ответил — вот сводка:\n\n" + adminReport(d);
+  const r = await tg(aenv, "sendMessage", { chat_id: chatId, text: html.slice(0, 3900), parse_mode: "HTML", reply_markup: adminKb() });
+  if (!(r && r.ok)) await tg(aenv, "sendMessage", { chat_id: chatId, text: html.replace(/<[^>]+>/g, "").slice(0, 3900), reply_markup: adminKb() });
+}
+
+const adminKb = () => ({ inline_keyboard: [[{ text: "📊 Дашборд", web_app: { url: APP_URL + "#admin" } }, { text: "📋 Сводка", callback_data: "a:report" }]] });
+
+/** Апдейты служебного бота: только владелец. */
+async function handleAdminUpdate(env, update) {
+  const aenv = adminEnv(env);
+  const msg = update.message;
+  const cb = update.callback_query;
+  const chatId = msg ? msg.chat.id : cb ? cb.message.chat.id : null;
+  if (!chatId) return;
+  if (cb) await tg(aenv, "answerCallbackQuery", { callback_query_id: cb.id });
+  if (!isOwner(env, chatId)) {
+    if (msg) await tg(aenv, "sendMessage", { chat_id: chatId, text: "Это служебный бот Launch Scout." });
+    return;
+  }
+  await ensureTables(env);
+  const raw = msg ? (msg.text || "").trim() : "";
+  const text = raw.toLowerCase();
+  const data = cb ? cb.data || "" : "";
+  if (text.startsWith("/start") || text.startsWith("/help")) {
+    await tg(aenv, "sendMessage", { chat_id: chatId, parse_mode: "HTML", reply_markup: adminKb(),
+      text: "🛠 <b>Dashboard Launch Scout</b>\n\nСюда приходят служебные уведомления: сбор молчит, токены, баланс OpenRouter, оплаты, новые пользователи, /paysupport.\n\n" +
+        "/report — сводка · /costs — себестоимость действий за неделю\n/grant &lt;id&gt; &lt;free|pro|max|promax&gt; · /credit &lt;id&gt; &lt;LS&gt; · /refund &lt;id&gt; &lt;charge_id&gt;\n\nИли спросите текстом/голосом: «как дела за неделю?», «сколько новых пользователей?»." });
+    return;
+  }
+  if (data === "a:report" || text.startsWith("/report")) {
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: adminReport(await adminStats(env)), parse_mode: "HTML", reply_markup: adminKb() });
+    return;
+  }
+  if (/^\/(grant|credit|costs)\b/.test(text)) {
+    await lsAdmin(aenv, chatId, text);
+    return;
+  }
+  if (/^\/refund\b/.test(text)) {
+    const [, uid, charge] = raw.split(/\s+/);
+    // Оплата была в публичном боте — возвращает он, ответ — сюда.
+    const r = await tg(env, "refundStarPayment", { user_id: Number(uid), telegram_payment_charge_id: charge });
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: r && r.ok ? `✅ возврат ${uid} ${charge}` : `не вышло: ${JSON.stringify(r).slice(0, 200)}` });
+    return;
+  }
+  let question = raw;
+  if (msg && msg.voice) {
+    question = (await transcribe(aenv, msg.voice)) || "";
+    if (!question) { await tg(aenv, "sendMessage", { chat_id: chatId, text: "Не расслышал — попробуйте ещё раз." }); return; }
+  }
+  if (question) await adminAsk(env, chatId, question);
+}
+
+/** Настройка ботов (имя, аватар, вебхук, меню) — из отладки, токены берутся из секретов. */
+async function setupBot(env, which, avatar) {
+  const isAdmin = which === "admin";
+  const benv = isAdmin ? adminEnv(env) : env;
+  const base = "https://launch-scout-bot.clam83574.workers.dev";
+  const out = {};
+  out.webhook = await tg(benv, "setWebhook", { url: base + (isAdmin ? "/tg-admin" : "/tg"), secret_token: env.LS_WEBHOOK_SECRET,
+    allowed_updates: ["message", "callback_query", "pre_checkout_query", "edited_message"] });
+  out.name = await tg(benv, "setMyName", { name: isAdmin ? "Dashboard Launch Scout" : "Launch Scout" });
+  out.menu = await tg(benv, "setChatMenuButton", { menu_button: { type: "web_app", text: isAdmin ? "Дашборд" : "Приложение", web_app: { url: APP_URL + (isAdmin ? "#admin" : "") } } });
+  if (isAdmin) {
+    out.commands = await tg(benv, "setMyCommands", { commands: [
+      { command: "report", description: "📋 Сводка" }, { command: "costs", description: "🧾 Себестоимость за неделю" },
+      { command: "grant", description: "Выдать тариф: /grant id pro" }, { command: "credit", description: "Начислить LS: /credit id 1000" },
+      { command: "refund", description: "Возврат: /refund id charge_id" }] });
+    for (const l of ["en", "kk"]) await tg(benv, "deleteMyCommands", { language_code: l });
+  }
+  if (avatar && avatar.byteLength) {
+    const fd = new FormData();
+    fd.append("photo", JSON.stringify({ type: "static", photo: "attach://avatar" }));
+    fd.append("avatar", new Blob([avatar], { type: "image/png" }), "avatar.png");
+    out.photo = await fetch(`https://api.telegram.org/bot${benv.LS_BOT_TOKEN}/setMyProfilePhoto`, { method: "POST", body: fd }).then((r) => r.json()).catch((e) => ({ error: String(e) }));
+  }
+  const me = await tg(benv, "getMe", {});
+  out.me = me && me.result ? { username: me.result.username, name: me.result.first_name } : me;
+  return out;
 }
 
 let lastUnsupported = null;   // для /debug-chat
@@ -3943,10 +4083,16 @@ async function appUser(env, request) {
   params.delete("hash");
   const check = [...params.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([k, v]) => `${k}=${v}`).join("\n");
-  const secret = await hmac(new TextEncoder().encode("WebAppData"), env.LS_BOT_TOKEN);
-  const sig = await hmac(secret, check);
-  const hex = [...sig].map((b) => b.toString(16).padStart(2, "0")).join("");
-  if (hex !== hash) return null;
+  const signed = async (token) => {
+    if (!token) return false;
+    const secret = await hmac(new TextEncoder().encode("WebAppData"), token);
+    const sig = await hmac(secret, check);
+    return [...sig].map((b) => b.toString(16).padStart(2, "0")).join("") === hash;
+  };
+  const viaPublic = await signed(env.LS_BOT_TOKEN);
+  // Из служебного бота мини-приложение открывает только владелец.
+  const viaAdmin = !viaPublic && (await signed(env.LS_ADMIN_TOKEN));
+  if (!viaPublic && !viaAdmin) return null;
   if (Date.now() / 1000 - Number(params.get("auth_date") || 0) > 86400) return null;
   let user = null;
   try {
@@ -3955,6 +4101,7 @@ async function appUser(env, request) {
     return null;
   }
   if (!user || !user.id) return null;
+  if (viaAdmin) return isOwner(env, user.id) ? user : null;
   return (await hasAccess(env, user.id)) ? user : null;
 }
 
@@ -3996,6 +4143,7 @@ async function favorites(env, request, user, url) {
 
 export default {
   async fetch(request, env, ctx) {
+    env = botEnv(env);
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/app") {
@@ -4186,6 +4334,11 @@ export default {
       await ensureTables(env);
       return json(await adminStats(env));
     }
+    if (env.LS_DEBUG === "1" && request.method === "POST" && url.pathname === "/debug-setup-bot") {
+      const which = url.searchParams.get("which") === "admin" ? "admin" : "public";
+      if (which === "admin" && !env.LS_ADMIN_TOKEN) return json({ error: "нет LS_PUBLIC_BOT_TOKEN — служебный бот ещё не выделен" }, 400);
+      return json(await setupBot(env, which, await request.arrayBuffer()));
+    }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-invoice") {
       return json({ link: await starsLink(env, url.searchParams.get("uid") || "1", url.searchParams.get("item") || "pro", "ru") });
     }
@@ -4289,6 +4442,15 @@ export default {
       }
     }
 
+    if (request.method === "POST" && url.pathname === "/tg-admin") {
+      if (request.headers.get("x-telegram-bot-api-secret-token") !== env.LS_WEBHOOK_SECRET || !env.LS_ADMIN_TOKEN) {
+        return new Response("нет", { status: 403 });
+      }
+      const update = await request.json();
+      ctx.waitUntil(handleAdminUpdate(env, update).catch((e) => console.log("admin:", e)));
+      return new Response("ok");
+    }
+
     if (request.method === "POST" && url.pathname === "/tg") {
       // Без этой проверки в Worker может постучаться кто угодно и выдать
       // себя за Telegram.
@@ -4312,6 +4474,7 @@ export default {
    * Ошибку запуска запоминаем — её увидят «📊 Статус» и сторож.
    */
   async scheduled(event, env, ctx) {
+    env = botEnv(env);
     const now = Math.floor(Date.now() / 1000);
     const err = await dispatchRun(env, { digest: "auto" });
     await setMeta(env, "last_dispatch_error", err || "");
@@ -4323,9 +4486,7 @@ export default {
     const day = new Date().toISOString().slice(0, 10);
     if (orc && orc.total - orc.used < 3 && (await meta(env, "or_low_alert")) !== day) {
       await setMeta(env, "or_low_alert", day);
-      for (const owner of (env.LS_BOT_ALLOW || "").split(",").map((x) => x.trim()).filter(Boolean)) {
-        await tg(env, "sendMessage", { chat_id: owner, text: `⚠️ На OpenRouter осталось $${(orc.total - orc.used).toFixed(2)} — пополните, иначе ИИ-ответы остановятся.` });
-      }
+      await ownerNotify(env, { text: `⚠️ На OpenRouter осталось $${(orc.total - orc.used).toFixed(2)} — пополните, иначе ИИ-ответы остановятся.` });
     }
     await tokenReminder(env, now);
     await setupCommands(env);

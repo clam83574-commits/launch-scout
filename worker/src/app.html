@@ -775,7 +775,13 @@
 
   // --- баланс LS и оплата звёздами ------------------------------------------
   async function showAdminTab() {
-    try { const r = await api("/api/ls"); if (r && r.owner) document.querySelector('nav [data-tab="admin"]').hidden = false; } catch (e) { /* не владелец */ }
+    try {
+      const r = await api("/api/ls");
+      if (r && r.owner) {
+        document.querySelector('nav [data-tab="admin"]').hidden = false;
+        if (location.hash === "#admin") setTab("admin");
+      }
+    } catch (e) { /* не владелец */ }
   }
   if (!demo) showAdminTab();
   async function loadLs() {
