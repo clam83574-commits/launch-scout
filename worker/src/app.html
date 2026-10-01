@@ -761,6 +761,7 @@
         ${tile(usd(d.revenue_all), `выручка за всё время · ${d.payers_all} плательщ.`)}
         ${tile(d.stars_balance == null ? "—" : d.stars_balance + " ⭐", "баланс звёзд бота")}
         ${tile(d.or_balance == null ? "—" : usd(d.or_balance), "остаток на OpenRouter", d.or_balance != null && d.or_balance < 5 ? "bad" : "")}
+        ${d.quota ? tile(d.quota.load + "%", `загрузка бесплатного Cloudflare · вопросов за сутки ${d.quota.questions}`, d.quota.load >= 70 ? "bad" : "") : ""}
       </div>
       ${bars(d.daily.users, "Активные по дням (30 дн)")}
       ${bars(d.daily.new, "Новые по дням")}

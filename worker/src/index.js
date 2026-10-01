@@ -534,7 +534,44 @@ const LANG_PICKER = {
   ]],
 };
 
+/**
+ * Список в одном сообщении — каждый пункт отдельной цитатой (просьба
+ * владельца 2026-10-02: «всё, что идёт списком, разделяй цитатами»).
+ * Пункт — строка «1. …», «• …» или «🤖 <b>Ниша</b> — …» и её продолжение
+ * с отступом. Сообщения, где цитаты уже есть (ответы чата), не трогаем.
+ */
+const ITEM_START = /^(?:\d{1,2}\.\s|•\s|(?:\p{Extended_Pictographic}|\p{Regional_Indicator})[\uFE0F\u200d\p{Extended_Pictographic}\p{Regional_Indicator}]*\s*<b>[^<]{1,80}<\/b>\s*\S)/u;
+function quoteLists(text) {
+  if (!text || text.includes("<blockquote")) return text;
+  const lines = String(text).split("\n");
+  const out = [];
+  let item = null, items = 0;
+  const flush = () => { if (item) { out.push(`<blockquote>${item.join("\n")}</blockquote>`); item = null; items++; } };
+  for (const [idx, line] of lines.entries()) {
+    // Первая строка — заголовок сообщения, не пункт списка.
+    if (idx > 0 && ITEM_START.test(line)) { flush(); item = [line.trim()]; continue; }
+    if (item && /^\s{2,}\S/.test(line)) { item.push(line.trim()); continue; }
+    flush();
+    out.push(line);
+  }
+  flush();
+  if (items < 2) return text;   // один пункт — не список
+  // Не влезает в лимит Telegram — убираем последние пункты целиком, а не плашки.
+  let res = out.join("\n").replace(/\n{3,}/g, "\n\n");
+  while (res.length > 4096) {
+    const quoted = out.map((x) => x.startsWith("<blockquote>"));
+    const i = quoted.lastIndexOf(true);
+    if (i < 0 || quoted.filter(Boolean).length <= 1) return text;
+    out.splice(i, 1);
+    res = out.join("\n").replace(/\n{3,}/g, "\n\n");
+  }
+  return res;
+}
+
 async function tg(env, method, payload) {
+  if ((method === "sendMessage" || method === "editMessageText") && payload && payload.parse_mode === "HTML" && typeof payload.text === "string") {
+    payload = { ...payload, text: quoteLists(payload.text) };
+  }
   // Отладка (/debug-chat при LS_DEBUG=1): вызовы Telegram пишутся в список, а не уходят.
   if (globalThis.__tgCap) {
     globalThis.__tgCap.push({ t: Date.now(), method, text: payload.text, kb: payload.reply_markup, ok: payload.ok });
@@ -673,7 +710,9 @@ async function listTop(env, chatId, offset, windowHours, title, topic = null, la
   kb.push(pool.length > more ? [{ text: s.more10, callback_data: `${key}:${more}` }, ...(offset ? [{ text: s.start_over, callback_data: `${key}:0` }] : [])]
     : offset ? [{ text: s.start_over, callback_data: `${key}:0` }] : []);
   kb.push([{ text: s.kb_app, web_app: { url: APP_URL } }]);
-  const payload = { chat_id: chatId, text: lines.join("\n").slice(0, 4000), parse_mode: "HTML", disable_web_page_preview: true,
+  // Пункт обрезается целиком: под теги цитат нужен запас до лимита 4096.
+  while (lines.join("\n").length > 3600 && lines.length > 4) lines.splice(lines.length - 5, 4);
+  const payload = { chat_id: chatId, text: lines.join("\n"), parse_mode: "HTML", disable_web_page_preview: true,
     reply_markup: { inline_keyboard: kb.filter((r) => r.length) } };
   if (editMsg) {
     const r = await tg(env, "editMessageText", { ...payload, message_id: editMsg });
@@ -3117,6 +3156,7 @@ async function adminStats(env) {
     actions: lsM.map((x) => ({ action: x.action, n: x.n, ls: x.ls, usd: Math.round((x.usd || 0) * 10000) / 10000 })),
     daily: { users: series(daily, "users"), actions: series(daily, "actions"), cost: series(daily, "usd"), new: series(dailyNew, "n"), stars: series(dailyPay, "stars") },
     assumptions: { star_usd: STAR_USD, topup_fee: TOPUP_FEE, fixed: FIXED_USD_MONTH },
+    quota: await quotaStats(env),
   };
 }
 
@@ -3145,6 +3185,49 @@ async function ownerNotify(env, payload) {
   for (const o of await adminIds(env)) await tg(adminEnv(env), "sendMessage", { chat_id: o, disable_web_page_preview: true, ...payload });
 }
 
+/**
+ * Нагрузка на бесплатный Cloudflare — по тому, что съедает лимиты: вопросы
+ * в чате (чтения D1 и поиск Vectorize), активные за сутки, число ниш
+ * (хранилище Vectorize). Точных счётчиков Cloudflare без API-токена изнутри
+ * нет, поэтому пороги с запасом (оценка 2026-10-02: ~500 вопросов/сутки,
+ * ~4 880 ниш — потолок бесплатного тарифа; D1 к тому же общий с tm-scout).
+ */
+const QUOTA = { questions: 500, users: 80, niches: 4880 };
+async function quotaStats(env) {
+  const since = Math.floor(Date.now() / 1000) - 86400;
+  const q = (await env.DB.prepare("SELECT COUNT(*) n, COUNT(DISTINCT user_id) u FROM ls_log WHERE ts >= ?1").bind(since).first().catch(() => null)) || {};
+  const nn = (await env.DB.prepare("SELECT COUNT(*) n FROM niche_matrix").first().catch(() => null)) || {};
+  const own = owners(env);
+  const paid = ((await env.DB.prepare("SELECT plan FROM ls_balance WHERE plan != 'free' AND paid_until > ?1").bind(Math.floor(Date.now() / 1000)).all().catch(() => ({}))).results) || [];
+  const mrr = paid.filter((r) => !own.includes(String(r.user_id))).reduce((a, r) => a + ((PLANS[r.plan] || {}).usd || 0), 0);
+  const load = Math.max((q.n || 0) / QUOTA.questions, (q.u || 0) / QUOTA.users, (nn.n || 0) / QUOTA.niches);
+  return { questions: q.n || 0, users: q.u || 0, niches: nn.n || 0, mrr: Math.round(mrr * 100) / 100, load: Math.round(load * 100) };
+}
+
+/** Раз в сутки: при 50% — «нагрузка растёт», при 70% — «пора на Workers Paid». */
+async function quotaCheck(env) {
+  const day = new Date().toISOString().slice(0, 10);
+  if ((await meta(env, "quota_check")) === day) return;
+  await setMeta(env, "quota_check", day);
+  const st = await quotaStats(env);
+  const level = st.load >= 70 ? 2 : st.load >= 50 ? 1 : 0;
+  const prev = Number((await meta(env, "quota_level")) || 0);
+  await setMeta(env, "quota_level", String(level));
+  // Сообщаем при росте уровня, а на «пора» — повторяем раз в три дня.
+  const lastRed = Number((await meta(env, "quota_red_ts")) || 0);
+  if (!(level > prev || (level === 2 && Date.now() / 1000 - lastRed > 3 * 86400))) return;
+  if (level === 2) await setMeta(env, "quota_red_ts", String(Math.floor(Date.now() / 1000)));
+  const head = level === 2 ? "⚠️ <b>Пора переходить на Workers Paid ($5/мес)</b>" : "📈 <b>Нагрузка на бесплатный Cloudflare растёт</b>";
+  await ownerNotify(env, { parse_mode: "HTML", text: [head, "",
+    `Загрузка бесплатного тарифа: ~<b>${st.load}%</b>`,
+    `• вопросов в чате за сутки: ${st.questions} из ~${QUOTA.questions}`,
+    `• активных за сутки: ${st.users} из ~${QUOTA.users}`,
+    `• ниш в поиске: ${st.niches} из ${QUOTA.niches}`,
+    `• MRR: <b>$${st.mrr.toFixed(2)}</b>${st.mrr >= 5 ? " — тариф окупается" : " — пока меньше $5"}`, "",
+    level === 2 ? "При превышении дневного лимита бот замолчит до 03:00 по Алматы. Перейти: dash.cloudflare.com → Workers & Pages → Plans."
+      : "Пока запас есть; при 70% напомню перейти на Workers Paid."].join("\n") });
+}
+
 function adminReport(d) {
   const usd = (v) => (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2);
   const plans = Object.entries(d.plans || {}).map(([k, v]) => `${k} ${v}`).join(", ") || "—";
@@ -3159,7 +3242,8 @@ function adminReport(d) {
     `🧾 Затраты: ${usd(d.cost_month)} (ИИ ${usd(d.ai_month)} + комиссии)`,
     `📈 Чистая прибыль: <b>${usd(d.profit_month)}</b>`,
     `⭐ Баланс звёзд: ${d.stars_balance ?? "—"} · OpenRouter: ${d.or_balance == null ? "—" : usd(d.or_balance)}${d.or_balance != null && d.or_balance < 5 ? " ⚠️" : ""}`,
-  ].join("\n");
+    d.quota ? `☁️ Загрузка бесплатного Cloudflare: ~${d.quota.load}% (вопросов за сутки ${d.quota.questions}, ниш ${d.quota.niches})${d.quota.load >= 70 ? " — пора на Workers Paid" : ""}` : "",
+  ].filter((x) => x !== "").join("\n");
 }
 
 const ADMIN_SYSTEM = `You are the business analyst for the owner of Launch Scout, a paid Telegram market-radar bot. Answer the owner's question about how the business is doing using ONLY the STATS JSON (users, activity, plans, revenue in USD and Stars, costs, profit, balances, daily series for the last 30 days — index 0 is 30 days ago, the last item is today) and the RECENT lists. Never invent numbers. Be brief: 3-8 lines, key numbers in <b>bold</b> (Telegram HTML, no markdown), then one practical suggestion if it is useful. Answer in Russian unless asked otherwise.`;
@@ -4819,6 +4903,7 @@ export default {
     const err = await dispatchRun(env, { digest: "auto" });
     await setMeta(env, "last_dispatch_error", err || "");
     await watchdog(env, now);
+    await quotaCheck(env).catch((e) => console.log("quota:", e));
     // Расход OpenRouter на начало месяца — для затрат в дашборде; при остатке
     // меньше $3 — напоминание владельцу раз в сутки (иначе бот замолчит).
     const orc = await orCredits(env).catch(() => null);
