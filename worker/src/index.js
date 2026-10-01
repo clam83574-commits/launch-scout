@@ -3273,7 +3273,8 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   lastUnsupported = { unsupported, raw: body, facts: fx.facts.length };
   // Списание: живой поиск — по цене поиска, иначе по режиму ответа.
   const charge = await lsSpend(env, chatId, liveRes ? "live" : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
-  let finalText = (html ? cardify(html) : esc(body)) + lsFooter(s, charge);
+  // Плашки-«посты» — после одобрения владельцем (переменная LS_CARDS=1).
+  let finalText = (html ? (env.LS_CARDS === "1" ? cardify(html) : html) : esc(body)) + lsFooter(s, charge);
   // Обрезка не должна разрывать плашку: выкидываем последние блоки целиком.
   while (finalText.length > 3900 && finalText.includes("<blockquote>")) finalText = finalText.slice(0, finalText.lastIndexOf("<blockquote>")).trim();
   finalText = finalText.slice(0, 3900);
