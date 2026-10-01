@@ -13,7 +13,8 @@ import urllib.request
 
 import segno
 
-CODE = (sys.argv[1] if len(sys.argv) > 1 else "digitalbridge").lower()
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+CODE = (ARGS[0] if ARGS else "digitalbridge").lower()
 PARTNER = {"digitalbridge": "AI & Digital Bridge"}.get(CODE, CODE)
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
@@ -82,3 +83,15 @@ subprocess.run(common + ["--no-pdf-header-footer", "--print-to-pdf=" + pdf, url]
 subprocess.run(common + ["--force-device-scale-factor=2", "--window-size=600,820", "--screenshot=" + png, url], check=True, capture_output=True)
 os.remove(tmp)
 print(json.dumps({"pdf": pdf, "png": png, "url": URL}))
+
+# Экран для телефона (1080×1920): показывать QR с телефона на мероприятии.
+if "--phone" in sys.argv:
+    ph = open(os.path.join(HERE, "phone.html"), encoding="utf-8").read()
+    # на экране телефона код уже в ссылке: показали — отсканировали — скидка включилась
+    ph = ph.replace("__QR__", qr_svg("https://launch-scout-site.pages.dev/?promo=" + CODE)).replace("__PARTNER__", partner_html()).replace("__CODE__", CODE.upper()).replace("__PARTNER_NAME__", PARTNER)
+    tmp = os.path.join(HERE, f"_phone_{CODE}.html")
+    open(tmp, "w", encoding="utf-8").write(ph)
+    out = os.path.join(HERE, f"phone_{CODE}.png")
+    subprocess.run(common + ["--force-device-scale-factor=1", "--window-size=1080,1920", "--screenshot=" + out, "file:///" + tmp.replace("\\", "/")], check=True, capture_output=True)
+    os.remove(tmp)
+    print(json.dumps({"phone": out}))

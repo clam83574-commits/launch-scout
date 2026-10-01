@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Экран телефона 1080×1920 — максимально просто: заголовок, крупный QR, оффер. */
+:root { --ink: #0f1d3a; --muted: #56647f; --line: #e6ecf5; --blue: #1d4fd8; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: "Golos Text", sans-serif; color: var(--ink);
+  background: #fff; background-image: linear-gradient(var(--line) 2px, transparent 2px), linear-gradient(90deg, var(--line) 2px, transparent 2px); background-size: 54px 54px; }
+.wrap { position: absolute; inset: 0; padding: 110px 80px 90px; display: flex; flex-direction: column; align-items: center; }
+h1 { align-self: stretch; font: 500 84px/1.04 "Unbounded", sans-serif; letter-spacing: -.035em; }
+h1 em { font-style: normal; color: var(--blue); }
+.qr { margin-top: 70px; width: 880px; height: 880px; border: 6px solid var(--ink); border-radius: 44px; padding: 30px; background: #fff; }
+.qr svg { width: 100%; height: 100%; display: block; }
+.offer { margin-top: auto; align-self: stretch; background: var(--blue); color: #fff; border-radius: 36px; padding: 44px 52px; display: flex; flex-direction: column; gap: 22px; }
+.offer .row { display: flex; align-items: baseline; gap: 30px; }
+.offer b { font: 700 120px/.9 "Unbounded", sans-serif; letter-spacing: -.04em; }
+.offer .row span { font-size: 40px; line-height: 1.2; }
+.offer .code { font-size: 36px; line-height: 1.25; opacity: .92; }
+.offer code { font: 500 54px "JetBrains Mono", monospace; letter-spacing: .12em; background: #fff; color: var(--blue); padding: 10px 28px; border-radius: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Launch Scout — венчурный радар <em>вашего стартапа</em></h1>
+  <div class="qr">__QR__</div>
+  <div class="offer">
+    <div class="row"><b>−30%</b><span>для участников<br>__PARTNER_NAME__</span></div>
+    <div class="code">Скидка уже в QR — применится сама</div>
+  </div>
+</div>
+</body>
+</html>
