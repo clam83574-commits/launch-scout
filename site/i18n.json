@@ -1,0 +1,1469 @@
+{
+ "meta": {
+  "ru": {
+   "lang": "ru",
+   "locale": "ru_RU",
+   "path": "/",
+   "og": "og.png?v=2"
+  },
+  "kk": {
+   "lang": "kk",
+   "locale": "kk_KZ",
+   "path": "/kk/",
+   "og": "og_kk.png?v=2"
+  },
+  "en": {
+   "lang": "en",
+   "locale": "en_US",
+   "path": "/en/",
+   "og": "og_en.png?v=2"
+  }
+ },
+ "js": {
+  "ru": {
+   "sectors": {
+    "ai_infra": "ИИ-инфраструктура",
+    "energy": "Энергетика",
+    "health": "Медицина",
+    "ai_agents": "ИИ-агенты",
+    "defense_space": "Оборона и космос",
+    "hardware": "Железо",
+    "mobility": "Транспорт",
+    "fintech": "Финтех",
+    "security": "Кибербез",
+    "b2b_saas": "B2B SaaS",
+    "proptech": "Недвижимость",
+    "commerce": "E-commerce",
+    "crypto": "Крипто",
+    "consumer": "Потребительские",
+    "devtools": "DevTools",
+    "edu": "Образование"
+   },
+   "countries": {
+    "US": "США",
+    "DE": "Германия",
+    "IN": "Индия",
+    "KR": "Корея",
+    "PL": "Польша",
+    "BG": "Болгария",
+    "AU": "Австралия",
+    "TW": "Тайвань",
+    "RU": "Россия",
+    "GB": "Великобритания",
+    "UK": "Великобритания",
+    "FR": "Франция",
+    "KZ": "Казахстан",
+    "UZ": "Узбекистан",
+    "CN": "Китай",
+    "JP": "Япония",
+    "SG": "Сингапур",
+    "IL": "Израиль",
+    "CA": "Канада",
+    "NL": "Нидерланды",
+    "ES": "Испания",
+    "SE": "Швеция",
+    "BR": "Бразилия",
+    "AE": "ОАЭ",
+    "CH": "Швейцария",
+    "FI": "Финляндия",
+    "IT": "Италия",
+    "ID": "Индонезия"
+   },
+   "mon": [
+    "янв",
+    "фев",
+    "мар",
+    "апр",
+    "мая",
+    "июн",
+    "июл",
+    "авг",
+    "сен",
+    "окт",
+    "ноя",
+    "дек"
+   ],
+   "dec": ",",
+   "bn": " млрд",
+   "mn": " млн",
+   "rounds": "раундов",
+   "chartFoot": "Сумма раундов за 90 дней",
+   "chartSrc": "источник: база Launch Scout",
+   "rev": "Рев.",
+   "next": "СЛЕД. ПРОГОН",
+   "typing": "печатает…",
+   "status": "венчурный радар",
+   "scan": [
+    "черновик",
+    "проверка",
+    "ищу источник…",
+    "готово"
+   ],
+   "kb": [
+    [
+     "search",
+     "Глубже"
+    ],
+    [
+     "map",
+     "Карта идеи"
+    ],
+    [
+     "compass",
+     "Смежные ниши"
+    ],
+    [
+     "flag",
+     "Конкуренты"
+    ],
+    [
+     "bell",
+     "Следить"
+    ],
+    [
+     "globe",
+     "Искать везде"
+    ]
+   ],
+   "demos": [
+    {
+     "q": "Куда идут деньги в ИИ-агентах?",
+     "a": [
+      [
+       "v",
+       "<b>Горячо.</b> 148 раундов и $11,5 млрд за 90 дней — четвёртое место из 16 секторов."
+      ],
+      [
+       "q",
+       "coin",
+       "Свежие сделки",
+       "Flow Engineering — $50 млн, Series B · Medow Health AI — $2,3 млн, Seed"
+      ],
+      [
+       "q",
+       "compass",
+       "Где свободнее",
+       "Агенты под одну отрасль: недвижимость, медицина, юристы"
+      ],
+      [
+       "q",
+       "target",
+       "Первый шаг",
+       "Выберите отрасль и проверьте идею командой /check"
+      ]
+     ]
+    },
+    {
+     "q": "/check ИИ-ассистент для частных клиник в Казахстане",
+     "a": [
+      [
+       "v",
+       "<b>Делать, но узко.</b> Медицина — самый частый сектор: 278 раундов за 90 дней."
+      ],
+      [
+       "q",
+       "coin",
+       "Деньги в нише есть",
+       "Alma — $17 млн, Series A · Aleph Surgery — $7,5 млн, Pre-seed"
+      ],
+      [
+       "q",
+       "alert",
+       "Что против",
+       "В СНГ за 90 дней — 1 раунд в медицине. Платить будут клиники, а продажи им долгие"
+      ],
+      [
+       "q",
+       "flask",
+       "Проверка за 7 дней",
+       "10 интервью с главврачами частных сетей и лендинг с ценой"
+      ]
+     ]
+    },
+    {
+     "q": "Кто конкуренты в proptech?",
+     "a": [
+      [
+       "v",
+       "<b>Ниша не перегрета:</b> 43 раунда и $1,9 млрд за 90 дней."
+      ],
+      [
+       "q",
+       "flag",
+       "Кто привлёк",
+       "Kuro (Германия) — $10,8 млн, Seed · Zaritalk (Корея) — $10,7 млн, Series A · Quotr (США) — $4 млн, Seed"
+      ],
+      [
+       "q",
+       "globe",
+       "Где пусто",
+       "В СНГ за 90 дней — ни одного раунда в proptech"
+      ],
+      [
+       "q",
+       "bulb",
+       "Идея",
+       "Повторить рабочую модель из Кореи или Германии для своего города"
+      ]
+     ]
+    }
+   ],
+   "thou": " ",
+   "date": "{d} {m} {y}"
+  },
+  "kk": {
+   "sectors": {
+    "ai_infra": "ЖИ инфрақұрылымы",
+    "energy": "Энергетика",
+    "health": "Медицина",
+    "ai_agents": "ЖИ агенттері",
+    "defense_space": "Қорғаныс және ғарыш",
+    "hardware": "Құрылғылар",
+    "mobility": "Көлік",
+    "fintech": "Финтех",
+    "security": "Киберқауіпсіздік",
+    "b2b_saas": "B2B SaaS",
+    "proptech": "Жылжымайтын мүлік",
+    "commerce": "E-commerce",
+    "crypto": "Крипто",
+    "consumer": "Тұтынушылық",
+    "devtools": "DevTools",
+    "edu": "Білім беру"
+   },
+   "countries": {
+    "US": "АҚШ",
+    "DE": "Германия",
+    "IN": "Үндістан",
+    "KR": "Корея",
+    "PL": "Польша",
+    "BG": "Болгария",
+    "AU": "Австралия",
+    "TW": "Тайвань",
+    "RU": "Ресей",
+    "GB": "Ұлыбритания",
+    "UK": "Ұлыбритания",
+    "FR": "Франция",
+    "KZ": "Қазақстан",
+    "UZ": "Өзбекстан",
+    "CN": "Қытай",
+    "JP": "Жапония",
+    "SG": "Сингапур",
+    "IL": "Израиль",
+    "CA": "Канада",
+    "NL": "Нидерланд",
+    "ES": "Испания",
+    "SE": "Швеция",
+    "BR": "Бразилия",
+    "AE": "БАӘ",
+    "CH": "Швейцария",
+    "FI": "Финляндия",
+    "IT": "Италия",
+    "ID": "Индонезия"
+   },
+   "mon": [
+    "қаң",
+    "ақп",
+    "нау",
+    "сәу",
+    "мам",
+    "мау",
+    "шіл",
+    "там",
+    "қыр",
+    "қаз",
+    "қар",
+    "жел"
+   ],
+   "dec": ",",
+   "bn": " млрд",
+   "mn": " млн",
+   "rounds": "раунд",
+   "chartFoot": "90 күндегі раундтар сомасы",
+   "chartSrc": "дереккөз: Launch Scout базасы",
+   "rev": "Нұсқа",
+   "next": "КЕЛЕСІ ЖАҢАРТУ",
+   "typing": "жазып жатыр…",
+   "status": "венчурлық радар",
+   "scan": [
+    "жоба",
+    "тексеру",
+    "дереккөз ізделуде…",
+    "дайын"
+   ],
+   "kb": [
+    [
+     "search",
+     "Тереңірек"
+    ],
+    [
+     "map",
+     "Идея картасы"
+    ],
+    [
+     "compass",
+     "Көрші тауашалар"
+    ],
+    [
+     "flag",
+     "Бәсекелестер"
+    ],
+    [
+     "bell",
+     "Бақылау"
+    ],
+    [
+     "globe",
+     "Барлық жерден іздеу"
+    ]
+   ],
+   "demos": [
+    {
+     "q": "ЖИ агенттеріне ақша қайда барады?",
+     "a": [
+      [
+       "v",
+       "<b>Ыстық.</b> 90 күнде 148 раунд және $11,5 млрд — 16 сектордың ішінде төртінші орын."
+      ],
+      [
+       "q",
+       "coin",
+       "Жаңа мәмілелер",
+       "Flow Engineering — $50 млн, Series B · Medow Health AI — $2,3 млн, Seed"
+      ],
+      [
+       "q",
+       "compass",
+       "Қай жер бос",
+       "Бір салаға арналған агенттер: жылжымайтын мүлік, медицина, заңгерлер"
+      ],
+      [
+       "q",
+       "target",
+       "Алғашқы қадам",
+       "Саланы таңдап, идеяны /check командасымен тексеріңіз"
+      ]
+     ]
+    },
+    {
+     "q": "/check Қазақстандағы жеке клиникаларға арналған ЖИ көмекшісі",
+     "a": [
+      [
+       "v",
+       "<b>Жасау керек, бірақ тар бағытта.</b> Медицина — ең жиі кездесетін сектор: 90 күнде 278 раунд."
+      ],
+      [
+       "q",
+       "coin",
+       "Тауашада ақша бар",
+       "Alma — $17 млн, Series A · Aleph Surgery — $7,5 млн, Pre-seed"
+      ],
+      [
+       "q",
+       "alert",
+       "Қарсы дәлелдер",
+       "ТМД-да 90 күнде медицинада 1 раунд. Клиникалар төлейді, ал оларға сату ұзаққа созылады"
+      ],
+      [
+       "q",
+       "flask",
+       "7 күндік тексеру",
+       "Жеке желілердің бас дәрігерлерімен 10 сұхбат және бағасы бар лендинг"
+      ]
+     ]
+    },
+    {
+     "q": "Proptech-те бәсекелестер кім?",
+     "a": [
+      [
+       "v",
+       "<b>Тауаша қызып кетпеген:</b> 90 күнде 43 раунд және $1,9 млрд."
+      ],
+      [
+       "q",
+       "flag",
+       "Кім тартты",
+       "Kuro (Германия) — $10,8 млн, Seed · Zaritalk (Корея) — $10,7 млн, Series A · Quotr (АҚШ) — $4 млн, Seed"
+      ],
+      [
+       "q",
+       "globe",
+       "Қай жер бос",
+       "ТМД-да 90 күнде proptech бойынша бірде-бір раунд жоқ"
+      ],
+      [
+       "q",
+       "bulb",
+       "Идея",
+       "Корея немесе Германиядағы жұмыс істеп тұрған модельді өз қалаңызға бейімдеу"
+      ]
+     ]
+    }
+   ],
+   "thou": " ",
+   "date": "{d} {m} {y}"
+  },
+  "en": {
+   "sectors": {
+    "ai_infra": "AI infrastructure",
+    "energy": "Energy",
+    "health": "Health",
+    "ai_agents": "AI agents",
+    "defense_space": "Defense & space",
+    "hardware": "Hardware",
+    "mobility": "Mobility",
+    "fintech": "Fintech",
+    "security": "Cybersecurity",
+    "b2b_saas": "B2B SaaS",
+    "proptech": "Proptech",
+    "commerce": "E-commerce",
+    "crypto": "Crypto",
+    "consumer": "Consumer",
+    "devtools": "DevTools",
+    "edu": "Education"
+   },
+   "countries": {
+    "US": "USA",
+    "DE": "Germany",
+    "IN": "India",
+    "KR": "Korea",
+    "PL": "Poland",
+    "BG": "Bulgaria",
+    "AU": "Australia",
+    "TW": "Taiwan",
+    "RU": "Russia",
+    "GB": "UK",
+    "UK": "UK",
+    "FR": "France",
+    "KZ": "Kazakhstan",
+    "UZ": "Uzbekistan",
+    "CN": "China",
+    "JP": "Japan",
+    "SG": "Singapore",
+    "IL": "Israel",
+    "CA": "Canada",
+    "NL": "Netherlands",
+    "ES": "Spain",
+    "SE": "Sweden",
+    "BR": "Brazil",
+    "AE": "UAE",
+    "CH": "Switzerland",
+    "FI": "Finland",
+    "IT": "Italy",
+    "ID": "Indonesia"
+   },
+   "mon": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+   ],
+   "dec": ".",
+   "bn": "B",
+   "mn": "M",
+   "rounds": "rounds",
+   "chartFoot": "Total raised over 90 days",
+   "chartSrc": "source: Launch Scout dataset",
+   "rev": "Rev.",
+   "next": "NEXT RUN",
+   "typing": "typing…",
+   "status": "venture radar",
+   "scan": [
+    "draft",
+    "checking",
+    "looking for a source…",
+    "done"
+   ],
+   "kb": [
+    [
+     "search",
+     "Deeper"
+    ],
+    [
+     "map",
+     "Idea map"
+    ],
+    [
+     "compass",
+     "Adjacent niches"
+    ],
+    [
+     "flag",
+     "Competitors"
+    ],
+    [
+     "bell",
+     "Follow"
+    ],
+    [
+     "globe",
+     "Search everywhere"
+    ]
+   ],
+   "demos": [
+    {
+     "q": "Where is the money going in AI agents?",
+     "a": [
+      [
+       "v",
+       "<b>Hot.</b> 148 rounds and $11.5B in 90 days — 4th of 16 sectors."
+      ],
+      [
+       "q",
+       "coin",
+       "Fresh deals",
+       "Flow Engineering — $50M, Series B · Medow Health AI — $2.3M, Seed"
+      ],
+      [
+       "q",
+       "compass",
+       "Where it's less crowded",
+       "Agents for a single industry: real estate, healthcare, legal"
+      ],
+      [
+       "q",
+       "target",
+       "First step",
+       "Pick an industry and test the idea with /check"
+      ]
+     ]
+    },
+    {
+     "q": "/check AI assistant for private clinics in Kazakhstan",
+     "a": [
+      [
+       "v",
+       "<b>Do it, but narrowly.</b> Health is the most active sector: 278 rounds in 90 days."
+      ],
+      [
+       "q",
+       "coin",
+       "There is money in the niche",
+       "Alma — $17M, Series A · Aleph Surgery — $7.5M, Pre-seed"
+      ],
+      [
+       "q",
+       "alert",
+       "Against it",
+       "1 health round in the CIS in 90 days. Clinics pay, and selling to them takes long"
+      ],
+      [
+       "q",
+       "flask",
+       "7-day test",
+       "10 interviews with chief doctors of private chains and a landing page with a price"
+      ]
+     ]
+    },
+    {
+     "q": "Who are the competitors in proptech?",
+     "a": [
+      [
+       "v",
+       "<b>Not overheated:</b> 43 rounds and $1.9B in 90 days."
+      ],
+      [
+       "q",
+       "flag",
+       "Who raised",
+       "Kuro (Germany) — $10.8M, Seed · Zaritalk (Korea) — $10.7M, Series A · Quotr (USA) — $4M, Seed"
+      ],
+      [
+       "q",
+       "globe",
+       "Where it's empty",
+       "Not a single proptech round in the CIS in 90 days"
+      ],
+      [
+       "q",
+       "bulb",
+       "Idea",
+       "Bring a proven model from Korea or Germany to your city"
+      ]
+     ]
+    }
+   ],
+   "thou": ",",
+   "date": "{m} {d}, {y}"
+  }
+ },
+ "html": [
+  [
+   "Венчурный радар вашего стартапа в Telegram: куда идут деньги, какие ниши свободны, взлетит ли идея. 300 LS бесплатно.",
+   "Стартапыңыздың Telegram-дағы венчурлық радары: ақша қайда барады, қай тауашалар бос, идея ұша ма. 300 LS тегін.",
+   "The venture radar for your startup in Telegram: where the money goes, which niches are open, will your idea fly. 300 LS free."
+  ],
+  [
+   "Launch Scout — стройте там, куда уже идут деньги",
+   "Launch Scout — ақша барып жатқан жерде құрыңыз",
+   "Launch Scout — build where the money is already going"
+  ],
+  [
+   "Венчурный радар вашего стартапа в Telegram: ниша, конкуренты и оценка идеи за 10 секунд. Свой датасет из 17 источников, обновление каждые 10 минут. 300 LS бесплатно.",
+   "Стартапыңыздың Telegram-дағы венчурлық радары: тауаша, бәсекелестер және идеяны бағалау 10 секундта. 17 дереккөзден жиналған өз деректер базасы, әр 10 минут сайын жаңарады. 300 LS тегін.",
+   "The venture radar for your startup in Telegram: niche, competitors and idea check in 10 seconds. Our own dataset from 17 sources, updated every 10 minutes. 300 LS free."
+  ],
+  [
+   "Launch Scout: деньги по секторам за 90 дней, 3D-радар рынка",
+   "Launch Scout: 90 күндегі секторлар бойынша ақша, нарықтың 3D-радары",
+   "Launch Scout: money by sector over 90 days, 3D market radar"
+  ],
+  [
+   "Разделы",
+   "Бөлімдер",
+   "Sections"
+  ],
+  [
+   "Где деньги",
+   "Ақша қайда",
+   "Where the money is"
+  ],
+  [
+   "Пример",
+   "Мысал",
+   "Example"
+  ],
+  [
+   "Проверка",
+   "Тексеру",
+   "Fact-check"
+  ],
+  [
+   "Цены",
+   "Бағалар",
+   "Pricing"
+  ],
+  [
+   "300 LS бесплатно",
+   "300 LS тегін",
+   "300 LS free"
+  ],
+  [
+   "Пересчёт каждые 10 мин",
+   "Әр 10 мин сайын жаңарады",
+   "Updated every 10 min"
+  ],
+  [
+   "Стройте там, куда",
+   "Ақша",
+   "Build where"
+  ],
+  [
+   "уже идут деньги",
+   "барып жатқан жерде құрыңыз",
+   "the money is already going"
+  ],
+  [
+   "За 90 дней инвесторы вложили",
+   "90 күнде инвесторлар",
+   "In 90 days investors put"
+  ],
+  [
+   "в",
+   "салды —",
+   "into"
+  ],
+  [
+   "стартап. Launch Scout видит каждый раунд и за 10 секунд отвечает в Telegram: какую нишу брать, кто в ней уже есть и взлетит ли ваша идея.",
+   "стартапқа. Launch Scout әр раундты көреді және Telegram-да 10 секундта жауап береді: қай тауашаны таңдау керек, онда кім бар және идеяңыз ұша ма.",
+   "startups. Launch Scout sees every round and answers in Telegram in 10 seconds: which niche to take, who is already there, and whether your idea will fly."
+  ],
+  [
+   "Венчурный радар вашего стартапа: видит каждый раунд в мире и за 10 секунд отвечает в Telegram: какую нишу брать и взлетит ли идея.",
+   "Стартапыңыздың венчурлық радары: әлемдегі әр раундты көреді және Telegram-да 10 секундта жауап береді — қай тауашаны таңдау керек және идея ұша ма.",
+   "The venture radar for your startup: sees every round worldwide and answers in Telegram in 10 seconds — which niche to take and whether the idea will fly."
+  ],
+  [
+   "Нажмите и получите",
+   "Басыңыз да алыңыз:",
+   "Tap to get"
+  ],
+  [
+   "≈ 30 ответов",
+   "≈ 30 жауап",
+   "≈ 30 answers"
+  ],
+  [
+   "без карты",
+   "картасыз",
+   "no card"
+  ],
+  [
+   "прямо в Telegram",
+   "тікелей Telegram-да",
+   "right in Telegram"
+  ],
+  [
+   "Промокод",
+   "Промокод",
+   "Promo code"
+  ],
+  [
+   "— −30% на первую покупку. Подключится сам, когда откроете Launch Scout по любой кнопке на этой странице.",
+   "— алғашқы сатып алуға −30%. Осы беттегі кез келген батырма арқылы Launch Scout-ты ашқанда өзі қосылады.",
+   "— −30% off your first purchase. It activates automatically when you open Launch Scout from any button on this page."
+  ],
+  [
+   "3D-схема: столбики — сектора рынка, высота — сколько денег вложили за 90 дней; луч радара проходит по ним, сигналы из источников стекаются к нишам",
+   "3D-сызба: бағандар — нарық секторлары, биіктігі — 90 күнде салынған ақша; радар сәулесі оларды шолып өтеді, дереккөздерден сигналдар тауашаларға жиналады",
+   "3D diagram: bars are market sectors, height is money raised over 90 days; the radar beam sweeps them as signals from sources flow into niches"
+  ],
+  [
+   "ДЕНЬГИ ПО СЕКТОРАМ · 90 ДНЕЙ",
+   "СЕКТОРЛАР БОЙЫНША АҚША · 90 КҮН",
+   "MONEY BY SECTOR · 90 DAYS"
+  ],
+  [
+   "ВЫСОТА = $",
+   "БИІКТІК = $",
+   "HEIGHT = $"
+  ],
+  [
+   "СЛЕД. ПРОГОН —:—",
+   "КЕЛЕСІ ЖАҢАРТУ —:—",
+   "NEXT RUN —:—"
+  ],
+  [
+   "ВИД А · ИЗОМЕТРИЯ",
+   "А КӨРІНІСІ · ИЗОМЕТРИЯ",
+   "VIEW A · ISOMETRIC"
+  ],
+  [
+   "Свежие раунды из базы Launch Scout",
+   "Launch Scout базасындағы жаңа раундтар",
+   "Fresh rounds from the Launch Scout dataset"
+  ],
+  [
+   "Свежие раунды",
+   "Жаңа раундтар",
+   "Fresh rounds"
+  ],
+  [
+   "Зачем",
+   "Не үшін",
+   "Why"
+  ],
+  [
+   "Ресёрч рынка —",
+   "Нарықты зерттеу —",
+   "Market research"
+  ],
+  [
+   "за 10 секунд",
+   "10 секундта",
+   "in 10 seconds"
+  ],
+  [
+   "Большинство стартапов закрываются, потому что делают то, что рынку не нужно. Это проверяется до первой строчки кода.",
+   "Стартаптардың көбі нарыққа керек емес нәрсені жасағандықтан жабылады. Мұны кодтың алғашқы жолына дейін тексеруге болады.",
+   "Most startups die because they build something the market doesn't need. You can check that before writing a single line of code."
+  ],
+  [
+   "2 недели",
+   "2 апта",
+   "2 weeks"
+  ],
+  [
+   "10 секунд",
+   "10 секунд",
+   "10 seconds"
+  ],
+  [
+   "Ресёрч ниши",
+   "Тауашаны зерттеу",
+   "Niche research"
+  ],
+  [
+   "Вместо сорока вкладок и таблиц — один вопрос в Telegram, текстом или голосом.",
+   "Қырық қойынды мен кестенің орнына — Telegram-да бір сұрақ, мәтінмен немесе дауыспен.",
+   "Instead of forty tabs and spreadsheets — one question in Telegram, by text or voice."
+  ],
+  [
+   "раз в квартал",
+   "тоқсанына бір рет",
+   "once a quarter"
+  ],
+  [
+   "10 минут",
+   "10 минут",
+   "10 minutes"
+  ],
+  [
+   "Свежесть данных",
+   "Деректердің жаңалығы",
+   "Data freshness"
+  ],
+  [
+   "Отраслевые отчёты устаревают до выхода. База Launch Scout обновляется каждые 10 минут.",
+   "Салалық есептер шыққанға дейін ескіреді. Launch Scout базасы әр 10 минут сайын жаңарады.",
+   "Industry reports are outdated before they ship. The Launch Scout dataset updates every 10 minutes."
+  ],
+  [
+   "«кажется»",
+   "«сияқты»",
+   "“I think”"
+  ],
+  [
+   "ссылка",
+   "сілтеме",
+   "a link"
+  ],
+  [
+   "Каждая цифра — с источником",
+   "Әр сан — дереккөзімен",
+   "Every number has a source"
+  ],
+  [
+   "Нет источника — нет цифры. Launch Scout не пишет то, что не может подтвердить.",
+   "Дереккөз жоқ — сан жоқ. Launch Scout дәлелдей алмайтынын жазбайды.",
+   "No source — no number. Launch Scout never writes what it can't back up."
+  ],
+  [
+   "Где деньги · живые данные",
+   "Ақша қайда · тірі деректер",
+   "Where the money is · live data"
+  ],
+  [
+   "за 90 дней.",
+   "90 күнде.",
+   "in 90 days."
+  ],
+  [
+   "Вот куда",
+   "Міне, қайда",
+   "Here's where"
+  ],
+  [
+   "Это реальные данные из базы Launch Scout. Наведите на сектор — увидите число раундов. В Launch Scout то же самое, только по 1 118 нишам.",
+   "Бұл — Launch Scout базасындағы нақты деректер. Секторды нұсқасаңыз, раундтар саны көрінеді. Launch Scout-та дәл осылай, тек 1 118 тауаша бойынша.",
+   "This is real data from the Launch Scout dataset. Hover over a sector to see the number of rounds. Inside Launch Scout it's the same, across 1,118 niches."
+  ],
+  [
+   "Вложения по секторам за 90 дней",
+   "90 күндегі секторлар бойынша инвестициялар",
+   "Investment by sector over 90 days"
+  ],
+  [
+   "раунд за 90 дней",
+   "раунд, 90 күн",
+   "rounds in 90 days"
+  ],
+  [
+   "стран",
+   "ел",
+   "countries"
+  ],
+  [
+   "ниш в матрице",
+   "тауаша матрицада",
+   "niches in the matrix"
+  ],
+  [
+   "раундов в СНГ за 90 дней. Рынок почти пустой — место для первых.",
+   "раунд ТМД-да 90 күнде. Нарық бос дерлік — алғашқыларға орын бар.",
+   "rounds in the CIS in 90 days. The market is almost empty — room for first movers."
+  ],
+  [
+   "Как это выглядит",
+   "Бұл қалай көрінеді",
+   "How it looks"
+  ],
+  [
+   "Спросите свой венчурный радар",
+   "Венчурлық радарыңыздан сұраңыз",
+   "Ask your venture radar"
+  ],
+  [
+   "Примеры вопросов",
+   "Сұрақ мысалдары",
+   "Example questions"
+  ],
+  [
+   "Куда идут деньги?",
+   "Ақша қайда барады?",
+   "Where's the money?"
+  ],
+  [
+   "Ниша, суммы, свежие сделки",
+   "Тауаша, сомалар, жаңа мәмілелер",
+   "Niche, amounts, fresh deals"
+  ],
+  [
+   "Взлетит ли идея?",
+   "Идея ұша ма?",
+   "Will the idea fly?"
+  ],
+  [
+   "/check — сначала пробует опровергнуть",
+   "/check — алдымен жоққа шығаруға тырысады",
+   "/check — tries to disprove it first"
+  ],
+  [
+   "Кто конкуренты?",
+   "Бәсекелестер кім?",
+   "Who are the rivals?"
+  ],
+  [
+   "Кто привлёк, сколько, где пусто",
+   "Кім тартты, қанша, қай жер бос",
+   "Who raised, how much, where it's empty"
+  ],
+  [
+   "венчурный радар",
+   "венчурлық радар",
+   "venture radar"
+  ],
+  [
+   "Пример ответа · цифры из базы Launch Scout на 1 октября",
+   "Жауап мысалы · сандар Launch Scout базасынан, 1 қазан",
+   "Sample answer · figures from the Launch Scout dataset as of Oct 1"
+  ],
+  [
+   "Черновик ответа",
+   "Жауап жобасы",
+   "Answer draft"
+  ],
+  [
+   "проверка",
+   "тексеру",
+   "checking"
+  ],
+  [
+   "ИИ-агенты:",
+   "ЖИ агенттері:",
+   "AI agents:"
+  ],
+  [
+   "раундов за 90 дней",
+   "раунд, 90 күнде",
+   "rounds in 90 days"
+  ],
+  [
+   "✓ своя база",
+   "✓ өз базасы",
+   "✓ own dataset"
+  ],
+  [
+   "$50 млн",
+   "$50 млн",
+   "$50M"
+  ],
+  [
+   "✓ новость о раунде",
+   "✓ раунд туралы жаңалық",
+   "✓ funding news"
+  ],
+  [
+   "Выручка конкурента —",
+   "Бәсекелестің түсімі —",
+   "Competitor revenue —"
+  ],
+  [
+   "$90 млн",
+   "$90 млн",
+   "$90M"
+  ],
+  [
+   "✗ нет источника",
+   "✗ дереккөз жоқ",
+   "✗ no source"
+  ],
+  [
+   "Вы получаете",
+   "Сізге жетеді:",
+   "You get"
+  ],
+  [
+   "2 строки из 3",
+   "3 жолдың 2-еуі",
+   "2 of 3 lines"
+  ],
+  [
+   "— обе со ссылкой",
+   "— екеуі де сілтемемен",
+   "— both with a link"
+  ],
+  [
+   "Без выдумок",
+   "Ойдан шығарусыз",
+   "No made-up facts"
+  ],
+  [
+   "ИИ не может",
+   "ЖИ сізді",
+   "AI can't"
+  ],
+  [
+   "соврать",
+   "санмен алдай",
+   "lie to you"
+  ],
+  [
+   "вам цифрой",
+   "алмайды",
+   "with a number"
+  ],
+  [
+   "Модель пишет черновик",
+   "Модель жоба жазады",
+   "The model writes a draft"
+  ],
+  [
+   "Ответ собирается из фактов базы и веба.",
+   "Жауап база мен веб фактілерінен құралады.",
+   "The answer is built from dataset and web facts."
+  ],
+  [
+   "Радар ищет каждую цифру в источниках",
+   "Радар әр санды дереккөздерден іздейді",
+   "The radar checks every number against sources"
+  ],
+  [
+   "Суммы, проценты, названия компаний.",
+   "Сомалар, пайыздар, компания атаулары.",
+   "Amounts, percentages, company names."
+  ],
+  [
+   "Без источника — строка удаляется",
+   "Дереккөзі жоқ жол өшіріледі",
+   "No source — the line is removed"
+  ],
+  [
+   "До того, как вы её увидите. Крупные суммы — только если их подтвердили 3 издания.",
+   "Сіз оны көргенге дейін. Ірі сомалар — тек 3 басылым растаса ғана.",
+   "Before you ever see it. Large amounts only if confirmed by 3 outlets."
+  ],
+  [
+   "Под капотом",
+   "Ішкі құрылымы",
+   "Under the hood"
+  ],
+  [
+   "17 источников, один ответ",
+   "17 дереккөз, бір жауап",
+   "17 sources, one answer"
+  ],
+  [
+   "Launch Scout не пересказывает интернет: у него своя база сделок и ниш, которая пересчитывается круглые сутки.",
+   "Launch Scout интернетті қайталамайды: оның мәмілелер мен тауашалардың өз базасы бар, ол тәулік бойы жаңарып отырады.",
+   "Launch Scout doesn't just retell the internet: it has its own dataset of deals and niches, recalculated around the clock."
+  ],
+  [
+   "Сбор",
+   "Жинау",
+   "Collect"
+  ],
+  [
+   "Источники",
+   "Дереккөздер",
+   "Sources"
+  ],
+  [
+   "Сделки, запуски, спрос и пресс-релизы — каждые 10 минут.",
+   "Мәмілелер, іске қосулар, сұраныс және пресс-релиздер — әр 10 минут сайын.",
+   "Deals, launches, demand and press releases — every 10 minutes."
+  ],
+  [
+   "Сверка",
+   "Салыстыру",
+   "Verify"
+  ],
+  [
+   "дубли склеены: 4 → 1",
+   "қайталар біріктірілді: 4 → 1",
+   "duplicates merged: 4 → 1"
+  ],
+  [
+   "сумма из 3 изданий",
+   "сома 3 басылымнан",
+   "amount from 3 outlets"
+  ],
+  [
+   "$11B — оценка, не раунд",
+   "$11B — бағалау, раунд емес",
+   "$11B — valuation, not a round"
+  ],
+  [
+   "сектор: ИИ-агенты",
+   "сектор: ЖИ агенттері",
+   "sector: AI agents"
+  ],
+  [
+   "Очистка",
+   "Тазалау",
+   "Clean-up"
+  ],
+  [
+   "Десять статей об одной сделке — одна запись. Сомнительные суммы отсеиваются.",
+   "Бір мәміле туралы он мақала — бір жазба. Күмәнді сомалар алынып тасталады.",
+   "Ten articles about one deal become one record. Dubious amounts are filtered out."
+  ],
+  [
+   "Матрица",
+   "Матрица",
+   "Matrix"
+  ],
+  [
+   "Матрица ниш",
+   "Тауашалар матрицасы",
+   "Niche matrix"
+  ],
+  [
+   "По каждой нише: деньги, конкуренты, спрос в Google и X, импульс за 90 дней.",
+   "Әр тауаша бойынша: ақша, бәсекелестер, Google мен X-тегі сұраныс, 90 күндік серпін.",
+   "For every niche: money, competitors, demand on Google and X, 90-day momentum."
+  ],
+  [
+   "Ответ",
+   "Жауап",
+   "Answer"
+  ],
+  [
+   "Глубже",
+   "Тереңірек",
+   "Deeper"
+  ],
+  [
+   "Карта идеи",
+   "Идея картасы",
+   "Idea map"
+  ],
+  [
+   "Конкуренты",
+   "Бәсекелестер",
+   "Competitors"
+  ],
+  [
+   "Ответ в Telegram",
+   "Telegram-дағы жауап",
+   "Answer in Telegram"
+  ],
+  [
+   "Коротко, со ссылками и кнопками, чтобы копнуть глубже.",
+   "Қысқа, сілтемелермен және тереңірек қазуға арналған батырмалармен.",
+   "Short, with links and buttons to dig deeper."
+  ],
+  [
+   "← листайте →",
+   "← парақтаңыз →",
+   "← swipe →"
+  ],
+  [
+   "Что умеет",
+   "Не істей алады",
+   "What it does"
+  ],
+  [
+   "Цена каждого действия видна заранее, в LS — внутренней валюте сервиса.",
+   "Әр әрекеттің бағасы алдын ала көрінеді, LS-пен — сервистің ішкі валютасы.",
+   "The price of every action is shown upfront, in LS — the service's internal currency."
+  ],
+  [
+   "Радар под вас",
+   "Сізге арналған радар",
+   "Radar for you"
+  ],
+  [
+   "Два вопроса о рынке и модели — и радар подбирает ниши, которые вам по силам.",
+   "Нарық пен модель туралы екі сұрақ — және радар сізге шамасы келетін тауашаларды таңдайды.",
+   "Two questions about your market and model — and the radar picks niches you can actually take on."
+  ],
+  [
+   "БЕСПЛАТНО",
+   "ТЕГІН",
+   "FREE"
+  ],
+  [
+   "Вопрос текстом или голосом",
+   "Мәтінмен не дауыспен сұрақ",
+   "Ask by text or voice"
+  ],
+  [
+   "Про нишу, компанию или инвестора. Ответ за 5–10 секунд.",
+   "Тауаша, компания не инвестор туралы. Жауап 5–10 секундта.",
+   "About a niche, company or investor. Answer in 5–10 seconds."
+  ],
+  [
+   "Живой поиск",
+   "Тікелей іздеу",
+   "Live search"
+  ],
+  [
+   "Нет в базе — радар ищет прямо сейчас: веб, Hacker News, GitHub.",
+   "Базада жоқ болса — радар дәл қазір іздейді: веб, Hacker News, GitHub.",
+   "Not in the dataset? The radar searches right now: web, Hacker News, GitHub."
+  ],
+  [
+   "Сегменты, деньги, конкуренты и первый шаг на одном экране.",
+   "Сегменттер, ақша, бәсекелестер және алғашқы қадам бір экранда.",
+   "Segments, money, competitors and the first step on one screen."
+  ],
+  [
+   "Кто уже в нише, сколько привлёк и где у него слабое место.",
+   "Тауашада кім бар, қанша тартты және оның әлсіз жері қайда.",
+   "Who's already in the niche, how much they raised and where they're weak."
+  ],
+  [
+   "Проверка идеи",
+   "Идеяны тексеру",
+   "Idea check"
+  ],
+  [
+   "Сначала пытается опровергнуть фактами, потом даёт план проверки на 7 дней.",
+   "Алдымен фактілермен жоққа шығаруға тырысады, содан кейін 7 күндік тексеру жоспарын береді.",
+   "First tries to disprove it with facts, then gives a 7-day validation plan."
+  ],
+  [
+   "X и Google Trends",
+   "X және Google Trends",
+   "X and Google Trends"
+  ],
+  [
+   "Что обсуждают и что ищут по вашей нише за последние месяцы.",
+   "Соңғы айларда сіздің тауашаңыз бойынша не талқылайды және не іздейді.",
+   "What people discuss and search for in your niche over recent months."
+  ],
+  [
+   "Следить за нишей",
+   "Тауашаны бақылау",
+   "Follow a niche"
+  ],
+  [
+   "Новый раунд или запуск в нише — Launch Scout напишет сам.",
+   "Тауашада жаңа раунд не іске қосу болса — Launch Scout өзі жазады.",
+   "A new round or launch in the niche — Launch Scout will message you."
+  ],
+  [
+   "Инсайты по цене",
+   "Бір шыны кофе",
+   "Insights for the price of"
+  ],
+  [
+   "чашки кофе",
+   "бағасына инсайттар",
+   "a cup of coffee"
+  ],
+  [
+   "Оплата звёздами Telegram в пару касаний. LS подписки обновляются каждые 30 дней.",
+   "Telegram жұлдыздарымен бірнеше басумен төлеу. Жазылым LS әр 30 күн сайын жаңарады.",
+   "Pay with Telegram Stars in a couple of taps. Plan LS refresh every 30 days."
+  ],
+  [
+   "СТАРТ",
+   "БАСТАУ",
+   "START"
+  ],
+  [
+   "≈ стакан воды",
+   "≈ бір стақан су",
+   "≈ a glass of water"
+  ],
+  [
+   "/ мес",
+   "/ ай",
+   "/ mo"
+  ],
+  [
+   "≈ 30 ответов. Радар, сводка и лента — без ограничений.",
+   "≈ 30 жауап. Радар, шолу және лента — шексіз.",
+   "≈ 30 answers. Radar, digest and feed — unlimited."
+  ],
+  [
+   "Забрать 300 LS",
+   "300 LS алу",
+   "Get 300 LS"
+  ],
+  [
+   "ПОПУЛЯРНЫЙ",
+   "ТАНЫМАЛ",
+   "POPULAR"
+  ],
+  [
+   "≈ 1 большой американо",
+   "≈ 1 үлкен американо",
+   "≈ 1 large americano"
+  ],
+  [
+   "≈ 150 ответов или 37 живых поисков.",
+   "≈ 150 жауап немесе 37 тікелей іздеу.",
+   "≈ 150 answers or 37 live searches."
+  ],
+  [
+   "≈ 2 капучино",
+   "≈ 2 капучино",
+   "≈ 2 cappuccinos"
+  ],
+  [
+   "≈ 350 ответов. Для тех, кто ищет идею каждый день.",
+   "≈ 350 жауап. Күн сайын идея іздейтіндерге.",
+   "≈ 350 answers. For those hunting for ideas every day."
+  ],
+  [
+   "≈ 4 латте",
+   "≈ 4 латте",
+   "≈ 4 lattes"
+  ],
+  [
+   "≈ 700 ответов. Для акселераторов, фондов и команд.",
+   "≈ 700 жауап. Акселераторларға, қорларға және командаларға.",
+   "≈ 700 answers. For accelerators, funds and teams."
+  ],
+  [
+   "← листайте тарифы →",
+   "← тарифтерді парақтаңыз →",
+   "← swipe plans →"
+  ],
+  [
+   "Кончились LS? Докупите 1 000 за $3.49",
+   "LS бітті ме? 1 000 LS-ті $3.49-ға алыңыз",
+   "Out of LS? Top up 1,000 for $3.49"
+  ],
+  [
+   "— дешевле американо. Докупленные LS не сгорают.",
+   "— американодан арзан. Сатып алынған LS күймейді.",
+   "— cheaper than an americano. Purchased LS never expire."
+  ],
+  [
+   "Открыть в Telegram",
+   "Telegram-да ашу",
+   "Open in Telegram"
+  ],
+  [
+   "Цена действий",
+   "Әрекеттер бағасы",
+   "Action prices"
+  ],
+  [
+   "Вопрос",
+   "Сұрақ",
+   "Question"
+  ],
+  [
+   "X и Trends",
+   "X және Trends",
+   "X & Trends"
+  ],
+  [
+   "Глубже · Карта · Конкуренты",
+   "Тереңірек · Карта · Бәсекелестер",
+   "Deeper · Map · Competitors"
+  ],
+  [
+   "Радар · сводка · лента",
+   "Радар · шолу · лента",
+   "Radar · digest · feed"
+  ],
+  [
+   "Пока вы думаете, кто-то уже",
+   "Сіз ойланып жүргенде, біреу",
+   "While you're thinking, someone is already"
+  ],
+  [
+   "поднимает раунд",
+   "раунд тартып жатыр",
+   "raising a round"
+  ],
+  [
+   "в вашей нише",
+   "сіздің тауашаңызда",
+   "in your niche"
+  ],
+  [
+   "Откройте Launch Scout в Telegram, выберите язык и задайте первый вопрос. 300 LS ждут вас — это примерно 30 ответов.",
+   "Launch Scout-ты Telegram-да ашып, тілді таңдаңыз және алғашқы сұрағыңызды қойыңыз. Сізді 300 LS күтіп тұр — бұл шамамен 30 жауап.",
+   "Open Launch Scout in Telegram, pick a language and ask your first question. 300 LS are waiting for you — about 30 answers."
+  ],
+  [
+   "Получить",
+   "Алу:",
+   "Get"
+  ],
+  [
+   "Штамп",
+   "Мөртабан",
+   "Title block"
+  ],
+  [
+   "Изделие",
+   "Өнім",
+   "Product"
+  ],
+  [
+   "Launch Scout · радар рынка стартапов",
+   "Launch Scout · стартап нарығының радары",
+   "Launch Scout · startup market radar"
+  ],
+  [
+   "Языки",
+   "Тілдер",
+   "Languages"
+  ],
+  [
+   "Платформа",
+   "Платформа",
+   "Platform"
+  ],
+  [
+   "Обновлено",
+   "Жаңартылды",
+   "Updated"
+  ],
+  [
+   "1 окт 2026",
+   "1 қаз 2026",
+   "Oct 1, 2026"
+  ],
+  [
+   ", а не за две недели",
+   ", екі аптада емес",
+   ", not two weeks"
+  ],
+  [
+   "Всё, что нужно до первой строчки кода",
+   "Кодтың алғашқы жолына дейін керектің бәрі",
+   "Everything you need before the first line of code"
+  ],
+  [
+   "Язык",
+   "Тіл",
+   "Language"
+  ],
+  [
+   "Венчурный радар вашего стартапа в Telegram: ниша, конкуренты и оценка идеи — со ссылкой на источник у каждой цифры.",
+   "Стартапыңыздың венчурлық радары: тауаша, бәсекелестер, идеяны бағалау — әр сан дереккөзімен.",
+   "The venture radar for your startup in Telegram: niche, competitors and idea check — every number links to its source."
+  ],
+  [
+   "Вложено за 90 дней",
+   "90 күнде салынды",
+   "Invested in 90 days"
+  ],
+  [
+   "Раундов",
+   "Раундтар",
+   "Rounds"
+  ],
+  [
+   "Источников",
+   "Дереккөздер",
+   "Sources"
+  ],
+  [
+   "Обновление",
+   "Жаңарту",
+   "Updates"
+  ],
+  [
+   "каждые 10 мин",
+   "әр 10 мин",
+   "every 10 min"
+  ]
+ ]
+}

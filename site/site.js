@@ -2,46 +2,27 @@
   // Анимации — часть подачи: показываем их и при системном «уменьшить движение».
   const reduce = false;
   let DATA = __PULSE__;
+  const I = __I18N__;
   const PULSE_URL = "https://launch-scout-bot.clam83574.workers.dev/public/pulse";
   // Каждая часть страницы отдельно: сбой одной не гасит остальные.
   const safe = (name, fn) => { try { fn(); } catch (e) { console.error(name, e); } };
 
 /*RENDER-START*/
-  const SECTOR_RU = { ai_infra: "ИИ-инфраструктура", energy: "Энергетика", health: "Медицина", ai_agents: "ИИ-агенты", defense_space: "Оборона и космос",
-    hardware: "Железо", mobility: "Транспорт", fintech: "Финтех", security: "Кибербез", b2b_saas: "B2B SaaS", proptech: "Недвижимость",
-    commerce: "E-commerce", crypto: "Крипто", consumer: "Потребительские", devtools: "DevTools", edu: "Образование" };
-  const COUNTRY_RU = { US: "США", DE: "Германия", IN: "Индия", KR: "Корея", PL: "Польша", BG: "Болгария", AU: "Австралия", TW: "Тайвань", RU: "Россия",
-    GB: "Великобритания", UK: "Великобритания", FR: "Франция", KZ: "Казахстан", UZ: "Узбекистан", CN: "Китай", JP: "Япония", SG: "Сингапур", IL: "Израиль",
-    CA: "Канада", NL: "Нидерланды", ES: "Испания", SE: "Швеция", BR: "Бразилия", AE: "ОАЭ", CH: "Швейцария", FI: "Финляндия", IT: "Италия", ID: "Индонезия" };
+  const SECTOR_RU = I.sectors;
+  const COUNTRY_RU = I.countries;
   const STAGE = { "pre-seed": "Pre-seed", seed: "Seed", a: "Series A", b: "Series B", "c+": "Series C+" };
-  const MON = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
-  const nf = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  const usd = (v) => v >= 1e9 ? "$" + (v / 1e9).toFixed(v >= 1e11 ? 0 : 1).replace(".", ",").replace(",0", "") + " млрд"
-    : "$" + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1).replace(".", ",").replace(",0", "") + " млн";
+  const MON = I.mon;
+  const nf = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, I.thou);
+  const usd = (v) => v >= 1e9 ? "$" + (v / 1e9).toFixed(v >= 1e11 ? 0 : 1).replace(".", I.dec).replace(I.dec + "0", "") + I.bn
+    : "$" + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1).replace(".", I.dec).replace(I.dec + "0", "") + I.mn;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const SOURCES = ["X", "Hacker News", "Y Combinator", "GitHub", "Product Hunt", "Google News", "TechCrunch", "Crunchbase News", "EU-Startups",
     "SEC Form D", "PR Newswire", "GlobeNewswire", "Business Wire", "Astana Hub", "Devpost", "HN Hiring", "Google Trends"];
-  const DEMOS = [
-    { q: "Куда идут деньги в ИИ-агентах?", a: [
-      ["v", "<b>Горячо.</b> 148 раундов и $11,5 млрд за 90 дней — четвёртое место из 16 секторов."],
-      ["q", "coin", "Свежие сделки", "Flow Engineering — $50 млн, Series B · Medow Health AI — $2,3 млн, Seed"],
-      ["q", "compass", "Где свободнее", "Агенты под одну отрасль: недвижимость, медицина, юристы"],
-      ["q", "target", "Первый шаг", "Выберите отрасль и проверьте идею командой /check"] ] },
-    { q: "/check ИИ-ассистент для частных клиник в Казахстане", a: [
-      ["v", "<b>Делать, но узко.</b> Медицина — самый частый сектор: 278 раундов за 90 дней."],
-      ["q", "coin", "Деньги в нише есть", "Alma — $17 млн, Series A · Aleph Surgery — $7,5 млн, Pre-seed"],
-      ["q", "alert", "Что против", "В СНГ за 90 дней — 1 раунд в медицине. Платить будут клиники, а продажи им долгие"],
-      ["q", "flask", "Проверка за 7 дней", "10 интервью с главврачами частных сетей и лендинг с ценой"] ] },
-    { q: "Кто конкуренты в proptech?", a: [
-      ["v", "<b>Ниша не перегрета:</b> 43 раунда и $1,9 млрд за 90 дней."],
-      ["q", "flag", "Кто привлёк", "Kuro (Германия) — $10,8 млн, Seed · Zaritalk (Корея) — $10,7 млн, Series A · Quotr (США) — $4 млн, Seed"],
-      ["q", "globe", "Где пусто", "В СНГ за 90 дней — ни одного раунда в proptech"],
-      ["q", "bulb", "Идея", "Повторить рабочую модель из Кореи или Германии для своего города"] ] },
-  ];
+  const DEMOS = I.demos;
   // В переписке — эмодзи, как в самом Telegram; свои иконки — только на сайте вокруг.
   const EMO = { coin: "💸", compass: "🧭", target: "🎯", alert: "⚠️", flask: "🧪", flag: "🏁", globe: "🌍", bulb: "💡", search: "🔎", map: "🗺", bell: "🔔" };
   const ico = (id) => (EMO[id] || "") + " ";
-  const KB = `<div class="kb"><span>${ico("search")}Глубже</span><span>${ico("map")}Карта идеи</span><span>${ico("compass")}Смежные ниши</span><span>${ico("flag")}Конкуренты</span><span>${ico("bell")}Следить</span><span>🌐 Искать везде</span></div>`;
+  const KB = `<div class="kb">${I.kb.map(([e, t]) => `<span>${ico(e)}${t}</span>`).join("")}</div>`;
   function tickerHTML(D) {
     const items = (D.recent || []).filter((r) => r.c && r.usd).map((r) => {
       const d = new Date(r.ts * 1000);
@@ -53,10 +34,10 @@
   function chartHTML(D) {
     const secs = (D.sectors || []).filter((s) => SECTOR_RU[s.s]);
     const max = Math.max(...secs.map((s) => s.usd));
-    return secs.map((s, i) => `<div class="row" title="${nf(s.n)} раундов"><span class="nm">${SECTOR_RU[s.s]}</span>` +
+    return secs.map((s, i) => `<div class="row" title="${nf(s.n)} ${I.rounds}"><span class="nm">${SECTOR_RU[s.s]}</span>` +
       `<span class="tr"><i style="--w:${(s.usd / max * 100).toFixed(1)}%;--d:${(i * 0.05).toFixed(2)}s"></i></span>` +
-      `<span class="v">${usd(s.usd)}<span class="cnt">${nf(s.n)} раундов</span></span></div>`).join("") +
-      `<div class="foot mono"><span>Сумма раундов за 90 дней</span><span>источник: база Launch Scout</span></div>`;
+      `<span class="v">${usd(s.usd)}<span class="cnt">${nf(s.n)} ${I.rounds}</span></span></div>`).join("") +
+      `<div class="foot mono"><span>${I.chartFoot}</span><span>${I.chartSrc}</span></div>`;
   }
   function chatHTML(i) {
     const d = DEMOS[i];
@@ -72,8 +53,8 @@
     const map = { usd90: usd(DATA.usd90), rounds90: nf(DATA.rounds90), countries: nf(DATA.countries), niches: nf(DATA.niches) };
     document.querySelectorAll("[data-k]").forEach((el) => { const v = map[el.dataset.k]; if (v) el.textContent = v; });
     const d = new Date(DATA.ts * 1000);
-    document.getElementById("upd").textContent = d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
-    document.getElementById("liveTxt").textContent = "Рев. " + String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear();
+    document.getElementById("upd").textContent = I.date.replace("{d}", d.getDate()).replace("{m}", MON[d.getMonth()]).replace("{y}", d.getFullYear());
+    document.getElementById("liveTxt").textContent = I.rev + " " + String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear();
     document.getElementById("track").innerHTML = tickerHTML(DATA);
     document.getElementById("chart").innerHTML = chartHTML(DATA);
   }
@@ -88,6 +69,7 @@
     document.querySelectorAll('a[href*="t.me/Launch_Scout_bot"]').forEach((a) => { a.href = "https://t.me/Launch_Scout_bot?start=" + code; });
     document.getElementById("promoCode").textContent = code.toUpperCase();
     document.getElementById("promoNote").hidden = false;
+    document.querySelectorAll(".langs a").forEach((a) => { a.href = a.getAttribute("href").split("?")[0] + "?promo=" + code; });
   });
 
   // ---------- прожектор под курсором ----------
@@ -109,7 +91,7 @@
   safe("clock", () => {
     const clock = document.getElementById("clock");
     const tick = () => { const d = new Date(), left = 600 - ((d.getMinutes() % 10) * 60 + d.getSeconds());
-      clock.textContent = "СЛЕД. ПРОГОН " + String(Math.floor(left / 60)).padStart(2, "0") + ":" + String(left % 60).padStart(2, "0"); };
+      clock.textContent = I.next + " " + String(Math.floor(left / 60)).padStart(2, "0") + ":" + String(left % 60).padStart(2, "0"); };
     tick(); setInterval(tick, 1000);
   });
 
@@ -189,7 +171,7 @@
       tabs.forEach((t, k) => { t.setAttribute("aria-selected", k === i ? "true" : "false"); t.querySelector(".prog").classList.remove("run"); });
       const d = DEMOS[i];
       chat.innerHTML = `<div class="msg me">${esc(d.q)}</div>`;
-      status.textContent = "печатает…";
+      status.textContent = I.typing;
       const typing = document.createElement("div"); typing.className = "msg bot typing"; typing.innerHTML = "<i></i><i></i><i></i>"; chat.appendChild(typing);
       await sleep(380); if (id !== run) return;
       typing.remove();
@@ -202,7 +184,7 @@
       }
       chat.insertAdjacentHTML("beforeend", KB.replace('class="kb"', 'class="kb wait"'));
       await sleep(60); const kb = chat.querySelector(".kb"); if (kb) kb.classList.remove("wait");
-      status.textContent = "венчурный радар";
+      status.textContent = I.status;
       tabs[i].style.setProperty("--dur", "6.3s");
       const prog = tabs[i].querySelector(".prog"); void prog.offsetWidth; prog.classList.add("run");
       clearTimeout(autoT); autoT = setTimeout(() => { if (id === run) play((i + 1) % DEMOS.length); }, 6300);
@@ -220,17 +202,17 @@
     async function loop() {
       for (;;) {
         rows.forEach((r) => { r.className = "srow"; r.querySelector(".st").textContent = "…"; });
-        setStep(0); scanState.textContent = "черновик"; beam.style.opacity = 0;
+        setStep(0); scanState.textContent = I.scan[0]; beam.style.opacity = 0;
         await sleep(1600);
-        setStep(1); scanState.textContent = "проверка";
+        setStep(1); scanState.textContent = I.scan[1];
         for (const r of rows) {
           beam.style.opacity = 1; beam.style.top = (r.offsetTop + r.offsetHeight / 2) + "px";
-          r.classList.add("looking"); r.querySelector(".st").textContent = "ищу источник…";
+          r.classList.add("looking"); r.querySelector(".st").textContent = I.scan[2];
           await sleep(1100);
           r.classList.remove("looking"); r.classList.add(r.dataset.res); r.querySelector(".st").textContent = r.dataset.src;
           await sleep(350);
         }
-        beam.style.opacity = 0; setStep(2); scanState.textContent = "готово";
+        beam.style.opacity = 0; setStep(2); scanState.textContent = I.scan[3];
         await sleep(500); rows[2].classList.add("gone");
         await sleep(4200);
       }
