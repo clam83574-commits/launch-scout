@@ -2483,14 +2483,13 @@ async function gateNiches(env, question, cands) {
     });
     if (!r.ok) {
       await noteAiError(env, "groq gate", r.status, await r.text().catch(() => ""));
-      return cands.map((c) => c.niche);
+      return null;
     }
     const t = ((await r.json()).choices[0].message.content || "").trim();
     const keep = (JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)).keep || []).map(Number);
-    const out = keep.filter((i) => cands[i]).map((i) => cands[i].niche);
-    return out.length ? out : cands.map((c) => c.niche);
+    return keep.filter((i) => cands[i]).map((i) => cands[i].niche);   // пустой список — «ничего не подходит»
   } catch (e) {
-    return cands.map((c) => c.niche);
+    return null;                                                       // сбой фильтра — решает вызывающий
   } finally {
     clearTimeout(timer);
   }
@@ -2525,10 +2524,16 @@ const SYNONYMS = [
   [/путешеств|туризм|travel/i, ["travel"]], [/еда|ресторан|food/i, ["food", "restaurant"]],
 ];
 
+// Слова, которые есть в названиях сотен ниш и ничего не говорят о теме вопроса.
+const LEX_GENERIC = new Set(("system systems platform platforms service services solution solutions software startup startups " +
+  "company companies business businesses market markets niche niches product products subscription starting employees check " +
+  "focus about which should target targets working inside still model models based small medium large users customers " +
+  "tools management online digital smart").split(" "));
+
 function lexicalStems(question) {
   const out = new Set();
   for (const [rx, stems] of SYNONYMS) if (rx.test(question)) stems.forEach((x) => out.add(x));
-  for (const w of question.toLowerCase().match(/[a-z][a-z-]{4,}/g) || []) out.add(w.slice(0, 7));
+  for (const w of question.toLowerCase().match(/[a-z][a-z-]{4,}/g) || []) if (!LEX_GENERIC.has(w)) out.add(w.slice(0, 7));
   return [...out].slice(0, 8);
 }
 
@@ -2542,7 +2547,7 @@ const usdM = (v) => (v ? (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${(v / 1e6)
 async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
   const facts = [];
   const add = (text, url = null) => { facts.push({ id: facts.length + 1, text, url }); return facts.length; };
-  let names = [];
+  let names = [], vecNames = [];
   if (niche) names = [niche];
   else {
     const clean = question.replace(STOP_WORDS, " ").replace(/\s+/g, " ").trim() || question;
@@ -2562,6 +2567,7 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
       const ms = (res && res.matches) || [];
       const best = ms.length ? ms[0].score : 0;
       names = ms.filter((m) => m.score >= NICHE_SIM_MIN && m.score >= best - 0.08).map((m) => m.metadata && m.metadata.niche).filter(Boolean);
+      vecNames = names.slice();
     }
     // Объединение: сначала совпавшие по словам (их точность выше), затем
     // по смыслу; всего не больше 16 кандидатов — дальше решает фильтр.
@@ -2583,10 +2589,13 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
   ]);
   const by = Object.fromEntries((matrixRes.results || []).map((r) => [r.niche, r]));
   let found = names.filter((n) => by[n]).map((n) => ({ niche: n, name_ru: by[n].name_ru }));
-  if (keepList) {
+  if (Array.isArray(keepList)) {
     const keep = new Set(keepList);
-    const kept = found.filter((c) => keep.has(c.niche));
-    if (kept.length) found = kept;
+    found = found.filter((c) => keep.has(c.niche));
+  } else if (gateP && vecNames.length) {
+    // Фильтр не ответил: совпадения только по слову ненадёжны — оставляем смысловые.
+    const vs = new Set(vecNames);
+    found = found.filter((c) => vs.has(c.niche));
   }
   lastKept = found.map((c) => c.niche);
   const rows = [];
@@ -2668,13 +2677,16 @@ const FAST_RULES = `Never add up or compute numbers yourself: for any sum or cou
 Never recommend building or investing in businesses based on interest-bearing lending (riba), gambling or betting, alcohol, cannabis, pork or adult content: you may state their numbers neutrally as market facts, but do not present them as opportunities, next steps or ideas for the user.
 Interpret, do not just list: say whether the evidence shows an open window (demand, few funded players), a forming market (many early rounds and similar products — look for an unserved vertical) or an overheated one (mega-rounds, late stages, dozens of players).
 Market numbers (money, rounds, investors, niches) come from our dataset facts (TOTAL, NICHE, ROUND, INVESTOR LEADERBOARD); WEB, HACKER NEWS and GITHUB facts describe specific companies and products or complement the dataset. Ignore facts that do not answer the question (other countries' corporate spending, unrelated companies).
+CONVERSATION: earlier messages are the same founder talking about the same project. Read a short follow-up in the light of them and keep their product, market and price in mind; never answer a follow-up as if it were a new unrelated question.
+THE FOUNDER'S OWN PRODUCT: when the founder describes a product and gives its site or name ("check mysite.com", "our product", "we have"), that product is THEIRS. Never list it as a competitor, never say "it already exists" about it, never compare it with itself — evaluate it and compare it with OTHER companies. Features of their product (e.g. built-in AI agents) are parts of that product: judge them inside its category and for its buyers, not as a separate market.
+NARROW BEATS BROAD: when the question is about a specific category (e.g. AI agents built into an ERP for small businesses), base the verdict on the NICHE facts that match it most narrowly. Never carry a broad niche's verdict over to it: if the broad niche (e.g. enterprise AI agents) is overheated but the narrow one has few funded players, say exactly that, with both numbers.
 Never open with what is missing (no "В данных нет…", "No data on…"): the first line answers the question with what the evidence shows; if something asked is not in FACTS, say it in one short line at the end.
 FORMAT for a phone screen: the first line is the verdict in one sentence wrapped in **double asterisks**. Then blocks, one per line, each like: "<ONE emoji> **Short title, 2-4 words** — 1-2 short sentences". Emojis: 💰 money · 📈 growth · 🔎 search interest · 🏁 competitors · 🇰🇿 Kazakhstan/CIS · 💼 investors · 🙋 demand · ⚠️ risk · 💡 idea. Key numbers and names in **bold**. A blank line between blocks. No # headers, no tables, no other markdown. Answer in %LANG%.`;
 
 const FAST_SYSTEM = {
   chat: `You are the analyst inside launch-scout, a market radar for founders (Kazakhstan first, then CIS/MENA, then global).
 ${FAST_RULES}
-Tailor the answer to the user's PROFILE. 3-5 bullets, then a blank line and a line like "👉 **Что сделать:**" (in the answer language) with 1-2 numbered concrete steps. At most 10 short lines — the user has buttons for a deep dive, an idea map and competitors.
+Tailor the answer to the user's PROFILE. 3-5 bullets, then a blank line and a line "👉 **<the words "What to do" translated into the answer language>:**" with 1-2 numbered concrete steps. At most 10 short lines — the user has buttons for a deep dive, an idea map and competitors.
 If the user's message tells something new about them (what they build, skills, budget, market), add a last line "PROFILE: <their updated profile in one English sentence>"; otherwise do not add it.`,
   deep: `You are the analyst inside launch-scout. Give a deep dive into ONE niche for a founder (Kazakhstan first).
 ${FAST_RULES}
@@ -2689,14 +2701,15 @@ Blocks: 🏁 leaders with prices (one line each, name in bold) · 🇰🇿 local
 ${FAST_RULES}
 Weigh posts by engagement and author audience; ignore spam and giveaways. Blocks: 🗣 what people say (2-4 bullets) · 🔎 search interest (worldwide and Kazakhstan) · 💡 what it means for the founder. At most 14 lines.`,
   check: `You are the analyst inside launch-scout. The user gives a startup idea. First try to KILL it with evidence, then say honestly whether it survives. Market priority: Kazakhstan, then CIS/MENA, then global.
+If the idea names a site or product the founder already runs (e.g. "check mysite.com"), that is the founder's own product: test its market and positioning against OTHER companies; never list it as a competitor.
 ${FAST_RULES}
-Format: ❌/⚠️ lines — strongest reasons not to do it; 🟢 lines — evidence for it; "Вердикт:" one of делать / делать узко (which segment) / не делать, with one sentence why; then 3 steps to verify in 7 days. At most 18 lines.`,
+Format: ❌/⚠️ lines — strongest reasons not to do it; 🟢 lines — evidence for it; a "Verdict:" line written in the answer language (e.g. "Вердикт:" in Russian) with one of: do it / do it narrowly (which segment) / don't do it — and one sentence why; then 3 steps to verify in 7 days. At most 18 lines.`,
 };
 
 /** Потоковый ответ OpenRouter: onDelta(текст до сих пор). Возвращает полный текст или null. */
 // Первое слово не пришло за это время — обрываем и идём к запасной модели:
 // на замере 2026-09-30 провайдер Gemini изредка молчал 13–15 секунд.
-const FIRST_TOKEN_MS = 4500;
+const FIRST_TOKEN_MS = 6500;
 const FALLBACK_FAST_MODEL = "openai/gpt-oss-120b";
 
 async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000, maxTokens = 1800, firstMs = FIRST_TOKEN_MS, meter = null) {
@@ -2710,7 +2723,9 @@ async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
         "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
       body: JSON.stringify({ model, messages, stream: true, max_tokens: maxTokens, temperature: 0.3, usage: { include: true },
-        reasoning: { effort: "low", exclude: true },
+        // Gemini: минимум «размышления» перед ответом — иначе первое слово
+        // приходит через 5+ секунд (1 октября 2026 — 9 срывов за час).
+        reasoning: { effort: (env.LS_REASONING || (model.startsWith("google/") ? "minimal" : "low")), exclude: true },
         // gpt-oss — на серверах Groq через OpenRouter: первое слово за доли
         // секунды и сотни токенов в секунду, без минутного лимита бесплатного Groq.
         ...(model.startsWith("openai/gpt-oss") ? { provider: { order: ["groq"], allow_fallbacks: true } } : {}) }),
@@ -4057,10 +4072,15 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   if (!env.AI || !env.VEC || !env.LS_OPENROUTER_KEY) return false;
   const snap = await loadSnapshot(env);   // кэш на минуту — обычно мгновенно
   // План живого поиска — параллельно с матрицей (быстрая модель, ~1 с).
-  const planP = mode === "chat" || mode === "check" || mode === "map" ? planSearch(env, question) : Promise.resolve(null);
+  // Короткий вопрос после разговора — уточнение: ищем с учётом прошлого вопроса
+  // («А агенты внутри ERP?» — это про ERP человека, а не про агентов вообще).
+  const lastUser = [...hist].reverse().find((h) => h.role === "user");
+  const followUp = !niche && lastUser && question.length < 220 && !question.startsWith("/");
+  const rq = followUp ? `${question}\n(Context — the founder's previous message: ${String(lastUser.text).slice(0, 400)})` : question;
+  const planP = mode === "chat" || mode === "check" || mode === "map" ? planSearch(env, rq) : Promise.resolve(null);
   let fx;
   try {
-    fx = await matrixFacts(env, question, { niche, snap });
+    fx = await matrixFacts(env, rq, { niche, snap });
   } catch (e) {
     await noteAiError(env, "matrix", 0, String(e));
     return false;
@@ -4109,7 +4129,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   const factText = fx.facts.map((f) => `[F${f.id}] ${f.text}`).join("\n").slice(0, 16000);
   const messages = [
     { role: "system", content: FAST_SYSTEM[mode].replace("%LANG%", LANG_EN[lang] || "Russian") },
-    ...(mode === "chat" ? hist.slice(-4).map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, 800) })) : []),
+    ...hist.slice(-6).map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.text).slice(0, 900) })),
     { role: "user", content: `TODAY: ${new Date().toISOString().slice(0, 10)}\nPROFILE: ${profile || "unknown"}\n\nFACTS:\n${factText}\n\n${mode === "check" ? "IDEA" : "QUESTION"}: ${question.slice(0, 1500)}` },
   ];
   // Поток: первое сообщение — как только пришли первые слова, дальше правим
@@ -4130,12 +4150,15 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   };
   const maxTok = mode === "chat" ? 1100 : 2000;
   let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, onDelta, 25000, maxTok, FIRST_TOKEN_MS, meter);
+  // Запасные: сначала облегчённая Gemini (быстрая, держит правила ответа), потом gpt-oss.
+  if (!full && !msgId) full = await streamOpenRouter(env, WEB_FAST_MODEL, messages, onDelta, 20000, maxTok, 5000, meter);
   if (!full && !msgId) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, messages, onDelta, 20000, maxTok, 8000, meter);
   await clearStatus();
   if (!full || !full.trim()) {
     if (msgId) await tg(env, "deleteMessage", { chat_id: chatId, message_id: msgId });
     return false;
   }
+  full = full.replace(/【(F[^】]{0,40})】/g, "[$1]").replace(/\[F[^\]]{0,40}\]/g, (m) => m.replace(/[\u2010-\u2015]/g, "-"));
   const prof = /\nPROFILE:\s*(.+)$/s.exec(full);
   const body = full.replace(/\nPROFILE:.*$/s, "").trim();
   const { html, unsupported } = groundAnswer(body, fx.facts, question + " " + profile);
@@ -4143,10 +4166,15 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   // Списание: живой поиск — по цене поиска, иначе по режиму ответа.
   const charge = free ? { spent: 0, left: null } : await lsSpend(env, chatId, liveRes ? (upgrade ? "live_up" : "live") : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
   // Плашки-«посты» — после одобрения владельцем (переменная LS_CARDS=1).
-  let finalText = (html ? (env.LS_CARDS === "0" ? html : cardify(html)) : esc(body));
+  // Проверка фактов могла выкинуть шаг из списка — нумеруем заново (без «2.» первым пунктом).
+  const renum = (t) => { let n = 0; return t.split("\n").map((l) => {
+    if (/^\s*\d+\.\s/.test(l)) { n++; return l.replace(/^(\s*)\d+\./, `$1${n}.`); }
+    if (l.trim()) n = 0;
+    return l; }).join("\n"); };
+  let finalText = (html ? (env.LS_CARDS === "0" ? renum(html) : cardify(renum(html))) : esc(body));
   // Обрезка не должна разрывать плашку: выкидываем последние блоки целиком.
   while (finalText.length > 3900 && finalText.includes("<blockquote>")) finalText = finalText.slice(0, finalText.lastIndexOf("<blockquote>")).trim();
-  finalText = finalText.slice(0, 3900);
+  finalText = finalText.replace(/[ \u00a0]+([.,;:!?])/g, "$1").slice(0, 3900);
   // Кнопки под ответом: что можно сделать с этой нишей дальше.
   const prevCtx = mode === "chat" || mode === "check" ? {} : await loadCtx(env, chatId);
   const top = fx.niches[0];
@@ -4874,10 +4902,11 @@ export default {
       const t0 = Date.now();
       const q = url.searchParams.get("q") || "", mode = url.searchParams.get("mode") || "chat";
       const okA = await fastAnswer(env, "debug", q, url.searchParams.get("lang") || "ru", mode,
-        { niche: url.searchParams.get("niche") || null, live: url.searchParams.get("live") === "1" });
+        { niche: url.searchParams.get("niche") || null, live: url.searchParams.get("live") === "1",
+          hist: url.searchParams.get("prev") ? [{ role: "user", text: url.searchParams.get("prev") }, { role: "assistant", text: url.searchParams.get("prevA") || "" }] : [] });
       const cap = globalThis.__tgCap.map((c) => ({ ...c, t: c.t - t0 }));
       globalThis.__tgCap = null;
-      return json({ ok: okA, total_ms: Date.now() - t0, calls: cap, check: lastUnsupported });
+      return json({ ok: okA, total_ms: Date.now() - t0, kept: lastKept, ctx: await loadCtx(env, "debug"), calls: cap, check: lastUnsupported });
     }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-web") {
       const t0 = Date.now();
