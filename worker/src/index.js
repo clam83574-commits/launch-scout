@@ -332,6 +332,7 @@ const EXTRA = {
     why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
+    ab_live_p: "📡 Искать везде · +%d LS", ab_xtrends: "📡 X и Google Trends · %d LS",
     st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS в месяц на вопросы, поиск и разборы. Продление каждые 30 дней, отмена в любой момент.", st_descr_pack: "Докупленные LS не сгорают и тратятся после подписочных.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Счёт готов — оплата в один клик звёздами Telegram.", st_pay_btn: "Оплатить %d ⭐", st_ok_sub: "✅ Тариф <b>%s</b> подключён: %d LS до %s.", st_ok_pack: "✅ +%d LS. Докупленных теперь %d — они не сгорают.", st_support_hint: "Опишите проблему одним сообщением: /paysupport <текст>. Передам владельцу.", st_support_ok: "Передал — ответим здесь же.", ls_pay_soon: "Оплата — звёздами Telegram, кнопки ниже. Условия — /terms.", st_terms: "<b>Условия Launch Scout</b>\n\n1. Сервис даёт аналитику рынка и ответы ИИ по открытым данным. Это не инвестиционная рекомендация; решения вы принимаете сами.\n2. Действия оплачиваются внутренними единицами LS по фиксированному прайсу (/balance): вопрос — 10 LS; если для ответа нужен живой поиск в интернете (вопрос о конкретной компании, продукте или новостях) — 40 LS, и бот сообщает об этом в начале поиска. Подписочные LS действуют один расчётный месяц и не переносятся; докупленные LS не сгорают.\n3. Подписка оплачивается Telegram Stars и продлевается каждые 30 дней, пока вы её не отмените в настройках Telegram. Сервис не начисляет проценты, штрафы и скрытые платежи.\n4. Оплата за оказанный период не возвращается. Исключение — технический сбой: звёзды списаны, а тариф или LS не начислены, или списание прошло дважды. Напишите /paysupport, исправим или вернём звёзды.\n5. Вопросы об оплате — /paysupport.",
     ls_footer: "−%d LS · осталось %d LS", ls_low: "⚠️ Осталось %d LS — меньше 10% месячного лимита.", ls_short: "💳 На это нужно %d LS, а у вас %d.", ls_balance: "💳 <b>Тариф: %s</b>\nПодписочные LS: <b>%d</b> · докупленные: <b>%d</b>\nПодписочные обновятся %s; докупленные не сгорают.", ls_tariffs_title: "<b>Тарифы</b>", ls_plan_free: "Free — $%s · %s LS в месяц", ls_plan_pro: "Pro — $%s · %s LS в месяц", ls_plan_max: "Max — $%s · %s LS в месяц", ls_plan_promax: "Pro Max — $%s · %s LS в месяц", ls_pack: "Докупить: %s LS за $%s — не сгорают", ls_prices: "Цена действий: вопрос 10 · глубже / карта идеи / конкуренты 20 · проверка идеи 30 · живой поиск 40 · X и Google Trends 15 · карточка идеи 10 LS. Сводка, лента и радар — бесплатно.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "База раундов", src_web: "Веб и новости", live_head: "🔎 Живой поиск в интернете (40 LS): %s", research_started: "📡 Запустил глубокий поиск по X и Google Trends — дополнение придёт отдельным сообщением через 1–2 минуты.", research_limit: "📡 Глубокий поиск — до %d раз в сутки, лимит на сегодня исчерпан.", research_err: "📡 Глубокий поиск сейчас не запустился — попробуйте позже.", research_head: "📡 <b>Дополнение: X и Google Trends</b>", research_empty: "📡 В X и Google Trends по этому запросу ничего заметного.", ab_deep: "🔬 Глубже", ab_map: "🗺 Карта идеи", ab_wide: "🧭 Смежные ниши", ab_comp: "⚔️ Конкуренты", ab_follow: "🔔 Следить", ab_unfollow: "✅ Слежу", ab_live: "📡 Искать везде", ctx_gone: "Контекст устарел — задайте вопрос заново", adj_title: "🧭 <b>Рядом с «%s»</b>", adj_line: "компаний за 6 мес: %d, ранних %d, %s", onboard: "👋 Пять быстрых вопросов — и я буду подбирать ниши и инсайты под вас. Отметьте, что подходит, и нажмите «Показать радар».",
@@ -386,6 +387,7 @@ const EXTRA = {
     why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
+    ab_live_p: "📡 Барлық жерден іздеу · +%d LS", ab_xtrends: "📡 X және Google Trends · %d LS",
     st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "Айына %d LS: сұрақтар, іздеу және талдаулар. 30 күн сайын ұзартылады, кез келген уақытта тоқтатуға болады.", st_descr_pack: "Сатып алынған LS күймейді және жазылым LS-тен кейін жұмсалады.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Шот дайын — Telegram жұлдыздарымен бір рет басып төлеңіз.", st_pay_btn: "%d ⭐ төлеу", st_ok_sub: "✅ <b>%s</b> тарифі қосылды: %d LS, %s дейін.", st_ok_pack: "✅ +%d LS. Сатып алынғандары енді %d — күймейді.", st_support_hint: "Мәселені бір хабарламамен жазыңыз: /paysupport <мәтін>.", st_support_ok: "Жіберілді — осында жауап береміз.", ls_pay_soon: "Төлем — Telegram жұлдыздарымен, батырмалар төменде. Шарттар — /terms.", st_terms: "<b>Launch Scout шарттары</b>\n\n1. Сервис ашық деректер бойынша нарық аналитикасын және ЖИ жауаптарын береді. Бұл инвестициялық кеңес емес.\n2. Әрекеттер LS бірліктерімен тұрақты баға бойынша төленеді (/balance): сұрақ — 10 LS; жауапқа интернеттен тікелей іздеу керек болса (нақты компания, өнім не жаңалық туралы сұрақ) — 40 LS, бот бұл туралы іздеу басында хабарлайды. Жазылым LS бір есеп айы жарамды және келесі айға ауыспайды; сатып алынған LS күймейді.\n3. Жазылым Telegram Stars арқылы төленеді және 30 күн сайын ұзартылады. Сервис пайыз, айыппұл және жасырын төлем алмайды.\n4. Көрсетілген кезең үшін төлем қайтарылмайды. Ерекшелік — техникалық ақау: жұлдыздар алынды, бірақ тариф не LS берілмеді, не екі рет алынды. /paysupport жазыңыз.\n5. Төлем сұрақтары — /paysupport.",
     ls_footer: "−%d LS · қалды %d LS", ls_low: "⚠️ %d LS қалды — айлық лимиттің 10%-нан аз.", ls_short: "💳 Бұған %d LS керек, сізде %d.", ls_balance: "💳 <b>Тариф: %s</b>\nЖазылым LS: <b>%d</b> · сатып алынған: <b>%d</b>\nЖазылым LS %s жаңарады; сатып алынғандары күймейді.", ls_tariffs_title: "<b>Тарифтер</b>", ls_plan_free: "Free — $%s · айына %s LS", ls_plan_pro: "Pro — $%s · айына %s LS", ls_plan_max: "Max — $%s · айына %s LS", ls_plan_promax: "Pro Max — $%s · айына %s LS", ls_pack: "Қосымша: %s LS — $%s, күймейді", ls_prices: "Әрекет бағасы: сұрақ 10 · тереңірек / идея картасы / бәсекелестер 20 · идеяны тексеру 30 · тікелей іздеу 40 · X және Google Trends 15 · идея картасы 10 LS. Шолу, лента және радар — тегін.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Раундтар базасы", src_web: "Веб және жаңалықтар", live_head: "🔎 Интернеттен тікелей іздеу (40 LS): %s", research_started: "📡 X және Google Trends бойынша терең іздеу басталды — толықтыру 1–2 минуттан кейін бөлек хабарламамен келеді.", research_limit: "📡 Терең іздеу — тәулігіне %d рет, бүгінгі лимит бітті.", research_err: "📡 Терең іздеу қазір басталмады — кейінірек көріңіз.", research_head: "📡 <b>Толықтыру: X және Google Trends</b>", research_empty: "📡 Бұл сұрау бойынша X пен Google Trends-те елеулі ештеңе жоқ.", ab_deep: "🔬 Тереңірек", ab_map: "🗺 Идея картасы", ab_wide: "🧭 Көршілес тауашалар", ab_comp: "⚔️ Бәсекелестер", ab_follow: "🔔 Бақылау", ab_unfollow: "✅ Бақылаудамын", ab_live: "📡 Барлық жерден іздеу", ctx_gone: "Контекст ескірді — сұрақты қайта қойыңыз", adj_title: "🧭 <b>«%s» маңында</b>", adj_line: "6 айда компаниялар: %d, ерте %d, %s", onboard: "👋 Бес жылдам сұрақ — сонда тауашалар мен инсайттарды сізге қарай таңдаймын. Сәйкесін белгілеп, «Радарды көрсету» батырмасын басыңыз.",
@@ -440,6 +442,7 @@ const EXTRA = {
     why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
+    ab_live_p: "📡 Search everywhere · +%d LS", ab_xtrends: "📡 X and Google Trends · %d LS",
     st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS a month for questions, search and deep dives. Renews every 30 days, cancel anytime.", st_descr_pack: "Purchased LS never expire and are spent after plan LS.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Invoice ready — one-tap payment with Telegram Stars.", st_pay_btn: "Pay %d ⭐", st_ok_sub: "✅ Plan <b>%s</b> is on: %d LS until %s.", st_ok_pack: "✅ +%d LS. Purchased LS now %d — they never expire.", st_support_hint: "Describe the problem in one message: /paysupport <text>.", st_support_ok: "Sent — we will reply here.", ls_pay_soon: "Pay with Telegram Stars — buttons below. Terms — /terms.", st_terms: "<b>Launch Scout terms</b>\n\n1. The service provides market analytics and AI answers based on public data. It is not investment advice.\n2. Actions are paid in internal LS units at a fixed price list (/balance): a question is 10 LS; if the answer needs a live web search (a question about a specific company, product or news) it is 40 LS, and the bot says so when the search starts. Plan LS are valid for one billing month and do not roll over; purchased LS never expire.\n3. Plans are paid in Telegram Stars and renew every 30 days until you cancel in Telegram settings. No interest, penalties or hidden fees.\n4. Payments for a period already provided are not refunded. Exception — a technical failure: Stars were charged but the plan or LS were not credited, or you were charged twice. Write /paysupport and we will fix it or return the Stars.\n5. Payment questions — /paysupport.",
     ls_footer: "−%d LS · %d LS left", ls_low: "⚠️ %d LS left — under 10% of the monthly allowance.", ls_short: "💳 This needs %d LS, you have %d.", ls_balance: "💳 <b>Plan: %s</b>\nPlan LS: <b>%d</b> · purchased: <b>%d</b>\nPlan LS renew on %s; purchased LS never expire.", ls_tariffs_title: "<b>Plans</b>", ls_plan_free: "Free — $%s · %s LS a month", ls_plan_pro: "Pro — $%s · %s LS a month", ls_plan_max: "Max — $%s · %s LS a month", ls_plan_promax: "Pro Max — $%s · %s LS a month", ls_pack: "Top up: %s LS for $%s — never expire", ls_prices: "Prices: question 10 · deeper / idea map / competitors 20 · idea check 30 · live search 40 · X and Google Trends 15 · idea card 10 LS. Brief, feed and radar are free.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Rounds database", src_web: "Web and news", live_head: "🔎 Live web search (40 LS): %s", research_started: "📡 Started a deep search on X and Google Trends — the follow-up arrives as a separate message in 1–2 minutes.", research_limit: "📡 Deep search is limited to %d a day — today's limit is used up.", research_err: "📡 Deep search did not start — try again later.", research_head: "📡 <b>Follow-up: X and Google Trends</b>", research_empty: "📡 Nothing notable on X or Google Trends for this query.", ab_deep: "🔬 Deeper", ab_map: "🗺 Idea map", ab_wide: "🧭 Adjacent niches", ab_comp: "⚔️ Competitors", ab_follow: "🔔 Follow", ab_unfollow: "✅ Following", ab_live: "📡 Search everywhere", ctx_gone: "Context expired — ask again", adj_title: "🧭 <b>Next to “%s”</b>", adj_line: "companies in 6 months: %d, early %d, %s", onboard: "👋 Five quick questions — and I'll pick niches and insights for you. Tick what fits and tap “Show radar”.",
@@ -1917,7 +1920,7 @@ async function chatReply(env, chatId, question, lang, mode = "chat", opts = {}) 
   if (!groqKeys(env).length && !env.LS_OPENROUTER_KEY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_noai });
   if (total >= CHAT_MAX_PER_DAY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_day });
   if (mine >= CHAT_MAX_PER_USER) return tg(env, "sendMessage", { chat_id: chatId, text: fmt(s.chat_limit, mine) });
-  const act = opts.live ? "live" : (LS_PRICE[mode] ? mode : "chat");
+  const act = opts.upgrade ? "live_up" : opts.live ? "live" : (LS_PRICE[mode] ? mode : "chat");
   if (!(await lsCanAfford(env, chatId, act))) return lsShortMsg(env, chatId, lang, act);
   await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
 
@@ -1927,7 +1930,7 @@ async function chatReply(env, chatId, question, lang, mode = "chat", opts = {}) 
   // Быстрый путь: матрица ниш + один вызов модели с потоком (секунды).
   // Запасные ниже — цепочка инструментов и срез через Groq — только если он
   // недоступен (нет матрицы, индекса или OpenRouter не ответил).
-  if (await fastAnswer(env, chatId, question, lang, mode, { niche: opts.niche || null, profile, hist, live: !!opts.live, research: !!opts.research })) {
+  if (await fastAnswer(env, chatId, question, lang, mode, { niche: opts.niche || null, profile, hist, live: !!opts.live, research: !!opts.research, upgrade: !!opts.upgrade })) {
     await setMeta(env, "chat_calls_" + today, total + 1);
     await setMeta(env, `chat_user_${chatId}_${today}`, mine + 1);
     return;
@@ -2699,6 +2702,8 @@ function groundAnswer(text, facts, extra = "") {
       }).filter(Boolean);
       return links.length ? " " + links.join(" ") : "";
     });
+    // Больше трёх сносок подряд — шум («¹ ² … ¹⁶» в одной строке, 2026-10-01).
+    line = line.replace(/((?:\s*<a href="[^"]+">[^<]+<\/a>){3})(?:\s*<a href="[^"]+">[^<]+<\/a>)+/g, "$1");
     // Одна и та же сноска подряд («³ ³») — один раз.
     line = line.replace(/(<a href="([^"]+)">[^<]+<\/a>)(?:\s*<a href="\2">[^<]+<\/a>)+/g, "$1");
     lines.push(line.replace(/\s+$/, ""));
@@ -2761,7 +2766,7 @@ const PLANS = {
   max: { ls: 3500, usd: 9.99 },
   promax: { ls: 7000, usd: 19.99 },
 };
-const LS_PRICE = { chat: 10, live: 40, deep: 20, map: 20, comp: 20, check: 30, research: 15, idea: 10 };
+const LS_PRICE = { chat: 10, live: 40, live_up: 30, deep: 20, map: 20, comp: 20, check: 30, research: 15, idea: 10 };
 const LS_PERIOD = 30 * 86400;
 const CREDIT_PACK = { ls: 1000, usd: 3.49 };
 
@@ -2965,6 +2970,27 @@ const PLAN_SYSTEM = `You plan a live search for a market radar for startup found
 {"live": true|false, "queries": ["English search phrase, 2-5 words", "... at most 3"], "terms": ["1-3 word phrase people type into Google about this topic, at most 3"], "entities": ["company, product, fund or person names from the question"]}
 live = true if the question names a specific company, product, fund, person or event, asks for news or anything recent, or asks something a database of startup funding rounds and niches would not answer (e.g. how a product works, user numbers, pricing). Otherwise false.
 Questions like "which investors are most active", "where does the money go", "which niches are hot" are answered by the rounds database: live = false. Search phrases must not contain years unless the user gave one.`;
+
+/**
+ * Названия из вопроса без модели: «проект с названием Канго», «про Kango»,
+ * «"Nace"», латиница с заглавной. Планировщик на «с названием Канго» название
+ * не выделял, на «проект канго» — выделял (замер 2026-10-01).
+ */
+const NAME_STOP = new Set(["ai", "ии", "saas", "b2b", "b2c", "mvp", "crm", "api", "kz", "usa", "сша", "снг", "казахстан", "казахстане", "узбекистан", "рынок", "рынке", "ниша", "нише", "стартап", "стартапы", "идея", "идею", "для", "под", "над", "без", "при", "или", "что", "как", "это", "где", "который", "которая", "которые", "the", "for", "with", "and", "that", "which"]);
+function nameHints(q) {
+  const out = new Set();
+  const add = (x) => {
+    const v = String(x || "").replace(/[?!.,;:]+$/, "").trim();
+    if (v.length >= 3 && v.length <= 40 && !NAME_STOP.has(v.toLowerCase())) out.add(v);
+  };
+  for (const m of q.matchAll(/[«"“]([^»"”]{2,40})[»"”]/g)) add(m[1]);
+  for (const m of q.matchAll(/(?:названием|называется|компани[яиюей]|стартап[а-я]*|проект[а-я]*|сервис[а-я]*|продукт[а-я]*|приложени[еяю]|\bпро|\babout|called|named)\s+([\p{L}\p{N}][\p{L}\p{N}.\-]{2,30}(?:\s[\p{Lu}][\p{L}\p{N}.\-]{1,20})?)/gu)) {
+    if (/^(какой|какие|какую|который|этот|эту|это|сейчас|рынок|нишу|идею|себя|него|них|startup|project|company)/i.test(m[1])) continue;
+    add(m[1]);
+  }
+  for (const m of q.matchAll(/(?<![\p{L}])([A-Z][a-z0-9]+(?:[.\-][A-Za-z]+)?(?:\s[A-Z][a-z0-9]+)?)/gu)) add(m[1]);
+  return [...out].slice(0, 3);
+}
 
 async function planSearch(env, question) {
   const fallback = { live: false, queries: [question.slice(0, 80)], terms: [], entities: [] };
@@ -3223,11 +3249,15 @@ async function researchAnswer(env, res) {
 // 🧭 Кнопки под ответом и смежные ниши
 // ---------------------------------------------------------------------------
 function answerKb(s, ctx, following) {
-  if (!ctx.niche) return { inline_keyboard: [[{ text: s.ab_map, callback_data: "ca:map" }, { text: s.ab_live, callback_data: "ca:live" }]] };
+  // Цена — прямо на кнопке: после ответа по базе доплата до 40 LS, после
+  // живого поиска остаются только X и Google Trends.
+  const live = { text: ctx.liveDone ? fmt(s.ab_xtrends, LS_PRICE.research) : fmt(s.ab_live_p, LS_PRICE.live_up), callback_data: "ca:live" };
+  if (!ctx.niche) return { inline_keyboard: [[live], [{ text: s.ab_map, callback_data: "ca:map" }]] };
   return { inline_keyboard: [
     [{ text: s.ab_deep, callback_data: "ca:deep" }, { text: s.ab_map, callback_data: "ca:map" }],
     [{ text: s.ab_wide, callback_data: "ca:wide" }, { text: s.ab_comp, callback_data: "ca:comp" }],
-    [{ text: following ? s.ab_unfollow : s.ab_follow, callback_data: "ca:follow" }, { text: s.ab_live, callback_data: "ca:live" }],
+    [{ text: following ? s.ab_unfollow : s.ab_follow, callback_data: "ca:follow" }],
+    [live],
   ] };
 }
 
@@ -3296,14 +3326,21 @@ async function answerAction(env, chatId, lang, data, prefs, cb, msgId) {
     if (msgId) await tg(env, "editMessageReplyMarkup", { chat_id: chatId, message_id: msgId, reply_markup: answerKb(s, ctx, on) });
     return;
   }
-  if (act === "live" && ctx.q) return chatReply(env, chatId, ctx.q, lang, "chat", { niche: null, live: true, research: true });
+  if (act === "live" && ctx.q && ctx.liveDone) {
+    // Живой поиск уже был — остаются X и Google Trends.
+    if (!(await lsCanAfford(env, chatId, "research"))) return lsShortMsg(env, chatId, lang, "research");
+    const r = await researchDispatch(env, chatId, lang, ctx.q, { queries: ctx.queries || [ctx.q.slice(0, 80)], terms: ctx.terms || [] });
+    if (!r) await lsSpend(env, chatId, "research", 0);
+    return tg(env, "sendMessage", { chat_id: chatId, text: r === "limit" ? fmt(s.research_limit, RESEARCH_PER_USER) : r ? s.research_err : s.research_started });
+  }
+  if (act === "live" && ctx.q) return chatReply(env, chatId, ctx.q, lang, "chat", { niche: null, live: true, research: true, upgrade: true });
 }
 
 /**
  * Быстрый ответ по матрице. mode: chat | deep (niche задана) | check.
  * Возвращает true, если ответ отправлен; false — пусть отвечает запасной путь.
  */
-async function fastAnswer(env, chatId, question, lang, mode, { niche = null, profile = "", hist = [], live = false, research = false } = {}) {
+async function fastAnswer(env, chatId, question, lang, mode, { niche = null, profile = "", hist = [], live = false, research = false, upgrade = false } = {}) {
   const s = L(lang);
   if (!env.AI || !env.VEC || !env.LS_OPENROUTER_KEY) return false;
   const snap = await loadSnapshot(env);   // кэш на минуту — обычно мгновенно
@@ -3325,7 +3362,9 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   const invAnswered = INVESTOR_Q.test(question) && (((marketOf(snap) || {}).report || {}).investors_top || []).length > 0;
   // Названа конкретная компания (домен или имя из плана) — ищем всегда: модель-
   // планировщик то включала поиск на «insora.dev», то нет (2026-10-01).
-  const named = /\b[a-z0-9-]{2,}\.(?:ai|dev|io|com|co|app|so|xyz|tech|kz|ru|org|net)\b/i.test(question)
+  const hints = nameHints(question);
+  if (plan && hints.length) plan.entities = [...new Set([...plan.entities, ...hints])];
+  const named = /\b[a-z0-9-]{2,}\.(?:ai|dev|io|com|co|app|so|xyz|tech|kz|ru|org|net)\b/i.test(question) || hints.length > 0
     || (plan && plan.entities.some((e) => e.length >= 3 && !/^(ai|ии|saas|b2b|b2c)$/i.test(e)));
   // Живой поиск дороже (40 LS): без баланса на него отвечаем по базе.
   const meter = { usd: 0 };
@@ -3390,9 +3429,9 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   const { html, unsupported } = groundAnswer(body, fx.facts, question + " " + profile);
   lastUnsupported = { unsupported, raw: body, facts: fx.facts.length };
   // Списание: живой поиск — по цене поиска, иначе по режиму ответа.
-  const charge = await lsSpend(env, chatId, liveRes ? "live" : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
+  const charge = await lsSpend(env, chatId, liveRes ? (upgrade ? "live_up" : "live") : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
   // Плашки-«посты» — после одобрения владельцем (переменная LS_CARDS=1).
-  let finalText = (html ? (env.LS_CARDS === "1" ? cardify(html) : html) : esc(body));
+  let finalText = (html ? (env.LS_CARDS === "0" ? html : cardify(html)) : esc(body));
   // Обрезка не должна разрывать плашку: выкидываем последние блоки целиком.
   while (finalText.length > 3900 && finalText.includes("<blockquote>")) finalText = finalText.slice(0, finalText.lastIndexOf("<blockquote>")).trim();
   finalText = finalText.slice(0, 3900);
@@ -3400,7 +3439,8 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   const prevCtx = mode === "chat" || mode === "check" ? {} : await loadCtx(env, chatId);
   const top = fx.niches[0];
   const ctx = { niche: niche || (top && top.niche) || null, name_ru: (top && top.name_ru) || prevCtx.name_ru || "",
-    q: prevCtx.q || question.slice(0, 800) };
+    q: prevCtx.q || question.slice(0, 800), liveDone: !!liveRes,
+    queries: plan ? plan.queries : prevCtx.queries, terms: plan ? plan.terms : prevCtx.terms };
   const following = ctx.niche ? ((await getPrefs(env, chatId)).niches || []).includes(ctx.niche) : false;
   const kb = answerKb(s, ctx, following);
   await saveCtx(env, chatId, ctx);
@@ -3417,7 +3457,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
     await lsShortMsg(env, chatId, lang, "research");
   } else if (research && plan) {
     const r = await researchDispatch(env, chatId, lang, question, plan);
-    if (!r) await lsSpend(env, chatId, "research", 0);
+    if (!r && !upgrade) await lsSpend(env, chatId, "research", 0);
     await tg(env, "sendMessage", { chat_id: chatId, text: r === "limit" ? fmt(s.research_limit, RESEARCH_PER_USER) : r ? s.research_err : s.research_started });
   }
   const now = Math.floor(Date.now() / 1000);
@@ -4046,6 +4086,10 @@ export default {
       if (op === "spend") return json({ res: await lsSpend(env, uid, url.searchParams.get("arg"), 0), bal: await lsGet(env, uid) });
       if (op === "reset") await env.DB.prepare("DELETE FROM ls_balance WHERE user_id = ?1").bind(uid).run();
       return json({ bal: await lsGet(env, uid), can_live: await lsCanAfford(env, uid, "live") });
+    }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-plan") {
+      const t0 = Date.now();
+      return json({ plan: await planSearch(env, url.searchParams.get("q") || ""), ms: Date.now() - t0 });
     }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-invoice") {
       return json({ link: await starsLink(env, url.searchParams.get("uid") || "1", url.searchParams.get("item") || "pro", "ru") });
