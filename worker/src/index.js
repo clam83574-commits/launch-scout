@@ -332,6 +332,7 @@ const EXTRA = {
     why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
+    ls_footer: "−%d LS · осталось %d LS", ls_low: "⚠️ Осталось %d LS — меньше 10% месячного лимита.", ls_short: "💳 На это нужно %d LS, а у вас %d.", ls_balance: "💳 <b>Тариф: %s</b>\nПодписочные LS: <b>%d</b> · докупленные: <b>%d</b>\nПодписочные обновятся %s; докупленные не сгорают.", ls_tariffs_title: "<b>Тарифы</b>", ls_plan_free: "Free — $%s · %s LS в месяц", ls_plan_pro: "Pro — $%s · %s LS в месяц", ls_plan_max: "Max — $%s · %s LS в месяц", ls_plan_promax: "Pro Max — $%s · %s LS в месяц", ls_pack: "Докупить: %s LS за $%s — не сгорают", ls_prices: "Цена действий: вопрос 10 · глубже / карта идеи / конкуренты 20 · проверка идеи 30 · живой поиск 40 · X и Google Trends 15 · карточка идеи 10 LS. Сводка, лента и радар — бесплатно.", ls_pay_soon: "💳 Оплата появится в ближайшее время.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "База раундов", src_web: "Веб и новости", live_head: "🔎 Ищу вживую: %s", research_started: "📡 Запустил глубокий поиск по X и Google Trends — дополнение придёт отдельным сообщением через 1–2 минуты.", research_limit: "📡 Глубокий поиск — до %d раз в сутки, лимит на сегодня исчерпан.", research_err: "📡 Глубокий поиск сейчас не запустился — попробуйте позже.", research_head: "📡 <b>Дополнение: X и Google Trends</b>", research_empty: "📡 В X и Google Trends по этому запросу ничего заметного.", ab_deep: "🔬 Глубже", ab_map: "🗺 Карта идеи", ab_wide: "🧭 Смежные ниши", ab_comp: "⚔️ Конкуренты", ab_follow: "🔔 Следить", ab_unfollow: "✅ Слежу", ab_live: "📡 Искать везде", ctx_gone: "Контекст устарел — задайте вопрос заново", adj_title: "🧭 <b>Рядом с «%s»</b>", adj_line: "компаний за 6 мес: %d, ранних %d, %s", onboard: "👋 Пять быстрых вопросов — и я буду подбирать ниши и инсайты под вас. Отметьте, что подходит, и нажмите «Показать радар».",
     opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
     opp_overheated: "⚠️ Перегрев: вход только с сильным отличием", opp_local_gap: "🕳 Пусто у нас: доказано деньгами, в КЗ свободно",
@@ -384,6 +385,7 @@ const EXTRA = {
     why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
+    ls_footer: "−%d LS · қалды %d LS", ls_low: "⚠️ %d LS қалды — айлық лимиттің 10%-нан аз.", ls_short: "💳 Бұған %d LS керек, сізде %d.", ls_balance: "💳 <b>Тариф: %s</b>\nЖазылым LS: <b>%d</b> · сатып алынған: <b>%d</b>\nЖазылым LS %s жаңарады; сатып алынғандары күймейді.", ls_tariffs_title: "<b>Тарифтер</b>", ls_plan_free: "Free — $%s · айына %s LS", ls_plan_pro: "Pro — $%s · айына %s LS", ls_plan_max: "Max — $%s · айына %s LS", ls_plan_promax: "Pro Max — $%s · айына %s LS", ls_pack: "Қосымша: %s LS — $%s, күймейді", ls_prices: "Әрекет бағасы: сұрақ 10 · тереңірек / идея картасы / бәсекелестер 20 · идеяны тексеру 30 · тікелей іздеу 40 · X және Google Trends 15 · идея картасы 10 LS. Шолу, лента және радар — тегін.", ls_pay_soon: "💳 Төлем жақын арада қосылады.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Раундтар базасы", src_web: "Веб және жаңалықтар", live_head: "🔎 Тікелей іздеп жатырмын: %s", research_started: "📡 X және Google Trends бойынша терең іздеу басталды — толықтыру 1–2 минуттан кейін бөлек хабарламамен келеді.", research_limit: "📡 Терең іздеу — тәулігіне %d рет, бүгінгі лимит бітті.", research_err: "📡 Терең іздеу қазір басталмады — кейінірек көріңіз.", research_head: "📡 <b>Толықтыру: X және Google Trends</b>", research_empty: "📡 Бұл сұрау бойынша X пен Google Trends-те елеулі ештеңе жоқ.", ab_deep: "🔬 Тереңірек", ab_map: "🗺 Идея картасы", ab_wide: "🧭 Көршілес тауашалар", ab_comp: "⚔️ Бәсекелестер", ab_follow: "🔔 Бақылау", ab_unfollow: "✅ Бақылаудамын", ab_live: "📡 Барлық жерден іздеу", ctx_gone: "Контекст ескірді — сұрақты қайта қойыңыз", adj_title: "🧭 <b>«%s» маңында</b>", adj_line: "6 айда компаниялар: %d, ерте %d, %s", onboard: "👋 Бес жылдам сұрақ — сонда тауашалар мен инсайттарды сізге қарай таңдаймын. Сәйкесін белгілеп, «Радарды көрсету» батырмасын басыңыз.",
     opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
     opp_overheated: "⚠️ Қызып кеткен: кіру тек күшті ерекшелікпен", opp_local_gap: "🕳 Бізде бос: ақшамен дәлелденген, ҚЗ-да бос",
@@ -436,6 +438,7 @@ const EXTRA = {
     why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
+    ls_footer: "−%d LS · %d LS left", ls_low: "⚠️ %d LS left — under 10% of the monthly allowance.", ls_short: "💳 This needs %d LS, you have %d.", ls_balance: "💳 <b>Plan: %s</b>\nPlan LS: <b>%d</b> · purchased: <b>%d</b>\nPlan LS renew on %s; purchased LS never expire.", ls_tariffs_title: "<b>Plans</b>", ls_plan_free: "Free — $%s · %s LS a month", ls_plan_pro: "Pro — $%s · %s LS a month", ls_plan_max: "Max — $%s · %s LS a month", ls_plan_promax: "Pro Max — $%s · %s LS a month", ls_pack: "Top up: %s LS for $%s — never expire", ls_prices: "Prices: question 10 · deeper / idea map / competitors 20 · idea check 30 · live search 40 · X and Google Trends 15 · idea card 10 LS. Brief, feed and radar are free.", ls_pay_soon: "💳 Payments are coming soon.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Rounds database", src_web: "Web and news", live_head: "🔎 Searching live: %s", research_started: "📡 Started a deep search on X and Google Trends — the follow-up arrives as a separate message in 1–2 minutes.", research_limit: "📡 Deep search is limited to %d a day — today's limit is used up.", research_err: "📡 Deep search did not start — try again later.", research_head: "📡 <b>Follow-up: X and Google Trends</b>", research_empty: "📡 Nothing notable on X or Google Trends for this query.", ab_deep: "🔬 Deeper", ab_map: "🗺 Idea map", ab_wide: "🧭 Adjacent niches", ab_comp: "⚔️ Competitors", ab_follow: "🔔 Follow", ab_unfollow: "✅ Following", ab_live: "📡 Search everywhere", ctx_gone: "Context expired — ask again", adj_title: "🧭 <b>Next to “%s”</b>", adj_line: "companies in 6 months: %d, early %d, %s", onboard: "👋 Five quick questions — and I'll pick niches and insights for you. Tick what fits and tap “Show radar”.",
     opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
     opp_overheated: "⚠️ Overheated: enter only with strong differentiation", opp_local_gap: "🕳 Empty here: proven by money, free in KZ",
@@ -1016,15 +1019,15 @@ async function settingsAction(env, chatId, msgId, data, prefs, lang) {
  * Меню команд в Telegram — один раз на версию (помечается в kv). Раньше
  * команд в меню не было вовсе: /trends, /lang знали только те, кому сказали.
  */
-const COMMANDS_VERSION = "2026-10-01";
+const COMMANDS_VERSION = "2026-10-01b";
 async function setupCommands(env) {
   if ((await meta(env, "commands_version")) === COMMANDS_VERSION) return;
   const list = {
-    ru: [["market", "🧭 Куда движется рынок"], ["radar", "🎯 Возможности под меня"], ["profile", "✏️ Мой профиль"],  ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"],  ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
+    ru: [["market", "🧭 Куда движется рынок"], ["radar", "🎯 Возможности под меня"], ["profile", "✏️ Мой профиль"],  ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"], ["balance", "💳 Баланс LS и тарифы"], ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
       ["sectors", "🗂 Секторы"], ["settings", "⚙️ Настройки уведомлений"], ["lang", "🌐 Язык"]],
-    en: [["market", "🧭 Where the market is heading"], ["radar", "🎯 Opportunities for me"], ["profile", "✏️ My profile"],  ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"],  ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
+    en: [["market", "🧭 Where the market is heading"], ["radar", "🎯 Opportunities for me"], ["profile", "✏️ My profile"],  ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"], ["balance", "💳 LS balance and plans"], ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
       ["sectors", "🗂 Sectors"], ["settings", "⚙️ Notification settings"], ["lang", "🌐 Language"]],
-    kk: [["market", "🧭 Нарық қайда бет алды"], ["radar", "🎯 Маған арналған мүмкіндіктер"], ["profile", "✏️ Профилім"],  ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"],  ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
+    kk: [["market", "🧭 Нарық қайда бет алды"], ["radar", "🎯 Маған арналған мүмкіндіктер"], ["profile", "✏️ Профилім"],  ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"], ["balance", "💳 LS балансы мен тарифтер"], ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
       ["sectors", "🗂 Салалар"], ["settings", "⚙️ Хабарлама баптаулары"], ["lang", "🌐 Тіл"]],
   };
   const cmd = (arr) => arr.map(([command, description]) => ({ command, description }));
@@ -1251,6 +1254,14 @@ async function handleUpdate(env, update) {
   }
   if (data === "niches" || text.startsWith("/niches")) {
     await nichesMsg(env, chatId, lang, null, prefs);
+    return;
+  }
+  if (data === "ls" || text.startsWith("/balance")) {
+    await lsBalanceMsg(env, chatId, lang);
+    return;
+  }
+  if (isOwner(env, chatId) && /^\/(grant|credit|costs)\b/.test(text)) {
+    await lsAdmin(env, chatId, text);
     return;
   }
   if (data === "radar" || text.startsWith("/radar")) {
@@ -1664,7 +1675,7 @@ async function marketContext(env, f) {
   return out.length > 1 ? out.join("\n") : "";
 }
 
-async function ideaCard(env, f, uid, lang = "ru") {
+async function ideaCard(env, f, uid, lang = "ru", { allowNew = true } = {}) {
   const s = L(lang);
   const row = await env.DB.prepare("SELECT data FROM idea_cards WHERE item_id = ?1")
     .bind(Number(f.id)).first().catch(() => null);
@@ -1674,6 +1685,7 @@ async function ideaCard(env, f, uid, lang = "ru") {
     const card = ideaFor(saved, lang);
     if (card) return { card, cached: true };
   }
+  if (!allowNew) return { error: fmt(s.ls_short, LS_PRICE.idea, (await lsGet(env, uid)).sub_ls + (await lsGet(env, uid)).credits) };
   const day = new Date().toISOString().slice(0, 10);
   const total = Number((await meta(env, "idea_calls_" + day)) || 0);
   const mine = Number((await meta(env, `idea_user_${uid}_${day}`)) || 0);
@@ -1754,8 +1766,9 @@ function ideaCardHtml(f, card, lang = "ru") {
 // Помнит, чем занимается пользователь (коротко, в chat_profile), и последние
 // реплики разговора.
 // ---------------------------------------------------------------------------
-const CHAT_MAX_PER_USER = 25;
-const CHAT_MAX_PER_DAY = 250;
+// С LS суточные лимиты — только защита от злоупотреблений, тариф — баланс LS.
+const CHAT_MAX_PER_USER = 120;
+const CHAT_MAX_PER_DAY = 5000;
 const CHAT_TURNS = 6;
 
 const CHAT_SYSTEM = `You are the analyst inside launch-scout, a Telegram market radar for startup founders (Kazakhstan first, then the CIS and the English-speaking world).
@@ -1862,6 +1875,8 @@ async function chatReply(env, chatId, question, lang, mode = "chat", opts = {}) 
   if (!groqKeys(env).length && !env.LS_OPENROUTER_KEY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_noai });
   if (total >= CHAT_MAX_PER_DAY) return tg(env, "sendMessage", { chat_id: chatId, text: s.e_day });
   if (mine >= CHAT_MAX_PER_USER) return tg(env, "sendMessage", { chat_id: chatId, text: fmt(s.chat_limit, mine) });
+  const act = opts.live ? "live" : (LS_PRICE[mode] ? mode : "chat");
+  if (!(await lsCanAfford(env, chatId, act))) return lsShortMsg(env, chatId, lang, act);
   await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
 
   const prof = await env.DB.prepare("SELECT about FROM chat_profile WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
@@ -2427,7 +2442,7 @@ const FAST_RULES = `Never add up or compute numbers yourself: for any sum or cou
 Interpret, do not just list: say whether the evidence shows an open window (demand, few funded players), a forming market (many early rounds and similar products — look for an unserved vertical) or an overheated one (mega-rounds, late stages, dozens of players).
 Market numbers (money, rounds, investors, niches) come from our dataset facts (TOTAL, NICHE, ROUND, INVESTOR LEADERBOARD); WEB, HACKER NEWS and GITHUB facts describe specific companies and products or complement the dataset. Ignore facts that do not answer the question (other countries' corporate spending, unrelated companies).
 Never open with what is missing (no "В данных нет…", "No data on…"): the first line answers the question with what the evidence shows; if something asked is not in FACTS, say it in one short line at the end.
-FORMAT for a phone screen: the first line is the verdict in one sentence wrapped in **double asterisks**. Then short bullets, each starting with ONE fitting emoji instead of a dot (💰 money · 📈 growth · 🔎 search interest · 🏁 competitors · 🇰🇿 Kazakhstan/CIS · 💼 investors · 🙋 demand · ⚠️ risk · 💡 idea); key numbers and names in **bold**. A blank line between blocks. No # headers, no tables, no other markdown. Answer in %LANG%.`;
+FORMAT for a phone screen: the first line is the verdict in one sentence wrapped in **double asterisks**. Then blocks, one per line, each like: "<ONE emoji> **Short title, 2-4 words** — 1-2 short sentences". Emojis: 💰 money · 📈 growth · 🔎 search interest · 🏁 competitors · 🇰🇿 Kazakhstan/CIS · 💼 investors · 🙋 demand · ⚠️ risk · 💡 idea. Key numbers and names in **bold**. A blank line between blocks. No # headers, no tables, no other markdown. Answer in %LANG%.`;
 
 const FAST_SYSTEM = {
   chat: `You are the analyst inside launch-scout, a market radar for founders (Kazakhstan first, then CIS/MENA, then global).
@@ -2457,7 +2472,7 @@ Format: ❌/⚠️ lines — strongest reasons not to do it; 🟢 lines — evid
 const FIRST_TOKEN_MS = 4500;
 const FALLBACK_FAST_MODEL = "openai/gpt-oss-120b";
 
-async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000, maxTokens = 1800, firstMs = FIRST_TOKEN_MS) {
+async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000, maxTokens = 1800, firstMs = FIRST_TOKEN_MS, meter = null) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   let gotFirst = false;
@@ -2467,7 +2482,7 @@ async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000
       method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
         "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
-      body: JSON.stringify({ model, messages, stream: true, max_tokens: maxTokens, temperature: 0.3,
+      body: JSON.stringify({ model, messages, stream: true, max_tokens: maxTokens, temperature: 0.3, usage: { include: true },
         reasoning: { effort: "low", exclude: true },
         // gpt-oss — на серверах Groq через OpenRouter: первое слово за доли
         // секунды и сотни токенов в секунду, без минутного лимита бесплатного Groq.
@@ -2491,7 +2506,10 @@ async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000
         const payload = line.slice(5).trim();
         if (payload === "[DONE]") continue;
         try {
-          const d = JSON.parse(payload).choices[0].delta.content;
+          const obj = JSON.parse(payload);
+          // Последний кусок потока несёт usage.cost — фактическую цену вызова.
+          if (meter && obj.usage && obj.usage.cost) meter.usd += Number(obj.usage.cost) || 0;
+          const d = obj.choices && obj.choices[0] && obj.choices[0].delta && obj.choices[0].delta.content;
           if (d) { gotFirst = true; text += d; await onDelta(text); }
         } catch { /* служебные строки потока */ }
       }
@@ -2565,6 +2583,32 @@ function makeChecker(facts, extra = "") {
   };
 }
 
+/**
+ * Ответ «постами»: каждый блок, начинающийся с эмодзи, — в цитатную плашку
+ * Telegram (<blockquote>: подложка и полоса слева), заголовок блока — отдельной
+ * жирной строкой. Карточек внутри одного сообщения Telegram не умеет, плашки —
+ * самое близкое к ленте мини-приложения (просьба владельца 2026-10-01).
+ */
+const EMOJI_START = /^\s*(?:\p{Extended_Pictographic}|\p{Regional_Indicator})/u;
+function cardify(html) {
+  const out = [], block = [];
+  const flush = () => {
+    if (!block.length) return;
+    // «💰 <b>Деньги</b> — текст» -> заголовок строкой, текст под ним.
+    const first = block[0].replace(/^(\s*\S+\s+<b>[^<]{1,60}<\/b>)\s*[—–:-]\s*/u, "$1\n");
+    out.push(`<blockquote>${[first, ...block.slice(1)].join("\n").trim()}</blockquote>`);
+    block.length = 0;
+  };
+  for (const line of String(html || "").split("\n")) {
+    if (!line.trim()) { flush(); continue; }
+    if (EMOJI_START.test(line)) { flush(); block.push(line); continue; }
+    if (block.length) block.push(line);
+    else out.push(line);
+  }
+  flush();
+  return out.join("\n\n").replace(/\n{3,}/g, "\n\n");
+}
+
 const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 const sup = (n) => String(n).split("").map((d) => SUP[Number(d)]).join("");
 
@@ -2620,7 +2664,7 @@ function groundAnswer(text, facts, extra = "") {
 }
 
 /** Поиск в сети: статус в чате на время поиска, потом он удаляется. */
-async function webSearchWithStatus(env, chatId, statusText, subject, examples) {
+async function webSearchWithStatus(env, chatId, statusText, subject, examples, meter = null) {
   const st = await tg(env, "sendMessage", { chat_id: chatId, text: statusText });
   let data = null;
   const ctrl = new AbortController();
@@ -2633,12 +2677,14 @@ async function webSearchWithStatus(env, chatId, statusText, subject, examples) {
       method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
         "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
-      body: JSON.stringify({ model, max_tokens: 2500, temperature: 0.2, messages: [
+      body: JSON.stringify({ model, max_tokens: 2500, temperature: 0.2, usage: { include: true }, messages: [
         { role: "system", content: WEB_SYSTEM },
         { role: "user", content: `Niche or idea: ${subject}\nKnown funded companies: ${examples.join("; ")}` }] }),
     });
     if (r.ok) {
-      const t = ((await r.json()).choices[0].message.content || "").trim();
+      const j = await r.json();
+      if (meter && j.usage && j.usage.cost) meter.usd += Number(j.usage.cost) || 0;
+      const t = (j.choices[0].message.content || "").trim();
       data = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1));
     } else {
       await noteAiError(env, "openrouter web", r.status, await r.text().catch(() => ""));
@@ -2656,6 +2702,132 @@ const WEB_SYSTEM = `You research a startup niche or idea on the web for founders
 Find real products that already do this: global leaders and players in Kazakhstan/CIS, with the price if published, and what customers complain about.
 Reply with JSON only: {"competitors": [{"name": "...", "url": "https://...", "market": "global|US|EU|KZ|RU|CIS|MENA", "price": "...", "note": "one line"}], "complaints": [{"text": "...", "source": "https://..."}], "pricing": "one line", "icp": "one line"}
 At most 8 competitors and 5 complaints, only ones you actually found with real URLs. Never invent.`;
+
+// ---------------------------------------------------------------------------
+// 💳 LS — внутренняя валюта запросов (решение владельца 2026-10-01)
+//
+// Наружу — фиксированная цена действия в LS; внутри 1 LS ≈ $0,001 нашей
+// себестоимости, курс не показывается. Подписочные LS живут один расчётный
+// месяц и сгорают при продлении; докупленные credits не сгорают и тратятся
+// после подписочных, в том числе на Free. Фактическая стоимость каждого
+// действия (OpenRouter отдаёт cost) пишется в ls_log — по ней сверяем прайс.
+// ---------------------------------------------------------------------------
+const PLANS = {
+  free: { ls: 300, usd: 0 },
+  pro: { ls: 1500, usd: 3.99 },
+  max: { ls: 3500, usd: 9.99 },
+  promax: { ls: 7000, usd: 19.99 },
+};
+const LS_PRICE = { chat: 10, live: 40, deep: 20, map: 20, comp: 20, check: 30, research: 15, idea: 10 };
+const LS_PERIOD = 30 * 86400;
+const CREDIT_PACK = { ls: 1000, usd: 3.49 };
+
+async function lsGet(env, uid) {
+  const now = Math.floor(Date.now() / 1000);
+  let r = await env.DB.prepare("SELECT * FROM ls_balance WHERE user_id = ?1").bind(String(uid)).first().catch(() => null);
+  r = r ? { ...r } : { user_id: String(uid), plan: "free", paid_until: 0, period_end: 0, sub_ls: 0, credits: 0, warned: 0 };
+  if (now >= (r.period_end || 0)) {
+    // Новый расчётный месяц: подписочные LS — заново, credits остаются.
+    if (r.plan !== "free" && now >= (r.paid_until || 0)) r.plan = "free";
+    r.sub_ls = (PLANS[r.plan] || PLANS.free).ls;
+    r.period_end = now + LS_PERIOD;
+    r.warned = 0;
+    await lsSave(env, r);
+  }
+  return r;
+}
+
+async function lsSave(env, r) {
+  await env.DB.prepare("INSERT OR REPLACE INTO ls_balance (user_id, plan, paid_until, period_end, sub_ls, credits, warned, ts) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")
+    .bind(String(r.user_id), r.plan, r.paid_until || 0, r.period_end, r.sub_ls, r.credits, r.warned || 0, Math.floor(Date.now() / 1000)).run();
+}
+
+const lsFree = (env, uid) => isOwner(env, uid) || String(uid) === "debug";   // владелец и отладка — без списаний
+
+async function lsCanAfford(env, uid, action) {
+  if (lsFree(env, uid)) return true;
+  const r = await lsGet(env, uid);
+  return r.sub_ls + r.credits >= (LS_PRICE[action] || 10);
+}
+
+/** Списать за действие: сначала подписочные, потом credits. {spent, left, warn}. */
+async function lsSpend(env, uid, action, costUsd = 0) {
+  const price = LS_PRICE[action] || 10;
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.prepare("INSERT INTO ls_log (user_id, ts, action, ls, cost_usd) VALUES (?1, ?2, ?3, ?4, ?5)")
+    .bind(String(uid), now, action, price, Math.round((costUsd || 0) * 1e6) / 1e6).run().catch(() => null);
+  if (lsFree(env, uid)) return { spent: price, left: null, owner: true };
+  const r = await lsGet(env, uid);
+  const fromSub = Math.min(r.sub_ls, price);
+  r.sub_ls -= fromSub;
+  r.credits = Math.max(0, r.credits - (price - fromSub));
+  const left = r.sub_ls + r.credits;
+  const plan = PLANS[r.plan] || PLANS.free;
+  const warn = !r.warned && left < plan.ls * 0.1;
+  if (warn) r.warned = 1;
+  await lsSave(env, r);
+  return { spent: price, left, warn };
+}
+
+/** Строка под ответом: сколько списано и сколько осталось. */
+function lsFooter(s, res) {
+  if (!res) return "";
+  return res.owner ? `\n\n<i>−${res.spent} LS</i>` : `\n\n<i>${fmt(s.ls_footer, res.spent, res.left)}</i>`;
+}
+
+function lsTariffs(s) {
+  const row = (k) => fmt(s["ls_plan_" + k], PLANS[k].usd.toFixed(2), PLANS[k].ls.toLocaleString("ru-RU").replace(/,/g, " "));
+  return [s.ls_tariffs_title, row("free"), row("pro"), row("max"), row("promax"), "",
+    fmt(s.ls_pack, CREDIT_PACK.ls.toLocaleString("ru-RU").replace(/,/g, " "), CREDIT_PACK.usd.toFixed(2)), "",
+    s.ls_prices, s.ls_pay_soon].join("\n");
+}
+
+async function lsBalanceMsg(env, chatId, lang) {
+  const s = L(lang);
+  const r = await lsGet(env, chatId);
+  const text = [fmt(s.ls_balance, s["ls_name_" + r.plan] || r.plan, r.sub_ls, r.credits,
+    new Date(r.period_end * 1000).toISOString().slice(0, 10)), "", lsTariffs(s)].join("\n");
+  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML" });
+}
+
+async function lsShortMsg(env, chatId, lang, action) {
+  const s = L(lang);
+  const r = await lsGet(env, chatId);
+  await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML",
+    text: fmt(s.ls_short, LS_PRICE[action] || 10, r.sub_ls + r.credits) + "\n\n" + lsTariffs(s) });
+}
+
+/** Владелец: /grant <id> <free|pro|max|promax>, /credit <id> <LS>, /costs — сверка прайса с фактом. */
+async function lsAdmin(env, chatId, text) {
+  const [cmd, uid, arg] = text.trim().split(/\s+/);
+  if (cmd === "/grant" && uid && PLANS[arg]) {
+    const r = await lsGet(env, uid);
+    const now = Math.floor(Date.now() / 1000);
+    Object.assign(r, { plan: arg, paid_until: arg === "free" ? 0 : now + LS_PERIOD, period_end: now + LS_PERIOD, sub_ls: PLANS[arg].ls, warned: 0 });
+    await lsSave(env, r);
+    return tg(env, "sendMessage", { chat_id: chatId, text: `✅ ${uid}: ${arg}, ${PLANS[arg].ls} LS до ${new Date(r.period_end * 1000).toISOString().slice(0, 10)}` });
+  }
+  if (cmd === "/credit" && uid && Number(arg)) {
+    const r = await lsGet(env, uid);
+    r.credits = Math.max(0, r.credits + Math.round(Number(arg)));
+    await lsSave(env, r);
+    return tg(env, "sendMessage", { chat_id: chatId, text: `✅ ${uid}: credits ${r.credits}` });
+  }
+  if (cmd === "/costs") {
+    const since = Math.floor(Date.now() / 1000) - 7 * 86400;
+    const { results } = await env.DB.prepare("SELECT action, COUNT(*) n, SUM(ls) ls, SUM(cost_usd) usd, COUNT(DISTINCT user_id) users FROM ls_log WHERE ts >= ?1 GROUP BY action ORDER BY usd DESC")
+      .bind(since).all().catch(() => ({ results: [] }));
+    const lines = ["💳 Факт за 7 дней (цена LS против себестоимости; 1 LS = $0,001):"];
+    let tl = 0, tu = 0;
+    for (const x of results || []) {
+      tl += x.ls || 0; tu += x.usd || 0;
+      lines.push(`${x.action}: ${x.n} шт., ${x.users} чел. — ${x.ls} LS, факт $${(x.usd || 0).toFixed(3)} (в среднем $${((x.usd || 0) / x.n).toFixed(4)} при цене $${(LS_PRICE[x.action] / 1000).toFixed(3)})`);
+    }
+    lines.push(`Итого: ${tl} LS ($${(tl / 1000).toFixed(2)} по прайсу), факт $${tu.toFixed(2)}`);
+    return tg(env, "sendMessage", { chat_id: chatId, text: lines.join("\n") });
+  }
+  return tg(env, "sendMessage", { chat_id: chatId, text: "/grant <id> <free|pro|max|promax> · /credit <id> <LS> · /costs" });
+}
 
 let lastUnsupported = null;   // для /debug-chat
 const INVESTOR_Q = /инвест|инвестор|фонд|венчур|ангел|\bvc\b|investor|\bfunds?\b|backer|кто вкладыва|кто финансир/iu;
@@ -2698,7 +2870,7 @@ const WEB_FACTS_SYSTEM = `You search the web to answer a startup founder's quest
 {"facts": [{"text": "one factual sentence with names, numbers and dates", "url": "https://exact source page", "date": "YYYY-MM-DD or empty"}]}
 6-10 facts, newest first, only from pages you actually opened. Cover what the question needs: what the company/product does, funding and investors, revenue or users, pricing, competitors, Kazakhstan/CIS presence. Never invent.`;
 
-async function webFacts(env, question, queries, { model = null, timeoutMs = 16000 } = {}) {
+async function webFacts(env, question, queries, { model = null, timeoutMs = 16000, meter = null } = {}) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -2706,13 +2878,15 @@ async function webFacts(env, question, queries, { model = null, timeoutMs = 1600
       method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
         "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
-      body: JSON.stringify({ model: model || env.LS_WEB_MODEL || WEB_FAST_MODEL, max_tokens: 1500, temperature: 0.1,
+      body: JSON.stringify({ model: model || env.LS_WEB_MODEL || WEB_FAST_MODEL, max_tokens: 1500, temperature: 0.1, usage: { include: true },
         // У Perplexity поиск свой; остальным — плагин поиска OpenRouter.
         ...(String(model || "").startsWith("perplexity/") ? {} : { plugins: [{ id: "web", max_results: 6 }] }),
         messages: [{ role: "system", content: WEB_FACTS_SYSTEM }, { role: "user", content: `Question: ${question.slice(0, 800)}\nSearch phrases: ${queries.join("; ")}` }] }),
     });
     if (!r.ok) { await noteAiError(env, "openrouter live web", r.status, await r.text().catch(() => "")); return []; }
-    const t = ((await r.json()).choices[0].message.content || "").trim();
+    const j = await r.json();
+    if (meter && j.usage && j.usage.cost) meter.usd += Number(j.usage.cost) || 0;
+    const t = (j.choices[0].message.content || "").trim();
     const d = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1));
     return (d.facts || []).filter((f) => f && f.text).slice(0, 10).map((f) => ({
       text: `WEB${f.date ? " " + f.date : ""}: ${String(f.text).slice(0, 300)}`,
@@ -2839,7 +3013,7 @@ async function learnRounds(env, facts) {
 
 
 /** Живой поиск со статусом в чате: [{text, url}] — факты для ответа. */
-async function liveSearch(env, chatId, question, plan, lang) {
+async function liveSearch(env, chatId, question, plan, lang, meter = null) {
   const s = L(lang);
   const src = [["db", s.src_db], ["web", s.src_web], ["hn", "Hacker News"], ["gh", "GitHub"]];
   const state = Object.fromEntries(src.map(([k]) => [k, null]));
@@ -2857,8 +3031,8 @@ async function liveSearch(env, chatId, question, plan, lang) {
   };
   const [db, web, hn, gh] = await Promise.all([
     dbFacts(env, plan).catch(() => []).then((x) => done("db", x)),
-    Promise.all([webFacts(env, question, plan.queries, { model: WEB_FAST_MODEL, timeoutMs: 11000 }),
-      webFacts(env, question, plan.queries, { model: WEB_SOURCE_MODEL, timeoutMs: 14000 })])
+    Promise.all([webFacts(env, question, plan.queries, { model: WEB_FAST_MODEL, timeoutMs: 11000, meter }),
+      webFacts(env, question, plan.queries, { model: WEB_SOURCE_MODEL, timeoutMs: 14000, meter })])
       .then(([a, b]) => {
         const seen = new Set(), out = [];
         for (const f of [...b, ...a]) {
@@ -3031,8 +3205,15 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   // Вопрос «кто больше всех вкладывает» отвечает наш рейтинг инвесторов —
   // веб на нём тянул пенсионные фонды и PE (замер 2026-10-01); сеть — по кнопке.
   const invAnswered = INVESTOR_Q.test(question) && (((marketOf(snap) || {}).report || {}).investors_top || []).length > 0;
-  if (plan && (live || (plan.live && !invAnswered) || (!fx.niches.length && mode === "chat" && !invAnswered))) {
-    liveRes = await liveSearch(env, chatId, question, plan, lang);
+  // Названа конкретная компания (домен или имя из плана) — ищем всегда: модель-
+  // планировщик то включала поиск на «insora.dev», то нет (2026-10-01).
+  const named = /\b[a-z0-9-]{2,}\.(?:ai|dev|io|com|co|app|so|xyz|tech|kz|ru|org|net)\b/i.test(question)
+    || (plan && plan.entities.some((e) => e.length >= 3 && !/^(ai|ии|saas|b2b|b2c)$/i.test(e)));
+  // Живой поиск дороже (40 LS): без баланса на него отвечаем по базе.
+  const meter = { usd: 0 };
+  const canLive = await lsCanAfford(env, chatId, "live");
+  if (plan && canLive && (live || ((plan.live || named) && !invAnswered) || (!fx.niches.length && mode === "chat" && !invAnswered))) {
+    liveRes = await liveSearch(env, chatId, question, plan, lang, meter);
     for (const f of liveRes.facts) fx.facts.push({ id: fx.facts.length + 1, text: f.text, url: f.url });
   }
   const clearStatus = async () => { if (liveRes && !cleared) { cleared = true; await liveRes.clear(); } };
@@ -3040,7 +3221,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   if ((mode === "deep" || mode === "map" || mode === "comp") && fx.niches[0] && !fx.niches[0].web) {
     const d = fx.niches[0];
     const web = await webSearchWithStatus(env, chatId, fmt(s.searching_niche, lang === "en" ? d.niche : d.name_ru || d.niche), d.niche,
-      (d.top_6m || []).slice(0, 5).map((r) => r.company));
+      (d.top_6m || []).slice(0, 5).map((r) => r.company), meter);
     if (web) {
       web.ts = Math.floor(Date.now() / 1000);
       d.web = web;
@@ -3050,7 +3231,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   }
   if (mode === "check") {
     const web = await webSearchWithStatus(env, chatId, s.searching_idea, question,
-      fx.niches.flatMap((d) => (d.top_6m || []).slice(0, 2).map((r) => r.company)).slice(0, 6));
+      fx.niches.flatMap((d) => (d.top_6m || []).slice(0, 2).map((r) => r.company)).slice(0, 6), meter);
     if (web) {
       for (const c of (web.competitors || []).slice(0, 8)) fx.facts.push({ id: fx.facts.length + 1, text: `COMPETITOR of this idea: ${c.name} (${c.market || "?"}), price ${c.price || "not published"} — ${c.note || ""}`, url: c.url });
       for (const c of (web.complaints || []).slice(0, 4)) fx.facts.push({ id: fx.facts.length + 1, text: `CUSTOMER COMPLAINT about existing products: ${c.text}`, url: c.source });
@@ -3079,8 +3260,8 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
     }
   };
   const maxTok = mode === "chat" ? 1100 : 2000;
-  let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, onDelta, 25000, maxTok);
-  if (!full && !msgId) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, messages, onDelta, 20000, maxTok, 8000);
+  let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, messages, onDelta, 25000, maxTok, FIRST_TOKEN_MS, meter);
+  if (!full && !msgId) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, messages, onDelta, 20000, maxTok, 8000, meter);
   await clearStatus();
   if (!full || !full.trim()) {
     if (msgId) await tg(env, "deleteMessage", { chat_id: chatId, message_id: msgId });
@@ -3090,7 +3271,12 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   const body = full.replace(/\nPROFILE:.*$/s, "").trim();
   const { html, unsupported } = groundAnswer(body, fx.facts, question + " " + profile);
   lastUnsupported = { unsupported, raw: body, facts: fx.facts.length };
-  const finalText = (html || esc(body)).slice(0, 3900);
+  // Списание: живой поиск — по цене поиска, иначе по режиму ответа.
+  const charge = await lsSpend(env, chatId, liveRes ? "live" : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
+  let finalText = (html ? cardify(html) : esc(body)) + lsFooter(s, charge);
+  // Обрезка не должна разрывать плашку: выкидываем последние блоки целиком.
+  while (finalText.length > 3900 && finalText.includes("<blockquote>")) finalText = finalText.slice(0, finalText.lastIndexOf("<blockquote>")).trim();
+  finalText = finalText.slice(0, 3900);
   // Кнопки под ответом: что можно сделать с этой нишей дальше.
   const prevCtx = mode === "chat" || mode === "check" ? {} : await loadCtx(env, chatId);
   const top = fx.niches[0];
@@ -3105,10 +3291,14 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   } else {
     await tg(env, "sendMessage", { chat_id: chatId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb });
   }
+  if (charge.warn) await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.ls_low, charge.left) + "\n\n" + lsTariffs(s) });
   if (liveRes) await learnRounds(env, liveRes.facts);
   // «Искать везде»: X и Google Trends — в GitHub Actions, дополнение придёт следом.
-  if (research && plan) {
+  if (research && plan && !(await lsCanAfford(env, chatId, "research"))) {
+    await lsShortMsg(env, chatId, lang, "research");
+  } else if (research && plan) {
     const r = await researchDispatch(env, chatId, lang, question, plan);
+    if (!r) await lsSpend(env, chatId, "research", 0);
     await tg(env, "sendMessage", { chat_id: chatId, text: r === "limit" ? fmt(s.research_limit, RESEARCH_PER_USER) : r ? s.research_err : s.research_started });
   }
   const now = Math.floor(Date.now() / 1000);
@@ -3249,6 +3439,9 @@ async function ensureTables(env) {
     env.DB.prepare("CREATE INDEX IF NOT EXISTS rounds_niche ON rounds (niche)"),
     // Матрица ниш — готовые цифры для быстрого ответа (fastAnswer).
     env.DB.prepare("CREATE TABLE IF NOT EXISTS niche_matrix (niche TEXT PRIMARY KEY, name_ru TEXT, sector TEXT, data TEXT, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_balance (user_id TEXT PRIMARY KEY, plan TEXT, paid_until INTEGER, period_end INTEGER, sub_ls INTEGER, credits INTEGER, warned INTEGER, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_log (user_id TEXT, ts INTEGER, action TEXT, ls INTEGER, cost_usd REAL)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS ls_log_ts ON ls_log (ts)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS found_rounds (url TEXT, company TEXT, usd REAL, stage TEXT, date TEXT, investors TEXT, fact TEXT, ts INTEGER, status TEXT, PRIMARY KEY (company, url))"),
   ]);
   // Таблица prefs создавалась раньше без языка и фильтров — дополняем на
@@ -3573,7 +3766,8 @@ export default {
         const f = await findFinding(env, url.searchParams.get("id"));
         if (!f) return json({ error: "Находка уже выпала из свежего среза." }, 404);
         const lang = (await getPrefs(env, user.id)).lang || "ru";
-        const res = await ideaCard(env, f, user.id, lang);
+        const res = await ideaCard(env, f, user.id, lang, { allowNew: await lsCanAfford(env, user.id, "idea") });
+        if (!res.error && !res.cached) await lsSpend(env, user.id, "idea", 0);
         return json(res.error ? { error: res.error } : { card: res.card });
       }
       if (url.pathname === "/api/prefs") {
@@ -3702,6 +3896,20 @@ export default {
       const photo = await fetch(api("setMyProfilePhoto"), { method: "POST", body: fd }).then((r) => r.json()).catch((e) => ({ error: String(e) }));
       const me = await fetch(api("getMe")).then((r) => r.json());
       return json({ name, photo, me: me.result && { first_name: me.result.first_name, username: me.result.username } });
+    }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-send") {
+      // Настоящий ответ в Telegram указанному чату (показать оформление владельцу).
+      await ensureTables(env);
+      const ok = await fastAnswer(env, url.searchParams.get("chat"), url.searchParams.get("q") || "", "ru", "chat", {});
+      return json({ ok });
+    }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-ls") {
+      await ensureTables(env);
+      const uid = url.searchParams.get("uid"), op = url.searchParams.get("op");
+      if (op === "grant" || op === "credit") { globalThis.__tgCap = []; await lsAdmin(env, "x", `/${op} ${uid} ${url.searchParams.get("arg")}`); globalThis.__tgCap = null; }
+      if (op === "spend") return json({ res: await lsSpend(env, uid, url.searchParams.get("arg"), 0), bal: await lsGet(env, uid) });
+      if (op === "reset") await env.DB.prepare("DELETE FROM ls_balance WHERE user_id = ?1").bind(uid).run();
+      return json({ bal: await lsGet(env, uid), can_live: await lsCanAfford(env, uid, "live") });
     }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-adj") {
       globalThis.__tgCap = [];
