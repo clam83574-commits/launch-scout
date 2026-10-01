@@ -167,7 +167,7 @@
     async function typeInto(el, html, id) {
       const txt = plain(html);
       el.classList.add("caret");
-      for (let k = 1; k <= txt.length; k += 2) { if (id !== run) return false; el.textContent = txt.slice(0, k); await sleep(16); }
+      for (let k = 1; k <= txt.length; k += 2) { if (id !== run) return false; el.textContent = txt.slice(0, k); await sleep(11); }
       el.classList.remove("caret"); el.innerHTML = html; return true;
     }
     async function play(i) {
@@ -177,21 +177,21 @@
       chat.innerHTML = `<div class="msg me">${esc(d.q)}</div>`;
       status.textContent = "печатает…";
       const typing = document.createElement("div"); typing.className = "msg bot typing"; typing.innerHTML = "<i></i><i></i><i></i>"; chat.appendChild(typing);
-      await sleep(900); if (id !== run) return;
+      await sleep(630); if (id !== run) return;
       typing.remove();
       const bot = document.createElement("div"); bot.className = "msg bot"; chat.appendChild(bot);
       for (const p of d.a) {
         if (p[0] === "v") { const s = document.createElement("span"); s.className = "verdict"; bot.appendChild(s); if (!(await typeInto(s, p[1], id))) return; }
         else { const b = document.createElement("blockquote"), h = document.createElement("b"), tx = document.createElement("span");
           h.textContent = p[1]; b.append(h, tx); bot.appendChild(b); if (!(await typeInto(tx, p[2], id))) return; }
-        await sleep(160);
+        await sleep(110);
       }
       chat.insertAdjacentHTML("beforeend", KB.replace('class="kb"', 'class="kb wait"'));
       await sleep(60); const kb = chat.querySelector(".kb"); if (kb) kb.classList.remove("wait");
       status.textContent = "ИИ-аналитик";
-      tabs[i].style.setProperty("--dur", "9s");
+      tabs[i].style.setProperty("--dur", "6.3s");
       const prog = tabs[i].querySelector(".prog"); void prog.offsetWidth; prog.classList.add("run");
-      clearTimeout(autoT); autoT = setTimeout(() => { if (id === run) play((i + 1) % DEMOS.length); }, 9000);
+      clearTimeout(autoT); autoT = setTimeout(() => { if (id === run) play((i + 1) % DEMOS.length); }, 6300);
     }
     tabs.forEach((t, i) => t.addEventListener("click", () => { clearTimeout(autoT); play(i); }));
     if (!reduce) new IntersectionObserver(([en], o) => { if (en.isIntersecting && !played) { played = true; o.disconnect(); play(0); } }, { threshold: 0.35 }).observe(chat);
@@ -298,8 +298,9 @@
     const packets = []; for (let i = 0; i < PK; i++) packets.push(newPacket({}));
     for (let i = 0; i < 10; i++) world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(newPacket({}).curve.getPoints(40)), trailMat));
 
-    const tags = bars.slice(0, 4).map((b) => { const el = document.createElement("div"); el.className = "tag3d";
-      el.innerHTML = `${SECTOR_RU[b.s.s]} <b>${usd(b.s.usd)}</b>`; stage.appendChild(el); return { el, bar: b }; });
+    const tags = bars.map((b, i) => { const el = document.createElement("div"); el.className = "tag3d";
+      if (i >= 4) el.classList.add("sm");
+      el.innerHTML = `${SECTOR_RU[b.s.s]} <b>${usd(b.s.usd)}</b>`; stage.appendChild(el); return { el, bar: b, w: 0, h: 0 }; });
 
     function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < 500 ? 40 : 32; camera.updateProjectionMatrix(); }
     new ResizeObserver(resize).observe(stage); resize();
@@ -350,9 +351,17 @@
       pkGeo.attributes.position.needsUpdate = true;
       renderer.render(scene, camera);
       const W = stage.clientWidth, Hh = stage.clientHeight;
-      for (const tg of tags) { v.copy(tg.bar.g.position); v.y = tg.bar.fill.scale.y + 0.4; v.project(camera);
-        tg.el.style.left = ((v.x + 1) / 2 * W).toFixed(1) + "px"; tg.el.style.top = ((1 - v.y) / 2 * Hh).toFixed(1) + "px";
-        tg.el.style.opacity = t > 2 ? 1 : 0; tg.el.classList.toggle("hot", tg.bar.heat > 0.3); }
+      const placed = [];
+      for (const tg of tags) {                            // теги идут от крупных секторов к мелким
+        v.copy(tg.bar.g.position); v.y = tg.bar.fill.scale.y + 0.4; v.project(camera);
+        const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * Hh;
+        if (!tg.w) { tg.w = tg.el.offsetWidth; tg.h = tg.el.offsetHeight; }
+        const r = { l: x - tg.w / 2, r: x + tg.w / 2, t: y - tg.h, b: y };
+        const free = r.l > 4 && r.r < W - 4 && r.t > 22 && r.b < Hh - 22 && !placed.some((p) => r.l < p.r && r.r > p.l && r.t < p.b && r.b > p.t);
+        if (free) placed.push(r);
+        tg.el.style.left = x.toFixed(1) + "px"; tg.el.style.top = y.toFixed(1) + "px";
+        tg.el.style.opacity = t > 2 && free ? 1 : 0; tg.el.classList.toggle("hot", tg.bar.heat > 0.3);
+      }
     }
     function loop() { if (visible) frame(); requestAnimationFrame(loop); }
     if (reduce) { t = 6; frame(); addEventListener("resize", () => { resize(); frame(); }); } else loop();
