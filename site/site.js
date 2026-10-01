@@ -181,7 +181,7 @@
     async function typeInto(el, html, id) {
       const txt = plain(html);
       el.classList.add("caret");
-      for (let k = 1; k <= txt.length; k += 2) { if (id !== run) return false; el.textContent = txt.slice(0, k); await sleep(11); }
+      for (let k = 1; k <= txt.length; k += 6) { if (id !== run) return false; el.textContent = txt.slice(0, k); await sleep(10); }
       el.classList.remove("caret"); el.innerHTML = html; return true;
     }
     async function play(i) {
@@ -191,14 +191,14 @@
       chat.innerHTML = `<div class="msg me">${esc(d.q)}</div>`;
       status.textContent = "печатает…";
       const typing = document.createElement("div"); typing.className = "msg bot typing"; typing.innerHTML = "<i></i><i></i><i></i>"; chat.appendChild(typing);
-      await sleep(630); if (id !== run) return;
+      await sleep(380); if (id !== run) return;
       typing.remove();
       const bot = document.createElement("div"); bot.className = "msg bot"; chat.appendChild(bot);
       for (const p of d.a) {
         if (p[0] === "v") { const s = document.createElement("span"); s.className = "verdict"; bot.appendChild(s); if (!(await typeInto(s, p[1], id))) return; }
         else { const b = document.createElement("blockquote"), h = document.createElement("b"), tx = document.createElement("span");
           h.innerHTML = ico(p[1]) + esc(p[2]); b.append(h, tx); bot.appendChild(b); if (!(await typeInto(tx, p[3], id))) return; }
-        await sleep(110);
+        await sleep(50);
       }
       chat.insertAdjacentHTML("beforeend", KB.replace('class="kb"', 'class="kb wait"'));
       await sleep(60); const kb = chat.querySelector(".kb"); if (kb) kb.classList.remove("wait");

@@ -356,9 +356,21 @@ section.sheet { padding-block: 76px; }
 
 
 .swipe { display: none; margin-top: 4px; }
+.m-only { display: none; }
 
 /* ---------- телефон: компактно ---------- */
 @media (max-width: 600px) {
+  /* Лаконично: на телефоне только заголовки, цифры и действия — без абзацев-пояснений. */
+  .m-only { display: block; } .d-only { display: none; }
+  .sheet-head p, .vs p, .feat p, .node p, .plan p, .final p, .costs, .steps3 li span, .demo .example-note { display: none; }
+  .chart .row:nth-child(n+9) { display: none; }
+  .chart .foot span:last-child { display: none; }
+  .pack p { font-size: 13.5px; } .pack p .more { display: none; }
+  section.sheet { padding-block: 36px; }
+  .sheet-head { margin-bottom: 16px; }
+  .vs article { padding: 14px 16px; gap: 4px; }
+  .feat { padding: 12px; } .feat h3 { font-size: 13.5px; }
+  .node { gap: 8px; }
   body { font-size: 15.5px; }
   h2 { font-size: 25px; }
   .top .wrap { min-height: 56px; gap: 12px; }
@@ -489,7 +501,8 @@ section.sheet { padding-block: 76px; }
       <div class="hero-text">
         <div class="rev"><span id="liveTxt">Рев. 01.10.2026</span><span>Пересчёт каждые 10 мин</span></div>
         <h1>Стройте там, куда <em>уже идут деньги</em></h1>
-        <p class="lead">За 90 дней инвесторы вложили <b data-k="usd90">$101 млрд</b> в <b data-k="rounds90">1 601</b> стартап. Launch Scout видит каждый раунд и за 10 секунд отвечает в Telegram: какую нишу брать, кто в ней уже есть и взлетит ли ваша идея.</p>
+        <p class="lead d-only">За 90 дней инвесторы вложили <b data-k="usd90">$101 млрд</b> в <b data-k="rounds90">1 601</b> стартап. Launch Scout видит каждый раунд и за 10 секунд отвечает в Telegram: какую нишу брать, кто в ней уже есть и взлетит ли ваша идея.</p>
+        <p class="lead m-only">Видит каждый раунд в мире и за 10 секунд отвечает в Telegram: какую нишу брать и взлетит ли идея.</p>
         <div style="display:grid;gap:12px;justify-items:start">
           <a class="btn gift" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener"><span class="box"><svg><use href="#giftic"/></svg></span><span>Нажмите и получите <b>300 LS бесплатно</b></span></a>
           <div class="gift-sub mono"><span>≈ 30 ответов</span><span>без карты</span><span>прямо в Telegram</span></div>
@@ -603,9 +616,9 @@ section.sheet { padding-block: 76px; }
           <h2>ИИ не может <em>соврать</em> вам цифрой</h2>
         </div>
         <ol class="steps3" id="steps3">
-          <li><b>Модель пишет черновик</b>Ответ собирается из фактов базы и веба.</li>
-          <li><b>Аналитик ищет каждую цифру в источниках</b>Суммы, проценты, названия компаний.</li>
-          <li class="on"><b>Без источника — строка удаляется</b>До того, как вы её увидите. Крупные суммы — только если их подтвердили 3 издания.</li>
+          <li><b>Модель пишет черновик</b><span>Ответ собирается из фактов базы и веба.</span></li>
+          <li><b>Аналитик ищет каждую цифру в источниках</b><span>Суммы, проценты, названия компаний.</span></li>
+          <li class="on"><b>Без источника — строка удаляется</b><span>До того, как вы её увидите. Крупные суммы — только если их подтвердили 3 издания.</span></li>
         </ol>
       </div>
     </div>
@@ -709,7 +722,7 @@ section.sheet { padding-block: 76px; }
       </div>
       <div class="swipe mono">← листайте тарифы →</div>
       <div class="pack">
-        <p><b>Кончились LS? Докупите 1 000 за $3.49</b> — дешевле американо. Докупленные LS не сгорают.</p>
+        <p><b>Кончились LS? Докупите 1 000 за $3.49</b><span class="more"> — дешевле американо. Докупленные LS не сгорают.</span></p>
         <a class="btn ghost sm" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener">Открыть в Telegram</a>
       </div>
       <div class="costs" aria-label="Цена действий">
