@@ -16,32 +16,32 @@ body { font-family: "Golos Text", sans-serif; color: var(--ink); -webkit-print-c
 .mono { font-family: "JetBrains Mono", monospace; letter-spacing: .1em; text-transform: uppercase; }
 
 /* ---------- ваучер: рамка листа с вырезами по линии отрыва ---------- */
-.ticket { position: absolute; inset: 6mm; border: .5mm solid var(--ink); border-radius: 4mm; overflow: hidden; background: #fff; }
+.ticket { position: absolute; inset: 0; overflow: hidden; background: #fff; }   /* лист целиком, под обрез */
 .cut { position: absolute; left: 6mm; right: 6mm; top: 70mm; height: 0; border-top: .5mm dashed var(--line-2); z-index: 2; }
 .notch { position: absolute; top: calc(70mm - 4mm); width: 8mm; height: 8mm; border-radius: 50%; background: #fff; border: .5mm solid var(--ink); z-index: 3; }
 .notch.l { left: calc(6mm - 4mm); } .notch.r { right: calc(6mm - 4mm); }
 
 /* ---------- верх: сам ваучер ---------- */
-.head { position: absolute; left: 0; right: 0; top: 0; height: 58mm; background: var(--ink); color: #fff; overflow: hidden;
+.head { position: absolute; left: 0; right: 0; top: 0; height: 68mm; background: var(--ink); color: #fff; overflow: hidden;
   background-image: linear-gradient(rgba(255,255,255,.05) .3mm, transparent .3mm), linear-gradient(90deg, rgba(255,255,255,.05) .3mm, transparent .3mm); background-size: 6mm 6mm; }
 .head .glow { position: absolute; right: -30mm; top: -30mm; width: 110mm; height: 110mm; border-radius: 50%; background: radial-gradient(circle, rgba(29,79,216,.55), transparent 65%); }
-.h-top { position: absolute; left: 7mm; right: 7mm; top: 6mm; display: flex; justify-content: space-between; align-items: flex-start; }
+.h-top { position: absolute; left: 10mm; right: 10mm; top: 9mm; display: flex; justify-content: space-between; align-items: flex-start; }
 .h-top .lbl { font-size: 2.6mm; color: #9fb4e8; }
-.h-top .lbl b { display: block; font: 700 5.6mm/1 "Unbounded", sans-serif; letter-spacing: .02em; color: #fff; margin-top: 1.4mm; text-transform: uppercase; }
+.h-top .lbl b { display: block; font: 700 6.2mm/1 "Unbounded", sans-serif; letter-spacing: .02em; color: #fff; margin-top: 1.4mm; text-transform: uppercase; }
 .plogo { display: flex; flex-direction: column; align-items: center; gap: .3mm; }
-.plogo img { width: 30mm; display: block; }
-.plogo b { font: 700 5.15mm/1 "Unbounded", sans-serif; color: #fff; letter-spacing: -.01em; }
-.big { position: absolute; left: 7mm; top: 19mm; display: flex; align-items: flex-end; gap: 4mm; }
-.big b { font: 700 15.5mm/.85 "Unbounded", sans-serif; letter-spacing: -.05em; }
-.big span { font-size: 3.3mm; line-height: 1.25; padding-bottom: 1mm; max-width: 46mm; }
+.plogo img { width: 34mm; display: block; }
+.plogo b { font: 700 5.85mm/1 "Unbounded", sans-serif; color: #fff; letter-spacing: -.01em; }
+.big { position: absolute; left: 10mm; top: 30mm; display: flex; align-items: flex-end; gap: 4mm; }
+.big b { font: 700 19mm/.85 "Unbounded", sans-serif; letter-spacing: -.05em; }
+.big span { font-size: 3.5mm; line-height: 1.25; padding-bottom: 1mm; max-width: 46mm; }
 .big span em { font-style: normal; color: #9fb4e8; }
-.h-bot { position: absolute; left: 7mm; right: 7mm; bottom: 5mm; display: flex; align-items: center; gap: 3mm; flex-wrap: nowrap; }
+.h-bot { position: absolute; left: 10mm; right: 10mm; bottom: 7mm; display: flex; align-items: center; gap: 3mm; flex-wrap: nowrap; }
 .h-bot .k { font-size: 2.3mm; color: #9fb4e8; }
-.h-bot code { font: 500 4.2mm "JetBrains Mono", monospace; letter-spacing: .14em; background: #fff; color: var(--ink); padding: 1.2mm 3mm; border-radius: 1.2mm; }
+.h-bot code { font: 500 4.6mm "JetBrains Mono", monospace; letter-spacing: .14em; background: #fff; color: var(--ink); padding: 1.2mm 3mm; border-radius: 1.2mm; }
 .h-bot .t { font-size: 2.8mm; line-height: 1.35; color: #c9d5ea; }
 
 /* ---------- низ: о проекте — колонка, блоки не наезжают друг на друга ---------- */
-.body { position: absolute; left: 7mm; right: 7mm; top: 61mm; bottom: 5mm; display: flex; flex-direction: column; gap: 2.6mm; }
+.body { position: absolute; left: 10mm; right: 10mm; top: 72mm; bottom: 8mm; display: flex; flex-direction: column; gap: 2.6mm; }
 .intro { display: grid; grid-template-columns: 1fr 46mm; gap: 2mm; align-items: center; }
 .brand { display: flex; align-items: center; gap: 2mm; font: 500 3.9mm "Unbounded", sans-serif; }
 .brand svg { width: 6.5mm; height: 6.5mm; }
@@ -61,8 +61,8 @@ h1 em { font-style: normal; color: var(--blue); }
 .feats p { display: flex; flex-direction: column; gap: .2mm; }
 .feats b { font-size: 2.6mm; font-weight: 600; }
 .feats span { font-size: 2.1mm; color: var(--muted); }
-.foot { margin-top: auto; display: grid; grid-template-columns: 35mm 1fr; gap: 5mm; align-items: center; }
-.qr { width: 35mm; height: 35mm; border: .4mm solid var(--ink); border-radius: 2.4mm; padding: 1.4mm; background: #fff; }
+.foot { margin-top: auto; display: grid; grid-template-columns: 40mm 1fr; gap: 5mm; align-items: center; }
+.qr { width: 40mm; height: 40mm; border: .4mm solid var(--ink); border-radius: 2.4mm; padding: 1.4mm; background: #fff; }
 .qr svg { width: 100%; height: 100%; display: block; }
 .foot b.t { font: 500 4.4mm/1.2 "Unbounded", sans-serif; letter-spacing: -.02em; display: block; }
 .foot p { font-size: 2.6mm; line-height: 1.35; color: var(--muted); margin-top: .8mm; }
