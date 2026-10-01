@@ -4041,6 +4041,9 @@ export default {
       if (op === "reset") await env.DB.prepare("DELETE FROM ls_balance WHERE user_id = ?1").bind(uid).run();
       return json({ bal: await lsGet(env, uid), can_live: await lsCanAfford(env, uid, "live") });
     }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-invoice") {
+      return json({ link: await starsLink(env, url.searchParams.get("uid") || "1", url.searchParams.get("item") || "pro", "ru") });
+    }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-adj") {
       globalThis.__tgCap = [];
       await adjacentMsg(env, "debug", "ru", { niche: url.searchParams.get("niche") || "" });
