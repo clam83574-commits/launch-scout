@@ -17,7 +17,7 @@ CODE = (sys.argv[1] if len(sys.argv) > 1 else "digitalbridge").lower()
 PARTNER = {"digitalbridge": "AI & Digital Bridge"}.get(CODE, CODE)
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-URL = "https://launch-scout-site.pages.dev/?promo=" + CODE
+URL = "https://launch-scout-site.pages.dev/"   # код вводят вручную — так ваучер ощущается ценнее
 OFF = 0.3
 PLANS = [("Pro", 4.99, 1500, True), ("Max", 9.99, 3500, False), ("Pro Max", 19.99, 7000, False)]
 
