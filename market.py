@@ -741,6 +741,10 @@ def plausible_usd(g):
         return None, "stage"
     if usd >= MEGA_USD and g.get("outlets", 1) < 2 and g.get("src") not in ("crunchbase",):
         return None, "single"
+    # От $5 млрд раунды — единицы в год; чаще это оценка компании, принятая
+    # за сумму (ICEYE «$11 млрд», 2026-10-01). Нужны три издания или Crunchbase.
+    if usd >= 5e9 and g.get("outlets", 1) < 3 and g.get("src") not in ("crunchbase",):
+        return None, "single"
     return usd, None
 
 

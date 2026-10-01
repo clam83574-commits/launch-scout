@@ -177,6 +177,8 @@ def niche_extras():
     check("seed на $5 млн оставлен", market.plausible_usd({"usd": 5e6, "stage": "seed", "outlets": 1})[0] == 5e6, "")
     check("мегараунд из одной заметки отброшен", market.plausible_usd({"usd": 2e9, "stage": None, "outlets": 1})[1] == "single", "")
     check("мегараунд из трёх изданий оставлен", market.plausible_usd({"usd": 2e9, "stage": None, "outlets": 3})[0] == 2e9, "")
+    check("$11 млрд из двух изданий отброшен", market.plausible_usd({"usd": 11e9, "stage": "c+", "outlets": 2})[0] is None, "")
+    check("$6 млрд из трёх изданий оставлен", market.plausible_usd({"usd": 6e9, "stage": "c+", "outlets": 3})[0] == 6e9, "")
     check("сумма из формы D главнее", market.plausible_usd({"usd": 9e9, "usd_sec": 4e6, "stage": "seed"}) == (4e6, "sec"), "")
     check("дубли ниш склеиваются", market._stems("ai insurance broker automation") == market._stems("insurance brokerage automation"), "")
     check("разные ниши не склеиваются", market._stems("insurance claims automation") != market._stems("insurance brokerage automation"), "")
