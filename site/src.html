@@ -110,29 +110,32 @@ p { margin: 0; }
 @keyframes wiggle { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-12deg); } 82% { transform: rotate(10deg); } 89% { transform: rotate(-6deg); } }
 .gift-sub { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
 .vwrap { max-width: 1180px; margin: 0 auto 26px; padding-inline: 24px; }
-.vbar { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 28px; align-items: center;
-  background-color: var(--ink); color: #fff; border-radius: 18px; padding: 22px 28px;
-  background-image: radial-gradient(circle at 82% 18%, rgba(29,79,216,.75), transparent 55%),
+.vbar { position: relative; overflow: hidden; color: #fff; border-radius: 18px; padding: 30px 36px 30px; background-color: var(--ink);
+  background-image: radial-gradient(circle at 80% 18%, rgba(29,79,216,.75), transparent 55%),
     linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
   background-size: auto, 24px 24px, 24px 24px; }
-.vb-k { color: #9fb4e8; font-size: 12px; }
-.vb-main { display: flex; align-items: center; gap: 18px; margin-top: 6px; }
-.vb-main b { font: 700 54px/1 var(--f-display); letter-spacing: -.04em; }
-.vb-main span { font-size: 16px; line-height: 1.4; max-width: 30em; color: #dbe4f7; }
-.vb-r { display: flex; align-items: center; gap: 16px; }
-.vb-logo { background: transparent; border-radius: 12px; padding: 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.vb-logo img { width: 128px; display: block; }
-.vb-logo b { font: 700 22px/1 var(--f-display); color: #fff; letter-spacing: -.01em; }
-.vb-code { display: flex; flex-direction: column; gap: 5px; }
-.vb-code .mono { color: #9fb4e8; font-size: 11px; }
-.vb-code code { font: 500 20px var(--f-mono); letter-spacing: .1em; background: #fff; color: var(--ink); padding: 7px 12px; border-radius: 8px; }
+.vb-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.vb-k .mono { display: block; color: #9fb4e8; font-size: 13px; letter-spacing: .1em; }
+.vb-k b { display: block; font: 700 34px/1 var(--f-display); letter-spacing: .02em; text-transform: uppercase; margin-top: 8px; }
+.vb-logo { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.vb-logo img { width: 170px; display: block; }
+.vb-logo b { font: 700 29px/1 var(--f-display); color: #fff; letter-spacing: -.01em; }
+.vb-big { font: 700 104px/.9 var(--f-display); letter-spacing: -.05em; margin-top: 10px; }
+.vb-desc { font-size: 21px; line-height: 1.3; margin-top: 10px; }
+.vb-desc em { font-style: normal; color: #9fb4e8; }
+.vb-code { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; }
+.vb-code .mono { color: #9fb4e8; font-size: 12px; }
+.vb-code code { font: 500 26px var(--f-mono); letter-spacing: .14em; background: #fff; color: var(--ink); padding: 8px 18px; border-radius: 10px; }
+.vb-note { color: #c9d5ea; font-size: 15px; line-height: 1.35; }
 @media (max-width: 760px) {
   .vwrap { padding-inline: 16px; margin-bottom: 16px; }
-  .vbar { grid-template-columns: minmax(0, 1fr); padding: 18px; }
-  .vb-main { flex-direction: column; align-items: flex-start; gap: 6px; } .vb-main b { font-size: 44px; } .vb-main span { font-size: 14px; }
-  .vb-r { justify-content: space-between; }
-  .vb-logo img { width: 92px; } .vb-logo b { font-size: 16px; } .vb-logo { padding: 8px 10px 7px; }
-  .vb-r { gap: 10px; } .vb-code code { font-size: 15px; padding: 6px 9px; letter-spacing: .06em; }
+  .vbar { padding: 20px 18px; }
+  .vb-k .mono { font-size: 10px; } .vb-k b { font-size: 22px; margin-top: 6px; }
+  .vb-logo img { width: 104px; } .vb-logo b { font-size: 18px; }
+  .vb-big { font-size: 62px; margin-top: 8px; }
+  .vb-desc { font-size: 15px; margin-top: 6px; }
+  .vb-code { margin-top: 14px; gap: 10px; } .vb-code code { font-size: 17px; padding: 6px 12px; letter-spacing: .08em; }
+  .vb-note { font-size: 12.5px; flex-basis: 100%; }
 }
 .promo-note { border: 1px dashed var(--blue); background: var(--blue-soft); padding: 10px 12px; font-size: 14px; line-height: 1.45; max-width: 34em; }
 .promo-note b { font-family: var(--f-mono); font-weight: 500; color: var(--blue); letter-spacing: .04em; }
@@ -534,14 +537,13 @@ section.sheet { padding-block: 76px; }
   <section class="hero">
     <div class="vwrap" id="vbar" hidden>
       <div class="vbar">
-        <div class="vb-l">
-          <span class="mono vb-k" id="vbLabel"></span>
-          <div class="vb-main"><b>−30%</b><span id="vbText"></span></div>
-        </div>
-        <div class="vb-r">
+        <div class="vb-top">
+          <div class="vb-k"><span class="mono" id="vbGift"></span><b id="vbTitle"></b></div>
           <div class="vb-logo" id="vbLogo" hidden><img src="/db-logo.png" alt="AI &amp; Digital Bridge"><b>BRIDGE</b></div>
-          <div class="vb-code"><span class="mono" id="vbCodeK"></span><code id="vbCode"></code></div>
         </div>
+        <div class="vb-big">−30%</div>
+        <p class="vb-desc"><span id="vbDesc1"></span><br><em id="vbDesc2"></em></p>
+        <div class="vb-code"><span class="mono" id="vbCodeK"></span><code id="vbCode"></code><span class="vb-note" id="vbNote"></span></div>
       </div>
     </div>
     <div class="wrap">

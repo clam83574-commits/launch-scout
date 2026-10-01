@@ -212,7 +212,12 @@
    "date": "{d} {m} {y}",
    "vLabel": "Ваучер участника",
    "vCode": "Код",
-   "vText": "на первую покупку для участников {p}. Скидка уже подключена — откройте Launch Scout по любой кнопке на странице."
+   "vText": "на первую покупку для участников {p}. Скидка уже подключена — откройте Launch Scout по любой кнопке на странице.",
+   "vGift": "Подарок участнику",
+   "vTitle": "Ваучер",
+   "vDesc1": "на первую покупку в Launch Scout",
+   "vDesc2": "для участников {p}",
+   "vNote": "Скидка уже подключена — откройте Launch Scout по любой кнопке на странице"
   },
   "kk": {
    "sectors": {
@@ -406,7 +411,12 @@
    "date": "{d} {m} {y}",
    "vLabel": "Қатысушы ваучері",
    "vCode": "Код",
-   "vText": "{p} қатысушыларына алғашқы сатып алуға. Жеңілдік қосылды — Launch Scout-ты осы беттегі кез келген батырмамен ашыңыз."
+   "vText": "{p} қатысушыларына алғашқы сатып алуға. Жеңілдік қосылды — Launch Scout-ты осы беттегі кез келген батырмамен ашыңыз.",
+   "vGift": "Қатысушыға сыйлық",
+   "vTitle": "Ваучер",
+   "vDesc1": "Launch Scout-тағы алғашқы сатып алуға",
+   "vDesc2": "{p} қатысушыларына",
+   "vNote": "Жеңілдік қосылды — Launch Scout-ты осы беттегі кез келген батырмамен ашыңыз"
   },
   "en": {
    "sectors": {
@@ -600,7 +610,12 @@
    "date": "{m} {d}, {y}",
    "vLabel": "Participant voucher",
    "vCode": "Code",
-   "vText": "off your first purchase for {p} participants. The discount is already on — open Launch Scout from any button on this page."
+   "vText": "off your first purchase for {p} participants. The discount is already on — open Launch Scout from any button on this page.",
+   "vGift": "Gift for participants",
+   "vTitle": "Voucher",
+   "vDesc1": "off your first purchase in Launch Scout",
+   "vDesc2": "for {p} participants",
+   "vNote": "The discount is already on — open Launch Scout from any button on this page"
   }
  },
  "html": [

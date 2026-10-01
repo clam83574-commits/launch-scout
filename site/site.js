@@ -70,8 +70,11 @@
     // Синий ваучер над первым экраном: от какого мероприятия скидка и какой код.
     const PARTNERS = { aipreneurs: ["AI-preneurs", false], tomorrowschool: ["Tomorrow School", false], digitalbridge: ["AI & Digital Bridge", true] };
     const [pname, logo] = PARTNERS[code];
-    document.getElementById("vbLabel").textContent = I.vLabel;
-    document.getElementById("vbText").textContent = I.vText.replace("{p}", pname);
+    document.getElementById("vbGift").textContent = I.vGift;
+    document.getElementById("vbTitle").textContent = I.vTitle;
+    document.getElementById("vbDesc1").textContent = I.vDesc1;
+    document.getElementById("vbDesc2").textContent = I.vDesc2.replace("{p}", pname);
+    document.getElementById("vbNote").textContent = I.vNote;
     document.getElementById("vbCodeK").textContent = I.vCode;
     document.getElementById("vbCode").textContent = code.toUpperCase();
     document.getElementById("vbLogo").hidden = !logo;
