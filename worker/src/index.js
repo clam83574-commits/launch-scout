@@ -1298,6 +1298,7 @@ async function handleUpdate(env, update) {
 
   await ensureTables(env);
   if (msg && raw.startsWith("/start")) await refCapture(env, chatId, raw);
+  if (msg && /^\/start\s+site\b/i.test(raw)) await setMeta(env, "from_site", String(Number((await meta(env, "from_site")) || 0) + 1));
   if (!(await hasAccess(env, chatId))) {
     // Закрытый доступ: выдаёт админ по ID (решение владельца 2026-10-02), кодов нет.
     await accessGate(env, chatId, msg, cb, data);
@@ -4208,7 +4209,7 @@ const MODEL_SECTORS = {
   hardware: ["hardware", "energy", "defense_space", "mobility"],
 };
 const HEAVY = new Set(["hardware", "defense_space", "energy", "ai_infra"]);
-const HEAVY_NICHE = /drug|pharma|oncolog|therapeut|biotech|clinical trial|vaccine|gene|cell therap|medical device|chip|semiconductor|reactor|nuclear|fusion|satellite|launch vehicle|rocket|battery|solar|cooling|robot|humanoid|drone|lidar|manufactur|mining|fab/i;
+const HEAVY_NICHE = /drug|pharma|oncolog|therapeut|biotech|clinical trial|vaccine|gene|cell therap|medical device|chip|semiconductor|reactor|nuclear|fusion|satellite|launch vehicle|rocket|battery|solar|cooling|robot|humanoid|drone|lidar|manufactur|mining|fab\b/i;
 
 /**
  * Кнопки под сводкой дня: разобрать каждую из её ниш (тот же порядок, что в
@@ -5063,6 +5064,28 @@ export default {
       } catch (e) {
         return new Response(`не сохранено: ${String(e).slice(0, 300)}`, { status: 503 });
       }
+    }
+
+    // Пульс рынка для сайта: открытые сводные цифры, кэш 10 минут (D1 не читаем на каждый заход).
+    if (request.method === "GET" && url.pathname === "/public/pulse") {
+      const cache = caches.default;
+      const hit = await cache.match(request);
+      if (hit) return hit;
+      const since = Math.floor(Date.now() / 1000) - 90 * 86400;
+      const q = (sql, ...b) => env.DB.prepare(sql).bind(...b);
+      const [tot, sec, recent, niches] = await env.DB.batch([
+        q("SELECT COUNT(*) n, SUM(usd) usd, COUNT(DISTINCT NULLIF(country, '')) c FROM rounds WHERE ts >= ?1", since),
+        q("SELECT sector s, COUNT(*) n, SUM(usd) usd FROM rounds WHERE ts >= ?1 AND sector IS NOT NULL GROUP BY sector ORDER BY usd DESC", since),
+        q("SELECT company c, usd, stage, sector s, country, ts FROM rounds WHERE usd >= 1000000 AND usd < 5000000000 ORDER BY ts DESC LIMIT 16"),
+        q("SELECT COUNT(*) n FROM niche_matrix"),
+      ]);
+      const t = tot.results[0] || {};
+      const body = JSON.stringify({ ts: Math.floor(Date.now() / 1000), rounds90: t.n || 0, usd90: t.usd || 0, countries: t.c || 0,
+        niches: (niches.results[0] || {}).n || 0, sectors: sec.results, recent: recent.results });
+      const res = new Response(body, { headers: { "content-type": "application/json; charset=utf-8",
+        "access-control-allow-origin": "*", "cache-control": "public, max-age=600" } });
+      ctx.waitUntil(cache.put(request, res.clone()));
+      return res;
     }
 
     if (request.method === "POST" && url.pathname === "/tg-admin") {

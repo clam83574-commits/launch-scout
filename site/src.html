@@ -1,0 +1,921 @@
+<title>Launch Scout</title>
+<meta name="description" content="ИИ-аналитик рынка стартапов в Telegram: куда идут деньги, какие ниши свободны, взлетит ли идея. 300 LS бесплатно.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: лист технического чертежа — белая бумага в сетку, синие линии, выноски
+   и штамп; живые схемы на реальных данных бота. Одна светлая тема — по задумке. */
+:root {
+  --paper: #ffffff;
+  --paper-2: #f5f8fd;
+  --ink: #0f1d3a;
+  --muted: #56647f;
+  --line: #e6ecf5;
+  --line-2: #c9d5ea;
+  --blue: #1d4fd8;
+  --blue-2: #5b84f0;
+  --blue-soft: #eaf0fd;
+  --live: #0e9f6a;
+  --live-soft: #e3f6ee;
+  --warn: #d4482f;
+  --warn-soft: #fdecea;
+  --coffee: #7a4a2b;
+  --foam: #f3e6d6;
+  --f-display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --r: 14px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 17px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 32px 32px; background-position: -1px -1px;
+}
+/* синяя сетка проявляется под курсором */
+.spot {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: linear-gradient(color-mix(in srgb, var(--blue) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--blue) 22%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px; background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(260px circle at var(--mx, -500px) var(--my, -500px), #000, transparent 70%);
+  mask-image: radial-gradient(260px circle at var(--mx, -500px) var(--my, -500px), #000, transparent 70%);
+}
+main, header, footer { position: relative; z-index: 1; }
+a { color: var(--blue); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 24px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } body { font-size: 16px; } }
+.mono { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 500; text-wrap: balance; margin: 0; letter-spacing: -.02em; }
+h2 { font-size: clamp(26px, 3.4vw, 42px); line-height: 1.12; }
+h2 em, h1 em { font-style: normal; color: var(--blue); }
+h3 { font-size: 17px; font-weight: 500; letter-spacing: -.01em; line-height: 1.3; }
+p { margin: 0; }
+.num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 6px; }
+
+/* ---------- шапка ---------- */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 24px; min-height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-family: var(--f-display); font-weight: 500; font-size: 16px; }
+.brand svg { width: 30px; height: 30px; }
+.brand svg .sw { transform-origin: 16px 16px; animation: spin 4s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.nav { display: flex; gap: 22px; margin-left: auto; }
+.nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
+.nav a:hover { color: var(--ink); }
+@media (max-width: 820px) { .nav { display: none; } .top .btn { margin-left: auto; } }
+
+.btn { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; font: 500 15px/1 var(--f-body); text-decoration: none;
+  padding: 13px 20px; border-radius: 999px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
+  transition: transform .2s, background .2s, box-shadow .2s; position: relative; }
+.btn:hover { background: var(--blue); border-color: var(--blue); transform: translateY(-1px); box-shadow: 0 10px 26px -10px var(--blue); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
+.btn.ghost:hover { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); box-shadow: none; }
+.btn.sm { padding: 10px 16px; font-size: 14px; }
+/* главная кнопка-подарок */
+.gift { padding: 18px 26px 18px 20px; font-size: 17px; background: var(--blue); border-color: var(--blue); overflow: hidden; }
+.gift:hover { background: var(--ink); border-color: var(--ink); box-shadow: 0 14px 30px -12px var(--ink); }
+.gift .box { width: 34px; height: 34px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 18%, transparent); display: grid; place-items: center; }
+.gift .box svg { width: 20px; height: 20px; animation: wiggle 2.6s ease-in-out infinite; }
+.gift b { font-weight: 600; }
+.gift::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+  background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--paper) 35%, transparent), transparent); animation: shine 3.4s ease-in-out infinite; }
+@keyframes shine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+@keyframes wiggle { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-12deg); } 82% { transform: rotate(10deg); } 89% { transform: rotate(-6deg); } }
+.gift-sub { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.gift-sub span { display: inline-flex; gap: 6px; align-items: center; }
+.gift-sub svg { width: 14px; height: 14px; color: var(--live); }
+
+/* ---------- герой ---------- */
+.hero { padding-block: 48px 28px; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 36px; align-items: center; }
+.hero-text { display: grid; gap: 22px; min-width: 0; }
+.live-chip { display: inline-flex; align-items: center; gap: 10px; justify-self: start; padding: 7px 12px 7px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--paper); }
+.hero h1 { font-size: clamp(36px, 5.4vw, 66px); line-height: 1.03; }
+.hero .lead { font-size: clamp(17px, 1.6vw, 20px); color: var(--muted); max-width: 33em; }
+.hero .lead b { color: var(--ink); font-weight: 600; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--live); animation: pulse 2s infinite; flex: none; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 60%, transparent); } 80%, 100% { box-shadow: 0 0 0 10px transparent; } }
+.stage { position: relative; aspect-ratio: 1 / .92; width: 100%; max-width: 100%; border: 1px solid var(--line-2); border-radius: 18px; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 40%, var(--paper) 40%, var(--paper-2)); }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage .corner { position: absolute; font-family: var(--f-mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; z-index: 2; }
+.stage .tl { top: 12px; left: 14px; } .stage .tr { top: 12px; right: 14px; text-align: right; }
+.stage .bl { bottom: 12px; left: 14px; } .stage .br { bottom: 12px; right: 14px; }
+.tag3d { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; font-family: var(--f-mono); font-size: 11px; line-height: 1.25; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 7px; white-space: nowrap; transform: translate(-50%, -100%); transition: border-color .3s, box-shadow .3s; }
+.tag3d b { color: var(--blue); font-weight: 500; }
+.tag3d.hot { border-color: var(--blue); box-shadow: 0 4px 14px -6px var(--blue); }
+@media (max-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); } .stage { aspect-ratio: 1 / .85; } }
+
+/* ---------- бегущая лента сделок ---------- */
+.ticker { border-block: 1px solid var(--ink); background: var(--paper); overflow: hidden; position: relative; margin-top: 18px; }
+.ticker .lbl { position: absolute; left: 0; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: var(--ink); color: var(--paper); }
+.ticker .lbl.mono { color: var(--paper); }
+.ticker .track { display: flex; width: max-content; animation: marquee 60s linear infinite; padding-left: 210px; }
+.ticker:hover .track { animation-play-state: paused; }
+.ticker .it { display: flex; gap: 10px; align-items: baseline; padding: 14px 22px; border-right: 1px dashed var(--line-2); white-space: nowrap; font-size: 15px; }
+.ticker .it b { font-weight: 600; }
+.ticker .it .usd { font: 500 14px var(--f-mono); color: var(--blue); }
+.ticker .it .meta { font: 400 12px var(--f-mono); color: var(--muted); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+@media (max-width: 600px) { .ticker .lbl span:last-child { display: none; } .ticker .track { padding-left: 60px; } }
+
+/* ---------- разделы ---------- */
+section.sheet { padding-block: 76px; }
+.sheet-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 32px; align-items: end; margin-bottom: 36px; }
+.k { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.k i { display: block; width: 28px; height: 1px; background: var(--blue); }
+.sheet-head p { color: var(--muted); max-width: 30em; }
+@media (max-width: 760px) { .sheet-head { grid-template-columns: minmax(0, 1fr); } section.sheet { padding-block: 56px; } }
+.reveal { transition: transform .9s cubic-bezier(.2, .7, .2, 1); }
+.reveal.pre { transform: translateY(26px); }
+
+/* ---------- было / стало ---------- */
+.vs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.vs article { background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r); padding: 24px 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.vs .pair { display: grid; gap: 6px; }
+.vs .old { font: 500 clamp(22px, 2.4vw, 30px)/1.1 var(--f-display); color: var(--muted); position: relative; justify-self: start; }
+.vs .old::after { content: ""; position: absolute; left: -4px; right: -4px; top: 52%; height: 3px; border-radius: 2px; background: var(--warn); transform-origin: left; transform: scaleX(1); }
+.vs article.play .old::after { animation: strikeIn .7s .3s cubic-bezier(.6, 0, .2, 1) both; }
+@keyframes strikeIn { from { transform: scaleX(0); } }
+.vs .new { font: 500 clamp(30px, 3.4vw, 44px)/1.05 var(--f-display); color: var(--blue); letter-spacing: -.03em; }
+.vs article.play .new { animation: pop .6s 1s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes pop { from { transform: scale(.6); } }
+.vs h3 { font-family: var(--f-body); font-weight: 600; font-size: 17px; }
+.vs p { color: var(--muted); font-size: 15px; }
+@media (max-width: 900px) { .vs { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- карта денег ---------- */
+.money { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+.chart { background: var(--paper); border: 1px solid var(--line-2); border-radius: 18px; padding: 18px 20px; min-width: 0; }
+.chart .row { display: grid; grid-template-columns: 150px minmax(0, 1fr) 92px; gap: 14px; align-items: center; padding: 6px 0; font-size: 14px; cursor: default; }
+.chart .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chart .row .tr { height: 14px; background: var(--paper-2); border-radius: 4px; position: relative; overflow: hidden; }
+.chart .row .tr i { position: absolute; inset: 0 auto 0 0; width: var(--w); background: linear-gradient(90deg, var(--blue), var(--blue-2)); border-radius: 4px; transform-origin: left; }
+.chart.play .row .tr i { animation: grow 1.1s cubic-bezier(.2, .7, .2, 1) both; animation-delay: var(--d); }
+@keyframes grow { from { transform: scaleX(0); } }
+.chart .row .v { font: 500 13px var(--f-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.chart .row .cnt { font: 400 11px var(--f-mono); color: var(--muted); display: block; }
+.chart .row:hover .nm { color: var(--blue); }
+.chart .row:hover .tr i { background: var(--ink); }
+.chart .foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 12px; }
+.facts { display: grid; gap: 12px; }
+.fact { background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r); padding: 18px; display: grid; gap: 4px; }
+.fact b { font: 500 30px/1.05 var(--f-display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.fact span { color: var(--muted); font-size: 14px; }
+.fact.cis { border-style: dashed; }
+.fact.cis b { color: var(--live); }
+@media (max-width: 900px) { .money { grid-template-columns: minmax(0, 1fr); } .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .chart .row { grid-template-columns: 104px minmax(0, 1fr) 74px; gap: 10px; font-size: 13px; } .facts { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- демо ---------- */
+.demo { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.demo-copy { display: grid; gap: 22px; min-width: 0; }
+.tabs { display: grid; gap: 10px; }
+.tab { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line-2); border-radius: 12px; padding: 14px 16px; cursor: pointer;
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; transition: border-color .2s, background .2s; position: relative; overflow: hidden; }
+.tab:hover { border-color: var(--blue); }
+.tab .ic { width: 34px; height: 34px; border-radius: 9px; background: var(--blue-soft); display: grid; place-items: center; font-size: 17px; }
+.tab b { display: block; font-weight: 600; font-size: 15px; }
+.tab small { color: var(--muted); font-size: 13.5px; }
+.tab[aria-selected="true"] { border-color: var(--blue); background: var(--blue-soft); }
+.tab[aria-selected="true"] .ic { background: var(--paper); }
+.tab .prog { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--blue); transform-origin: left; transform: scaleX(0); }
+.tab[aria-selected="true"] .prog.run { animation: prog var(--dur, 12s) linear forwards; }
+@keyframes prog { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.phone-wrap { perspective: 1400px; display: grid; justify-items: center; min-width: 0; }
+.phone { width: min(390px, 100%); border-radius: 30px; border: 1px solid var(--line-2); background: #e7edf6;
+  box-shadow: 0 40px 80px -40px rgba(15, 29, 58, .45), 0 0 0 8px var(--paper), 0 0 0 9px var(--line-2);
+  transform: rotateY(-12deg) rotateX(5deg); transition: transform .8s cubic-bezier(.2, .7, .2, 1); overflow: hidden; }
+.phone:hover { transform: none; }
+.tg-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: var(--paper); border-bottom: 1px solid var(--line); }
+.tg-head .av { width: 36px; height: 36px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; color: var(--paper); }
+.tg-head .av svg { width: 22px; height: 22px; }
+.tg-head b { font-size: 15px; font-weight: 600; display: block; line-height: 1.2; }
+.tg-head small { font-size: 12px; color: var(--blue); }
+.tg-body { padding: 14px 12px 16px; display: grid; gap: 8px; font-size: 14px; line-height: 1.45; min-height: 470px; align-content: start; }
+.msg { max-width: 92%; padding: 9px 12px; border-radius: 14px; background: var(--paper); color: var(--ink); }
+.msg.me { justify-self: end; background: #d8e8ff; border-bottom-right-radius: 4px; }
+.msg.bot { border-bottom-left-radius: 4px; display: grid; gap: 8px; }
+.msg blockquote { margin: 0; padding: 6px 10px; border-left: 3px solid var(--blue); background: var(--blue-soft); border-radius: 4px 8px 8px 4px; font-size: 13px; }
+.msg blockquote b { display: block; }
+.msg .verdict b { color: var(--blue); }
+.typing { display: inline-flex; gap: 4px; padding: 12px 14px; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: dots 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes dots { 0%, 60%, 100% { opacity: .25; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+.kb { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; max-width: 92%; transition: opacity .4s; }
+.kb span { background: rgba(255, 255, 255, .75); border-radius: 9px; text-align: center; padding: 8px 4px; font-size: 12.5px; font-weight: 500; }
+.kb.wait { opacity: .25; }
+.caret::after { content: "▍"; color: var(--blue); animation: caret .8s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.example-note { text-align: center; margin-top: 18px; }
+@media (max-width: 900px) { .demo { grid-template-columns: minmax(0, 1fr); gap: 36px; } .phone { transform: none; } .tg-body { min-height: 0; } }
+
+/* ---------- проверка ---------- */
+.truth { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; align-items: center; }
+.scan { background: var(--paper); border: 1px solid var(--line-2); border-radius: 18px; padding: 20px; display: grid; gap: 10px; position: relative; overflow: hidden; min-width: 0; }
+.scan .hd { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.srow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 10px;
+  background: var(--paper-2); transition: opacity .6s, transform .6s, border-color .3s, background .3s, max-height .6s, padding .6s, margin .6s; max-height: 90px; position: relative; }
+.srow .tx { font-size: 15px; min-width: 0; }
+.srow .tx b { font-family: var(--f-mono); font-weight: 500; color: var(--blue); }
+.srow .st { font: 500 11.5px/1 var(--f-mono); padding: 6px 8px; border-radius: 6px; white-space: nowrap; border: 1px solid var(--line-2); color: var(--muted); background: var(--paper); }
+.srow.ok { border-color: color-mix(in srgb, var(--live) 45%, var(--paper)); background: var(--live-soft); }
+.srow.ok .st { color: var(--live); border-color: color-mix(in srgb, var(--live) 45%, var(--paper)); }
+.srow.bad { border-color: color-mix(in srgb, var(--warn) 45%, var(--paper)); background: var(--warn-soft); }
+.srow.bad .st { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--paper)); }
+.srow.bad .tx b { color: var(--warn); }
+.srow.gone { opacity: .45; }
+.srow.gone .tx { text-decoration: line-through; text-decoration-color: var(--warn); text-decoration-thickness: 2px; }
+.srow.looking { border-color: var(--blue); background: var(--blue-soft); }
+.beam { position: absolute; left: 0; right: 0; height: 2px; background: var(--blue); box-shadow: 0 0 18px 4px color-mix(in srgb, var(--blue) 40%, transparent); top: 0; opacity: 0; transition: top .7s cubic-bezier(.4, 0, .2, 1), opacity .3s; pointer-events: none; }
+.scan .out { display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px; font-size: 15px; }
+.scan .out b { font-family: var(--f-mono); font-weight: 500; color: var(--live); }
+.steps3 { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line-2); counter-reset: s; }
+.steps3 li { padding: 16px 0 16px 46px; border-bottom: 1px solid var(--line-2); position: relative; transition: color .3s; color: var(--muted); }
+.steps3 li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 14px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2);
+  display: grid; place-items: center; font: 500 13px var(--f-mono); color: var(--muted); background: var(--paper); transition: all .3s; }
+.steps3 li b { color: var(--ink); display: block; font-weight: 600; }
+.steps3 li.on::before { background: var(--blue); border-color: var(--blue); color: var(--paper); }
+.steps3 li.on b { color: var(--blue); }
+@media (max-width: 900px) { .truth { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- конвейер ---------- */
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.node { position: relative; background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r); padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; margin-inline: 14px; }
+.node:first-child { margin-left: 0; } .node:last-child { margin-right: 0; }
+.node .step { display: flex; justify-content: space-between; align-items: center; }
+.node .step b { font: 500 12px/1 var(--f-mono); color: var(--blue); background: var(--blue-soft); padding: 5px 8px; border-radius: 6px; }
+.node p { color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+.node .viz { border: 1px dashed var(--line-2); border-radius: 10px; padding: 12px; min-height: 140px; background: var(--paper-2); overflow: hidden; }
+.node:not(:last-child)::after { content: ""; position: absolute; top: 34px; right: -29px; width: 28px; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--blue) 0 6px, transparent 6px 10px); background-size: 20px 2px; animation: flowx .8s linear infinite; }
+.node:not(:last-child)::before { content: ""; position: absolute; top: 30px; right: -31px; border: 5px solid transparent; border-left-color: var(--blue); z-index: 1; }
+@keyframes flowx { to { background-position: 20px 0; } }
+@keyframes flowy { to { background-position: 0 20px; } }
+@media (max-width: 900px) {
+  .flow { grid-template-columns: minmax(0, 1fr); gap: 28px; } .node { margin-inline: 0; }
+  .node:not(:last-child)::after { top: auto; bottom: -27px; right: auto; left: 34px; width: 2px; height: 26px;
+    background: repeating-linear-gradient(180deg, var(--blue) 0 6px, transparent 6px 10px); background-size: 2px 20px; animation-name: flowy; }
+  .node:not(:last-child)::before { top: auto; bottom: -31px; right: auto; left: 30px; border-left-color: transparent; border-top-color: var(--blue); }
+}
+.srcs { display: flex; flex-wrap: wrap; gap: 6px; }
+.srcs span { font: 500 11px/1 var(--f-mono); padding: 6px 7px; border-radius: 6px; background: var(--paper); border: 1px solid var(--line-2); display: inline-flex; gap: 6px; align-items: center; }
+.srcs span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--line-2); animation: blink 3.2s infinite; animation-delay: var(--d, 0s); }
+@keyframes blink { 0%, 70%, 100% { background: var(--line-2); } 8%, 30% { background: var(--live); } }
+.checks { display: grid; gap: 7px; font: 400 11.5px/1.35 var(--f-mono); }
+.checks div { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 6px; padding: 6px 8px; background: var(--paper); border-radius: 6px; border: 1px solid var(--line); animation: scanb 6s infinite; animation-delay: var(--d, 0s); }
+.checks .ok i { color: var(--live); font-style: normal; } .checks .no i { color: var(--warn); font-style: normal; }
+.checks .no span { text-decoration: line-through; color: var(--muted); }
+@keyframes scanb { 0%, 12%, 100% { border-color: var(--line); } 4% { border-color: var(--blue); } }
+.matrix { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.matrix i { aspect-ratio: 1; border-radius: 3px; background: var(--blue); opacity: var(--o, .1); transition: opacity 1.2s ease; }
+.reply { display: grid; gap: 7px; }
+.reply .ln { height: 8px; border-radius: 4px; background: var(--line-2); transform-origin: left; animation: typeln 5s infinite; animation-delay: var(--d, 0s); }
+.reply .q { border-left: 2px solid var(--blue); padding-left: 8px; display: grid; gap: 6px; }
+.reply .chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.reply .chips span { font: 500 10px/1 var(--f-mono); padding: 5px 6px; border-radius: 5px; background: var(--paper); border: 1px solid var(--line-2); color: var(--blue); }
+@keyframes typeln { 0% { transform: scaleX(.05); } 25%, 85% { transform: scaleX(1); } 100% { transform: scaleX(.05); } }
+
+/* ---------- возможности ---------- */
+.feats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line-2); border-left: 1px solid var(--line-2); background: var(--paper); border-radius: var(--r); overflow: hidden; }
+.feat { padding: 22px 20px; border-right: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); display: grid; gap: 10px; align-content: start; min-width: 0; transition: background .25s; }
+.feat:hover { background: var(--blue-soft); }
+.feat svg { width: 30px; height: 30px; color: var(--blue); transition: transform .4s cubic-bezier(.2, 1.4, .4, 1); }
+.feat:hover svg { transform: scale(1.15) rotate(-6deg); }
+.feat p { color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+.feat .price { font: 500 11px/1 var(--f-mono); letter-spacing: .04em; border: 1px solid var(--line-2); border-radius: 6px; padding: 5px 7px; justify-self: start; background: var(--paper); }
+.feat .price.free { color: var(--live); border-color: color-mix(in srgb, var(--live) 40%, var(--paper)); }
+@media (max-width: 1000px) { .feats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .feats { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- тарифы + кофе ---------- */
+.plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.plan { background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r); padding: 20px; display: grid; gap: 12px; align-content: start; min-width: 0; position: relative; transition: transform .3s, box-shadow .3s; }
+.plan:hover { transform: translateY(-4px); box-shadow: 0 22px 40px -28px var(--ink); }
+.plan.main { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue), 0 24px 48px -32px var(--blue); }
+.plan .badge { position: absolute; top: -11px; left: 18px; font: 500 11px/1 var(--f-mono); letter-spacing: .05em; background: var(--blue); color: var(--paper); padding: 6px 8px; border-radius: 6px; }
+.plan .badge.g { background: var(--live); }
+.cups { height: 104px; border-radius: 10px; background: var(--paper-2); border: 1px dashed var(--line-2); display: grid; place-items: center; overflow: hidden; }
+.cups svg { height: 92px; width: auto; max-width: 100%; overflow: visible; }
+.steam path { fill: none; stroke: var(--line-2); stroke-width: 2.2; stroke-linecap: round; animation: steam 2.8s ease-in-out infinite; }
+.steam path:nth-child(2) { animation-delay: .6s; } .steam path:nth-child(3) { animation-delay: 1.2s; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(6px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+.plan .cmp { font: 500 12px/1.3 var(--f-mono); color: var(--coffee); }
+.plan .name { font: 500 15px var(--f-display); }
+.plan .price { font: 500 34px/1 var(--f-display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.plan .price small { font: 400 14px var(--f-body); color: var(--muted); letter-spacing: 0; }
+.plan .ls b { font: 500 14px var(--f-mono); }
+.plan p { color: var(--muted); font-size: 14px; }
+.plan .btn { justify-content: center; }
+.pack { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 16px 20px; border: 1px dashed var(--line-2); border-radius: var(--r); background: var(--paper); }
+.pack p { color: var(--muted); font-size: 15px; } .pack b { color: var(--ink); }
+.costs { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+.costs span { font: 400 12.5px/1 var(--f-mono); padding: 8px 10px; border-radius: 8px; background: var(--paper); border: 1px solid var(--line); color: var(--muted); }
+.costs span b { color: var(--ink); font-weight: 500; }
+@media (max-width: 1000px) { .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .plans { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- финал ---------- */
+.final { padding-block: 70px 40px; }
+.final .card { border: 1px solid var(--ink); border-radius: 22px; background: var(--paper); padding: clamp(28px, 5vw, 56px); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; position: relative; overflow: hidden; }
+.final h2 { font-size: clamp(28px, 4vw, 48px); max-width: 15em; }
+.final p { color: var(--muted); margin-top: 14px; max-width: 34em; }
+.final .rings { position: absolute; right: -130px; top: -130px; width: 380px; height: 380px; pointer-events: none; }
+.final .rings circle { animation: ring 4s ease-out infinite; transform-origin: 100px 100px; }
+.final .rings circle:nth-child(2) { animation-delay: 1s; } .final .rings circle:nth-child(3) { animation-delay: 2s; } .final .rings circle:nth-child(4) { animation-delay: 3s; }
+@keyframes ring { 0% { transform: scale(.2); opacity: .7; } 100% { transform: scale(1); opacity: 0; } }
+.final .act { display: grid; gap: 12px; justify-items: start; position: relative; }
+@media (max-width: 760px) { .final .card { grid-template-columns: minmax(0, 1fr); } }
+.titleblock { margin-top: 28px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; border: 1px solid var(--ink); font: 400 12px/1.3 var(--f-mono); background: var(--paper); }
+.titleblock div { padding: 10px 12px; border-left: 1px solid var(--ink); display: grid; gap: 3px; min-width: 0; }
+.titleblock div:first-child { border-left: 0; }
+.titleblock small { color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+@media (max-width: 600px) { .titleblock { grid-template-columns: 1fr 1fr; } .titleblock div:nth-child(3) { border-left: 0; } .titleblock div:nth-child(n+3) { border-top: 1px solid var(--ink); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="tg" viewBox="0 0 24 24"><path fill="currentColor" d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.8-3.6-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2l-11 6.9-4.7-1.5c-1-.3-1-1 .2-1.5L20.5 3c.9-.3 1.6.2 1.4 1.3Z"/></symbol>
+  <symbol id="giftic" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8C10 4 6.5 4.5 7 7c.3 1 2 1 5 1Zm0 0c2-4 5.5-3.5 5-1-.3 1-2 1-5 1Z"/></g></symbol>
+  <symbol id="chk" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+<div class="spot" id="spot" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><g class="sw"><path d="M16 16 L27 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="22.6" cy="11.4" r="2.2" fill="#1d4fd8"/></g></svg>Launch Scout</a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="#money">Где деньги</a>
+      <a href="#demo">Пример</a>
+      <a href="#truth">Проверка</a>
+      <a href="#pricing">Цены</a>
+    </nav>
+    <a class="btn sm" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener"><svg><use href="#giftic"/></svg>300 LS бесплатно</a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- 1. ГЕРОЙ -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-text">
+        <span class="live-chip mono"><span class="pulse"></span><span id="liveTxt">Пульс рынка · обновляется каждые 10 минут</span></span>
+        <h1>Стройте там, куда <em>уже идут деньги</em></h1>
+        <p class="lead">За 90 дней инвесторы вложили <b data-k="usd90">$101 млрд</b> в <b data-k="rounds90">1 601</b> стартап. Launch Scout видит каждый раунд и за 10 секунд отвечает в Telegram: какую нишу брать, кто в ней уже есть и взлетит ли ваша идея.</p>
+        <div style="display:grid;gap:12px;justify-items:start">
+          <a class="btn gift" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener"><span class="box"><svg><use href="#giftic"/></svg></span><span>Нажмите и получите <b>300 LS бесплатно</b></span></a>
+          <div class="gift-sub mono"><span><svg><use href="#chk"/></svg>≈ 30 ответов</span><span><svg><use href="#chk"/></svg>без карты</span><span><svg><use href="#chk"/></svg>сразу в Telegram</span></div>
+        </div>
+      </div>
+      <div class="stage" id="stage" aria-label="3D-схема: столбики — сектора рынка, высота — сколько денег вложили за 90 дней; луч радара проходит по ним, сигналы из источников стекаются к нишам">
+        <span class="corner tl">ДЕНЬГИ ПО СЕКТОРАМ · 90 ДНЕЙ</span>
+        <span class="corner tr">ВЫСОТА = $</span>
+        <span class="corner bl" id="clock">СЛЕД. ПРОГОН —:—</span>
+        <span class="corner br">ВИД А · ИЗОМЕТРИЯ</span>
+        <canvas id="radar"></canvas>
+      </div>
+    </div>
+    <div class="ticker" aria-label="Свежие раунды из базы бота">
+      <div class="lbl mono"><span class="pulse"></span><span>Свежие раунды</span></div>
+      <div class="track" id="track"></div>
+    </div>
+  </section>
+
+  <!-- 2. БЫЛО / СТАЛО -->
+  <section class="sheet" id="why">
+    <div class="wrap">
+      <div class="sheet-head reveal">
+        <div>
+          <div class="k mono"><i></i>Зачем</div>
+          <h2>Ресёрч рынка — <em>за 10 секунд</em>, а&nbsp;не за две недели</h2>
+        </div>
+        <p>Большинство стартапов закрываются, потому что делают то, что рынку не нужно. Это проверяется до первой строчки кода.</p>
+      </div>
+      <div class="vs" id="vs">
+        <article class="reveal">
+          <div class="pair"><span class="old">2 недели</span><span class="new">10 секунд</span></div>
+          <h3>Ресёрч ниши</h3>
+          <p>Вместо сорока вкладок и таблиц — один вопрос в Telegram, текстом или голосом.</p>
+        </article>
+        <article class="reveal">
+          <div class="pair"><span class="old">раз в квартал</span><span class="new">10 минут</span></div>
+          <h3>Свежесть данных</h3>
+          <p>Отраслевые отчёты устаревают до выхода. База бота обновляется каждые 10 минут.</p>
+        </article>
+        <article class="reveal">
+          <div class="pair"><span class="old">«кажется»</span><span class="new">ссылка</span></div>
+          <h3>Каждая цифра — с источником</h3>
+          <p>Нет источника — нет цифры. Бот не пишет то, что не может подтвердить.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. ГДЕ ДЕНЬГИ -->
+  <section class="sheet" id="money">
+    <div class="wrap">
+      <div class="sheet-head reveal">
+        <div>
+          <div class="k mono"><i></i>Где деньги · живые данные</div>
+          <h2><span data-k="usd90">$101 млрд</span> за 90 дней. <em>Вот куда</em></h2>
+        </div>
+        <p>Это реальные данные из базы бота. Наведите на сектор — увидите число раундов. В боте то же самое, только по 1 118 нишам.</p>
+      </div>
+      <div class="money">
+        <div class="chart reveal" id="chart" role="img" aria-label="Вложения по секторам за 90 дней"></div>
+        <div class="facts">
+          <div class="fact reveal"><b data-k="rounds90" class="num">1 601</b><span>раунд за 90 дней</span></div>
+          <div class="fact reveal"><b data-k="countries" class="num">66</b><span>стран</span></div>
+          <div class="fact reveal"><b data-k="niches" class="num">1 118</b><span>ниш в матрице бота</span></div>
+          <div class="fact cis reveal"><b>5</b><span>раундов в СНГ за 90 дней. Рынок почти пустой — место для первых.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. ДЕМО -->
+  <section class="sheet" id="demo">
+    <div class="wrap demo">
+      <div class="demo-copy">
+        <div class="reveal">
+          <div class="k mono"><i></i>Как это выглядит</div>
+          <h2>Спросите как у&nbsp;своего аналитика</h2>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Примеры вопросов">
+          <button class="tab" role="tab" id="t0" aria-selected="true"><span class="ic">💸</span><span><b>Куда идут деньги?</b><small>Ниша, суммы, свежие сделки</small></span><i class="prog"></i></button>
+          <button class="tab" role="tab" id="t1" aria-selected="false"><span class="ic">🧪</span><span><b>Взлетит ли идея?</b><small>/check — сначала пробует опровергнуть</small></span><i class="prog"></i></button>
+          <button class="tab" role="tab" id="t2" aria-selected="false"><span class="ic">🏁</span><span><b>Кто конкуренты?</b><small>Кто привлёк, сколько, где пусто</small></span><i class="prog"></i></button>
+        </div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone" aria-live="polite">
+          <div class="tg-head"><div class="av"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 16 L26 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="22" cy="11.6" r="2.2" fill="#5b84f0"/></svg></div><div><b>Launch Scout</b><small id="tgStatus">бот</small></div></div>
+          <div class="tg-body" id="chat"></div>
+        </div>
+        <div class="mono example-note">Пример ответа · цифры — из базы бота на 1 октября</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. ПРОВЕРКА -->
+  <section class="sheet" id="truth">
+    <div class="wrap truth">
+      <div class="scan" id="scan">
+        <div class="hd"><span class="mono">Черновик ответа</span><span class="mono" id="scanState">проверка</span></div>
+        <div class="srow ok" data-res="ok" data-src="✓ база бота"><span class="tx">ИИ-агенты: <b>148</b> раундов за 90 дней</span><span class="st">✓ база бота</span></div>
+        <div class="srow ok" data-res="ok" data-src="✓ новость о раунде"><span class="tx">Flow Engineering — <b>$50 млн</b>, Series B</span><span class="st">✓ новость о раунде</span></div>
+        <div class="srow bad gone" data-res="bad" data-src="✗ нет источника"><span class="tx">Выручка конкурента — <b>$90 млн</b></span><span class="st">✗ нет источника</span></div>
+        <div class="out"><svg width="18" height="18" style="color:var(--live)"><use href="#chk"/></svg><span>Вы получаете <b>2 строки из 3</b> — обе со ссылкой</span></div>
+        <div class="beam" id="beam"></div>
+      </div>
+      <div style="display:grid;gap:24px;min-width:0">
+        <div class="reveal">
+          <div class="k mono"><i></i>Без выдумок</div>
+          <h2>ИИ не может <em>соврать</em> вам цифрой</h2>
+        </div>
+        <ol class="steps3" id="steps3">
+          <li><b>Модель пишет черновик</b>Ответ собирается из фактов базы и веба.</li>
+          <li><b>Бот ищет каждую цифру в источниках</b>Суммы, проценты, названия компаний.</li>
+          <li class="on"><b>Без источника — строка удаляется</b>До того, как вы её увидите. Крупные суммы — только если их подтвердили 3 издания.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. КАК РАБОТАЕТ -->
+  <section class="sheet" id="how">
+    <div class="wrap">
+      <div class="sheet-head reveal">
+        <div>
+          <div class="k mono"><i></i>Под капотом</div>
+          <h2>11 источников, один ответ</h2>
+        </div>
+        <p>Бот не пересказывает интернет: у него своя база сделок и ниш, которая пересчитывается круглые сутки.</p>
+      </div>
+      <div class="flow">
+        <article class="node"><div class="step"><b>01</b><span class="mono">Сбор</span></div><div class="viz"><div class="srcs" id="srcs"></div></div><h3>Источники</h3><p>Сделки, запуски, спрос и пресс-релизы — каждые 10 минут.</p></article>
+        <article class="node"><div class="step"><b>02</b><span class="mono">Сверка</span></div><div class="viz"><div class="checks">
+          <div class="ok" style="--d:0s"><i>✓</i><span>дубли склеены: 4 → 1</span></div>
+          <div class="ok" style="--d:1.5s"><i>✓</i><span>сумма из 3 изданий</span></div>
+          <div class="no" style="--d:3s"><i>✗</i><span>$11B — оценка, не раунд</span></div>
+          <div class="ok" style="--d:4.5s"><i>✓</i><span>сектор: ИИ-агенты</span></div></div></div>
+          <h3>Очистка</h3><p>Десять статей об одной сделке — одна запись. Сомнительные суммы отсеиваются.</p></article>
+        <article class="node"><div class="step"><b>03</b><span class="mono">Матрица</span></div><div class="viz"><div class="matrix" id="matrix"></div></div><h3>Матрица ниш</h3><p>По каждой нише: деньги, конкуренты, спрос в Google и X, импульс за 90 дней.</p></article>
+        <article class="node"><div class="step"><b>04</b><span class="mono">Ответ</span></div><div class="viz"><div class="reply">
+          <div class="ln" style="width:70%;--d:0s"></div>
+          <div class="q"><div class="ln" style="width:90%;--d:.3s"></div><div class="ln" style="width:64%;--d:.6s"></div></div>
+          <div class="q"><div class="ln" style="width:82%;--d:.9s"></div><div class="ln" style="width:50%;--d:1.2s"></div></div>
+          <div class="chips"><span>Глубже</span><span>Карта идеи</span><span>Конкуренты</span></div></div></div>
+          <h3>Ответ в Telegram</h3><p>Коротко, со ссылками и кнопками, чтобы копнуть глубже.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. ВОЗМОЖНОСТИ -->
+  <section class="sheet" id="features">
+    <div class="wrap">
+      <div class="sheet-head reveal">
+        <div>
+          <div class="k mono"><i></i>Что умеет</div>
+          <h2>Всё, что нужно до&nbsp;первой строчки кода</h2>
+        </div>
+        <p>Цена каждого действия видна заранее, в LS — внутренней валюте бота.</p>
+      </div>
+      <div class="feats">
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="6"/><path d="M16 16 25 9" stroke-linecap="round"/><circle cx="22" cy="11" r="1.6" fill="currentColor"/></svg><h3>Радар под вас</h3><p>Два вопроса о рынке и модели — и бот подбирает ниши, которые вам по силам.</p><span class="price free">БЕСПЛАТНО</span></article>
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="12" y="4" width="8" height="15" rx="4"/><path d="M8 15a8 8 0 0 0 16 0M16 23v5" stroke-linecap="round"/></svg><h3>Вопрос текстом или голосом</h3><p>Про нишу, компанию или инвестора. Ответ за 5–10 секунд.</p><span class="price">10 LS</span></article>
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="12"/><path d="M4 16h24M16 4c4 3.5 4 20.5 0 24M16 4c-4 3.5-4 20.5 0 24"/></svg><h3>Живой поиск</h3><p>Нет в базе — бот ищет прямо сейчас: веб, Hacker News, GitHub.</p><span class="price">40 LS</span></article>
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M4 8l8-3 8 3 8-3v19l-8 3-8-3-8 3z"/><path d="M12 5v19M20 8v19"/></svg><h3>Карта идеи</h3><p>Сегменты, деньги, конкуренты и первый шаг на одном экране.</p><span class="price">20 LS</span></article>
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 27V9M6 9h14l-3 4 3 4H6" stroke-linejoin="round"/><path d="M24 27v-8M16 27v-5" stroke-linecap="round"/></svg><h3>Конкуренты</h3><p>Кто уже в нише, сколько привлёк и где у него слабое место.</p><span class="price">20 LS</span></article>
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4 27 8v8c0 6-5 10-11 12C10 26 5 22 5 16V8z" stroke-linejoin="round"/><path d="m11 16 4 4 6-8" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Проверка идеи</h3><p>Сначала пытается опровергнуть фактами, потом даёт план проверки на 7 дней.</p><span class="price">30 LS</span></article>
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 24 11 16l5 4 12-12"/><path d="M21 8h7v7"/></svg><h3>X и Google Trends</h3><p>Что обсуждают и что ищут по вашей нише за последние месяцы.</p><span class="price">15 LS</span></article>
+        <article class="feat"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 22V14a7 7 0 0 1 14 0v8l2 3H7z"/><path d="M13 28h6"/></svg><h3>Следить за нишей</h3><p>Новый раунд или запуск в нише — бот напишет сам.</p><span class="price free">БЕСПЛАТНО</span></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. ЦЕНЫ -->
+  <section class="sheet" id="pricing">
+    <div class="wrap">
+      <div class="sheet-head reveal">
+        <div>
+          <div class="k mono"><i></i>Цены</div>
+          <h2>Инсайты по цене <em>чашки кофе</em></h2>
+        </div>
+        <p>Оплата звёздами Telegram прямо в боте. LS подписки обновляются каждые 30 дней.</p>
+      </div>
+      <div class="plans">
+        <article class="plan">
+          <span class="badge g">СТАРТ</span>
+          <div class="cups"><svg viewBox="0 0 80 90" aria-hidden="true">
+            <path d="M24 22h32l-4 58H28z" fill="var(--blue-soft)" stroke="var(--line-2)" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M26 40h28l-2.6 38H28.6z" fill="#cfe0fb"/>
+            <ellipse cx="34" cy="52" rx="2" ry="2.4" fill="var(--paper)"/><ellipse cx="45" cy="62" rx="1.6" ry="2" fill="var(--paper)"/>
+          </svg></div>
+          <div class="cmp">≈ стакан воды · бесплатно</div>
+          <div class="name">Free</div>
+          <div class="price">$0 <small>/ мес</small></div>
+          <div class="ls"><b>300 LS</b></div>
+          <p>≈ 30 ответов. Радар, сводка и лента — без ограничений.</p>
+          <a class="btn sm" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener"><svg><use href="#giftic"/></svg>Забрать 300 LS</a>
+        </article>
+        <article class="plan main">
+          <span class="badge">ПОПУЛЯРНЫЙ</span>
+          <div class="cups"><svg viewBox="0 0 80 90" aria-hidden="true">
+            <g class="steam"><path d="M33 16c-4-5 4-7 0-12"/><path d="M41 16c-4-5 4-7 0-12"/><path d="M49 16c-4-5 4-7 0-12"/></g>
+            <rect x="22" y="22" width="36" height="8" rx="3" fill="var(--ink)"/>
+            <path d="M24 30h32l-4.5 54h-23z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M25.8 46h28.4l-1.6 20H27.4z" fill="var(--coffee)"/>
+            <text x="40" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="var(--foam)">LS</text>
+          </svg></div>
+          <div class="cmp">≈ 1 стаканчик американо</div>
+          <div class="name">Pro</div>
+          <div class="price">$3.99 <small>/ мес</small></div>
+          <div class="ls"><b>1 500 LS</b></div>
+          <p>≈ 150 ответов или 37 живых поисков.</p>
+        </article>
+        <article class="plan">
+          <div class="cups"><svg viewBox="0 0 150 90" aria-hidden="true">
+            <g class="steam"><path d="M38 34c-4-5 4-7 0-12"/><path d="M46 34c-4-5 4-7 0-12"/></g>
+            <g class="steam" transform="translate(66 0)"><path d="M38 34c-4-5 4-7 0-12"/><path d="M46 34c-4-5 4-7 0-12"/></g>
+            <g id="capp">
+              <ellipse cx="42" cy="78" rx="30" ry="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/>
+              <path d="M18 42h48c0 18-8 32-24 32S18 60 18 42z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/>
+              <path d="M66 48c9 0 9 12-2 12" fill="none" stroke="var(--ink)" stroke-width="2"/>
+              <ellipse cx="42" cy="42" rx="24" ry="5" fill="var(--foam)" stroke="var(--ink)" stroke-width="2"/>
+              <path d="M42 45c-3-3-6-1-4 1l4 3 4-3c2-2-1-4-4-1z" fill="var(--coffee)"/>
+            </g>
+            <use href="#capp" x="66"/>
+          </svg></div>
+          <div class="cmp">≈ 2 капучино</div>
+          <div class="name">Max</div>
+          <div class="price">$9.99 <small>/ мес</small></div>
+          <div class="ls"><b>3 500 LS</b></div>
+          <p>≈ 350 ответов. Для тех, кто ищет идею каждый день.</p>
+        </article>
+        <article class="plan">
+          <div class="cups"><svg viewBox="0 0 170 90" aria-hidden="true">
+            <g id="latte">
+              <path d="M10 20h26l-3 64H13z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M11.4 50h23.2l-1.5 32H12.9z" fill="var(--coffee)"/>
+              <path d="M11 38h24l-.6 12H11.6z" fill="#c9926a"/>
+              <path d="M10.6 28h24.8l-.5 10H11.1z" fill="var(--foam)"/>
+              <path d="M27 6l-3 26" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+            </g>
+            <use href="#latte" x="40"/><use href="#latte" x="80"/><use href="#latte" x="120"/>
+          </svg></div>
+          <div class="cmp">≈ 4 латте</div>
+          <div class="name">Pro Max</div>
+          <div class="price">$19.99 <small>/ мес</small></div>
+          <div class="ls"><b>7 000 LS</b></div>
+          <p>≈ 700 ответов. Для акселераторов, фондов и команд.</p>
+        </article>
+      </div>
+      <div class="pack reveal">
+        <p><b>Кончились LS? Докупите 1 000 за $3.49</b> — дешевле американо. Докупленные LS не сгорают.</p>
+        <a class="btn ghost sm" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener">Открыть бота</a>
+      </div>
+      <div class="costs" aria-label="Цена действий">
+        <span>Вопрос <b>10</b></span><span>X и Trends <b>15</b></span><span>Глубже · Карта · Конкуренты <b>20</b></span><span>Проверка идеи <b>30</b></span><span>Живой поиск <b>40</b></span><span>Радар · сводка · лента <b>0</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. ФИНАЛ -->
+  <section class="final">
+    <div class="wrap">
+      <div class="card reveal">
+        <svg class="rings" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="var(--blue)" stroke-width="1.2"><circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="96"/></g></svg>
+        <div>
+          <h2>Пока вы думаете, кто-то уже <em>поднимает раунд</em> в вашей нише</h2>
+          <p>Откройте бота, выберите язык и задайте первый вопрос. 300 LS ждут вас — это примерно 30 ответов.</p>
+        </div>
+        <div class="act">
+          <a class="btn gift" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener"><span class="box"><svg><use href="#giftic"/></svg></span><span>Получить <b>300 LS</b></span></a>
+          <span class="mono">@Launch_Scout_bot</span>
+        </div>
+      </div>
+      <div class="titleblock" aria-label="Штамп">
+        <div><small>Изделие</small>Launch Scout · радар рынка стартапов</div>
+        <div><small>Языки</small>RU · KZ · EN</div>
+        <div><small>Платформа</small>Telegram</div>
+        <div><small>Обновлено</small><span id="upd">1 окт 2026</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let DATA = __PULSE__;
+  const PULSE_URL = "https://launch-scout-bot.clam83574.workers.dev/public/pulse";
+
+  const SECTOR_RU = { ai_infra: "ИИ-инфраструктура", energy: "Энергетика", health: "Медицина", ai_agents: "ИИ-агенты", defense_space: "Оборона и космос",
+    hardware: "Железо", mobility: "Транспорт", fintech: "Финтех", security: "Кибербез", b2b_saas: "B2B SaaS", proptech: "Недвижимость",
+    commerce: "E-commerce", crypto: "Крипто", consumer: "Потребительские", devtools: "DevTools", edu: "Образование" };
+  const COUNTRY_RU = { US: "США", DE: "Германия", IN: "Индия", KR: "Корея", PL: "Польша", BG: "Болгария", AU: "Австралия", TW: "Тайвань", RU: "Россия",
+    GB: "Великобритания", UK: "Великобритания", FR: "Франция", KZ: "Казахстан", UZ: "Узбекистан", CN: "Китай", JP: "Япония", SG: "Сингапур", IL: "Израиль",
+    CA: "Канада", NL: "Нидерланды", ES: "Испания", SE: "Швеция", BR: "Бразилия", AE: "ОАЭ", CH: "Швейцария", FI: "Финляндия", IT: "Италия", ID: "Индонезия" };
+  const STAGE = { "pre-seed": "Pre-seed", seed: "Seed", a: "Series A", b: "Series B", "c+": "Series C+" };
+  const MON = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+  const nf = (n) => Math.round(n).toLocaleString("ru-RU").replace(/ /g, " ");
+  const usd = (v) => v >= 1e9 ? "$" + (v / 1e9).toFixed(v >= 1e11 ? 0 : 1).replace(".", ",").replace(",0", "") + " млрд"
+    : "$" + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1).replace(".", ",").replace(",0", "") + " млн";
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- подстановка живых данных ----------
+  function bind() {
+    const map = { usd90: usd(DATA.usd90), rounds90: nf(DATA.rounds90), countries: nf(DATA.countries), niches: nf(DATA.niches) };
+    document.querySelectorAll("[data-k]").forEach((el) => { const v = map[el.dataset.k]; if (v) el.textContent = v; });
+    const d = new Date(DATA.ts * 1000);
+    document.getElementById("upd").textContent = d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
+    buildTicker(); buildChart();
+  }
+  function buildTicker() {
+    const items = (DATA.recent || []).filter((r) => r.c && r.usd).map((r) => {
+      const d = new Date(r.ts * 1000);
+      const meta = [STAGE[r.stage] || "", SECTOR_RU[r.s] || "", COUNTRY_RU[r.country] || r.country || "", d.getDate() + " " + MON[d.getMonth()]].filter(Boolean).join(" · ");
+      return `<div class="it"><b>${esc(r.c)}</b><span class="usd">${usd(r.usd)}</span><span class="meta">${esc(meta)}</span></div>`;
+    }).join("");
+    document.getElementById("track").innerHTML = items + items;
+  }
+  function buildChart() {
+    const secs = (DATA.sectors || []).filter((s) => SECTOR_RU[s.s]);
+    const max = Math.max(...secs.map((s) => s.usd));
+    const ch = document.getElementById("chart");
+    ch.innerHTML = secs.map((s, i) => `<div class="row" title="${nf(s.n)} раундов"><span class="nm">${SECTOR_RU[s.s]}</span>` +
+      `<span class="tr"><i style="--w:${(s.usd / max * 100).toFixed(1)}%;--d:${(i * 0.05).toFixed(2)}s"></i></span>` +
+      `<span class="v">${usd(s.usd)}<span class="cnt">${nf(s.n)} раундов</span></span></div>`).join("") +
+      `<div class="foot mono"><span>Сумма раундов за 90 дней</span><span>источник: база Launch Scout</span></div>`;
+  }
+  bind();
+  fetch(PULSE_URL).then((r) => r.ok ? r.json() : null).then((j) => {
+    if (!j || !j.rounds90) return;
+    DATA = j; bind();
+    document.getElementById("liveTxt").textContent = "Пульс рынка · данные на " + new Date(j.ts * 1000).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  }).catch(() => {});
+
+  // ---------- курсор-прожектор ----------
+  const spot = document.getElementById("spot");
+  if (!reduce) addEventListener("pointermove", (e) => { spot.style.setProperty("--mx", e.clientX + "px"); spot.style.setProperty("--my", e.clientY + "px"); }, { passive: true });
+
+  // ---------- появления при прокрутке ----------
+  const io = new IntersectionObserver((ents) => ents.forEach((en) => {
+    if (!en.isIntersecting) return;
+    const el = en.target;
+    el.classList.remove("pre"); el.classList.add("play");
+    io.unobserve(el);
+  }), { threshold: 0.2 });
+  if (!reduce) {
+    document.querySelectorAll(".reveal").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.top > innerHeight) { el.classList.add("pre"); io.observe(el); }
+    });
+    document.querySelectorAll(".vs article, #chart").forEach((el) => io.observe(el));
+  }
+
+  // ---------- конвейер ----------
+  const SOURCES = ["X", "Hacker News", "Y Combinator", "GitHub", "Product Hunt", "Google News", "SEC Form D", "Astana Hub", "Devpost", "Google Trends", "Пресс-релизы"];
+  document.getElementById("srcs").innerHTML = SOURCES.map((s, i) => `<span style="--d:${(i * .29).toFixed(2)}s">${s}</span>`).join("");
+  const matrix = document.getElementById("matrix"), cells = [];
+  for (let i = 0; i < 35; i++) { const c = document.createElement("i"); c.style.setProperty("--o", (0.08 + Math.random() * 0.8).toFixed(2)); matrix.appendChild(c); cells.push(c); }
+  if (!reduce) setInterval(() => { for (let k = 0; k < 6; k++) cells[Math.floor(Math.random() * 35)].style.setProperty("--o", (0.08 + Math.random() * 0.85).toFixed(2)); }, 700);
+  const clock = document.getElementById("clock");
+  const tick = () => { const d = new Date(), left = 600 - ((d.getMinutes() % 10) * 60 + d.getSeconds());
+    clock.textContent = "СЛЕД. ПРОГОН " + String(Math.floor(left / 60)).padStart(2, "0") + ":" + String(left % 60).padStart(2, "0"); };
+  tick(); setInterval(tick, 1000);
+
+  // ---------- демо-переписка ----------
+  const DEMOS = [
+    { q: "Куда идут деньги в ИИ-агентах?", a: [
+      ["v", "<b>Горячо.</b> 148 раундов и $11,5 млрд за 90 дней — четвёртое место из 16 секторов."],
+      ["q", "💸 Свежие сделки", "Flow Engineering — $50 млн, Series B · Medow Health AI — $2,3 млн, Seed"],
+      ["q", "🧭 Где свободнее", "Агенты под одну отрасль: недвижимость, медицина, юристы"],
+      ["q", "🎯 Первый шаг", "Выберите отрасль и проверьте идею командой /check"] ] },
+    { q: "/check ИИ-ассистент для частных клиник в Казахстане", a: [
+      ["v", "<b>Делать, но узко.</b> Медицина — самый частый сектор: 278 раундов за 90 дней."],
+      ["q", "💸 Деньги в нише есть", "Alma — $17 млн, Series A · Aleph Surgery — $7,5 млн, Pre-seed"],
+      ["q", "⚠️ Что против", "В СНГ за 90 дней — 1 раунд в медицине. Платить будут клиники, а продажи им долгие"],
+      ["q", "🧪 Проверка за 7 дней", "10 интервью с главврачами частных сетей и лендинг с ценой"] ] },
+    { q: "Кто конкуренты в proptech?", a: [
+      ["v", "<b>Ниша не перегрета:</b> 43 раунда и $1,9 млрд за 90 дней."],
+      ["q", "🏁 Кто привлёк", "Kuro (Германия) — $10,8 млн, Seed · Zaritalk (Корея) — $10,7 млн, Series A · Quotr (США) — $4 млн, Seed"],
+      ["q", "🌍 Где пусто", "В СНГ за 90 дней — ни одного раунда в proptech"],
+      ["q", "🎯 Идея", "Повторить рабочую модель из Кореи или Германии для своего города"] ] },
+  ];
+  const chat = document.getElementById("chat"), status = document.getElementById("tgStatus");
+  const tabs = [...document.querySelectorAll(".tab")];
+  const KB = `<div class="kb wait"><span>🔎 Глубже</span><span>🗺 Карта идеи</span><span>🧭 Смежные ниши</span><span>🏁 Конкуренты</span><span>🔔 Следить</span><span>🌐 Искать везде</span></div>`;
+  const plain = (s) => s.replace(/<[^>]+>/g, "");
+  function renderStatic(i) {
+    const d = DEMOS[i];
+    chat.innerHTML = `<div class="msg me">${esc(d.q)}</div><div class="msg bot">` + d.a.map((p) => p[0] === "v"
+      ? `<span class="verdict">${p[1]}</span>` : `<blockquote><b>${p[1]}</b>${p[2]}</blockquote>`).join("") + `</div>` + KB.replace(" wait", "");
+  }
+  let run = 0, autoT = null, played = false;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function typeInto(el, html, id) {
+    const txt = plain(html);
+    el.classList.add("caret");
+    for (let k = 1; k <= txt.length; k += 2) { if (id !== run) return false; el.textContent = txt.slice(0, k); await sleep(14); }
+    el.classList.remove("caret"); el.innerHTML = html; return true;
+  }
+  async function play(i) {
+    const id = ++run;
+    tabs.forEach((t, k) => { t.setAttribute("aria-selected", k === i ? "true" : "false"); t.querySelector(".prog").classList.remove("run"); });
+    const d = DEMOS[i];
+    chat.innerHTML = `<div class="msg me">${esc(d.q)}</div>`;
+    status.textContent = "печатает…";
+    const typing = document.createElement("div"); typing.className = "msg bot typing"; typing.innerHTML = "<i></i><i></i><i></i>"; chat.appendChild(typing);
+    await sleep(900); if (id !== run) return;
+    typing.remove();
+    const bot = document.createElement("div"); bot.className = "msg bot"; chat.appendChild(bot);
+    for (const p of d.a) {
+      if (p[0] === "v") { const s = document.createElement("span"); s.className = "verdict"; bot.appendChild(s); if (!(await typeInto(s, p[1], id))) return; }
+      else { const b = document.createElement("blockquote"); const h = document.createElement("b"); h.textContent = p[1]; const t = document.createElement("span");
+        b.append(h, t); bot.appendChild(b); if (!(await typeInto(t, p[2], id))) return; }
+      await sleep(150);
+    }
+    chat.insertAdjacentHTML("beforeend", KB);
+    await sleep(80); const kb = chat.querySelector(".kb"); if (kb) kb.classList.remove("wait");
+    status.textContent = "бот";
+    tabs[i].style.setProperty("--dur", "9s");
+    const prog = tabs[i].querySelector(".prog"); void prog.offsetWidth; prog.classList.add("run");
+    clearTimeout(autoT); autoT = setTimeout(() => { if (id === run) play((i + 1) % DEMOS.length); }, 9000);
+  }
+  tabs.forEach((t, i) => t.addEventListener("click", () => { clearTimeout(autoT); play(i); }));
+  renderStatic(0);
+  if (!reduce) new IntersectionObserver(([en], o) => { if (en.isIntersecting && !played) { played = true; o.disconnect(); play(0); } }, { threshold: 0.35 }).observe(chat);
+
+  // ---------- сканер проверки ----------
+  const scan = document.getElementById("scan"), beam = document.getElementById("beam"), rows = [...scan.querySelectorAll(".srow")];
+  const steps = [...document.querySelectorAll("#steps3 li")], scanState = document.getElementById("scanState");
+  const setStep = (k) => steps.forEach((s, i) => s.classList.toggle("on", i === k));
+  async function scanLoop() {
+    for (;;) {
+      rows.forEach((r) => { r.className = "srow"; r.querySelector(".st").textContent = "…"; });
+      setStep(0); scanState.textContent = "черновик"; beam.style.opacity = 0;
+      await sleep(1600);
+      setStep(1); scanState.textContent = "проверка";
+      for (const r of rows) {
+        beam.style.opacity = 1; beam.style.top = (r.offsetTop + r.offsetHeight / 2) + "px";
+        r.classList.add("looking"); r.querySelector(".st").textContent = "ищу источник…";
+        await sleep(1100);
+        r.classList.remove("looking"); r.classList.add(r.dataset.res); r.querySelector(".st").textContent = r.dataset.src;
+        await sleep(350);
+      }
+      beam.style.opacity = 0;
+      setStep(2); scanState.textContent = "готово";
+      await sleep(500);
+      rows[2].classList.add("gone");
+      await sleep(4200);
+    }
+  }
+  if (!reduce) new IntersectionObserver(([en], o) => { if (en.isIntersecting) { o.disconnect(); scanLoop(); } }, { threshold: 0.4 }).observe(scan);
+
+  // ---------- 3D: деньги по секторам ----------
+  if (!window.THREE) return;
+  const stage = document.getElementById("stage"), canvas = document.getElementById("radar");
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); } catch (e) { return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const BLUE = new THREE.Color("#1d4fd8"), INK = new THREE.Color("#0f1d3a"), GRID = new THREE.Color("#c9d5ea");
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200), world = new THREE.Group(); scene.add(world);
+  const grid = new THREE.GridHelper(24, 24, GRID, GRID); grid.material.transparent = true; grid.material.opacity = 0.55; world.add(grid);
+  const ringMat = new THREE.LineDashedMaterial({ color: BLUE, dashSize: 0.25, gapSize: 0.18, transparent: true, opacity: 0.45 });
+  [3.5, 7, 10.5].forEach((r) => { const pts = []; for (let i = 0; i <= 128; i++) { const a = i / 128 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * r, 0.01, Math.sin(a) * r)); }
+    const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), ringMat); l.computeLineDistances(); world.add(l); });
+  world.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-11.5, .01, 0), new THREE.Vector3(11.5, .01, 0), new THREE.Vector3(0, .01, -11.5), new THREE.Vector3(0, .01, 11.5)]),
+    new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.3 })));
+  const sweep = new THREE.Mesh(new THREE.CircleGeometry(10.5, 48, 0, 0.55), new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }));
+  sweep.rotation.x = -Math.PI / 2; sweep.position.y = 0.02;
+  const sweepPivot = new THREE.Group(); sweepPivot.add(sweep);
+  sweepPivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, .03, 0), new THREE.Vector3(10.5, .03, 0)]), new THREE.LineBasicMaterial({ color: BLUE })));
+  world.add(sweepPivot);
+
+  const secs = (DATA.sectors || []).filter((s) => SECTOR_RU[s.s]);
+  const maxU = Math.max(...secs.map((s) => s.usd));
+  const boxGeo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), edgeGeo = new THREE.EdgesGeometry(boxGeo);
+  const bars = secs.map((s, i) => {
+    const h = 0.6 + Math.sqrt(s.usd / maxU) * 5.2;
+    const ring = i % 2 ? 7.7 : 4.4 + (i % 3) * 0.9, a = i / secs.length * Math.PI * 2 + 0.3;
+    const g = new THREE.Group(); g.position.set(Math.cos(a) * ring, 0, Math.sin(a) * ring);
+    const fill = new THREE.Mesh(boxGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.93, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }));
+    const edgeMat = new THREE.LineBasicMaterial({ color: INK.clone() }), edges = new THREE.LineSegments(edgeGeo, edgeMat);
+    fill.scale.set(.62, h, .62); edges.scale.set(.62, h, .62); g.add(fill, edges);
+    const pp = []; for (let k = 0; k <= 40; k++) { const t = k / 40 * Math.PI * 2; pp.push(new THREE.Vector3(Math.cos(t), .02, Math.sin(t))); }
+    const ping = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pp), new THREE.LineBasicMaterial({ color: BLUE, transparent: true, opacity: 0 })); g.add(ping);
+    world.add(g);
+    return { s, h, a: (a + Math.PI * 2) % (Math.PI * 2), g, fill, edges, edgeMat, ping, pingT: 9, heat: 0, phase: Math.random() * 6, grow: 0 };
+  });
+  const SRC_N = 11, srcPos = [], srcMat = new THREE.MeshBasicMaterial({ color: INK });
+  for (let i = 0; i < SRC_N; i++) { const a = i / SRC_N * Math.PI * 2, p = new THREE.Vector3(Math.cos(a) * 11.2, 0, Math.sin(a) * 11.2); srcPos.push(p);
+    const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.22), srcMat); m.position.copy(p).setY(0.25); world.add(m); }
+  const PK = 28, pkArr = new Float32Array(PK * 3), pkGeo = new THREE.BufferGeometry(); pkGeo.setAttribute("position", new THREE.BufferAttribute(pkArr, 3));
+  world.add(new THREE.Points(pkGeo, new THREE.PointsMaterial({ color: BLUE, size: 0.24 })));
+  const trailMat = new THREE.LineBasicMaterial({ color: BLUE, transparent: true, opacity: 0.12 });
+  function newPacket(p) {
+    const from = srcPos[Math.floor(Math.random() * SRC_N)], bar = bars[Math.floor(Math.random() * bars.length)];
+    const to = bar.g.position.clone(); to.y = bar.h;
+    const mid = from.clone().add(to).multiplyScalar(0.5); mid.y = 3 + Math.random() * 3;
+    p.curve = new THREE.QuadraticBezierCurve3(from.clone().setY(0.25), mid, to); p.t = -Math.random() * 1.5; p.speed = 0.2 + Math.random() * 0.16; p.bar = bar; return p;
+  }
+  const packets = []; for (let i = 0; i < PK; i++) packets.push(newPacket({}));
+  for (let i = 0; i < 9; i++) world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(newPacket({}).curve.getPoints(40)), trailMat));
+  const tags = bars.slice(0, 4).map((b) => { const el = document.createElement("div"); el.className = "tag3d";
+    el.innerHTML = `${SECTOR_RU[b.s.s]} <b>${usd(b.s.usd)}</b>`; stage.appendChild(el); return { el, bar: b }; });
+
+  function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < 500 ? 40 : 32; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage); resize();
+  let px = 0, py = 0, tx = 0, ty = 0;
+  stage.addEventListener("pointermove", (e) => { const r = stage.getBoundingClientRect(); tx = (e.clientX - r.left) / r.width - 0.5; ty = (e.clientY - r.top) / r.height - 0.5; });
+  stage.addEventListener("pointerleave", () => { tx = 0; ty = 0; });
+  const v = new THREE.Vector3(), clk = new THREE.Clock();
+  let visible = true, t = 0;
+  new IntersectionObserver(([en]) => { visible = en.isIntersecting; }).observe(stage);
+  function frame() {
+    const dt = Math.min(clk.getDelta(), 0.05); t += dt;
+    px += (tx - px) * 0.05; py += (ty - py) * 0.05;
+    const orbit = 0.78 + t * 0.04 + px * 0.6, R = stage.clientWidth < 560 ? 28 : 24;
+    camera.position.set(Math.cos(orbit) * R, 15 - py * 5, Math.sin(orbit) * R); camera.lookAt(0, 1.8, 0);
+    const sa = (t * 0.9) % (Math.PI * 2); sweepPivot.rotation.y = -sa;
+    bars.forEach((b, i) => {
+      b.grow = reduce ? 1 : Math.min(1, Math.max(0, (t - i * 0.06) / 1.2));
+      const e = 1 - Math.pow(1 - b.grow, 3);
+      const d = (sa - b.a + Math.PI * 4) % (Math.PI * 2);
+      if (d < 0.08 && b.pingT > 1.2) { b.pingT = 0; b.heat = 1; }
+      b.pingT += dt; b.heat = Math.max(0, b.heat - dt * 0.7);
+      const k = Math.min(b.pingT / 1.4, 1); b.ping.scale.setScalar(0.4 + k * 1.8); b.ping.material.opacity = (1 - k) * 0.8;
+      b.edgeMat.color.copy(INK).lerp(BLUE, b.heat);
+      const hh = Math.max(0.02, (b.h * (1 + Math.sin(t * 0.7 + b.phase) * 0.05) + b.heat * 0.3) * e);
+      b.fill.scale.y = hh; b.edges.scale.y = hh;
+    });
+    for (let i = 0; i < PK; i++) { const p = packets[i]; p.t += dt * p.speed;
+      if (p.t >= 1) { p.bar.heat = Math.max(p.bar.heat, 0.6); newPacket(p); }
+      const q = p.t <= 0 ? p.curve.v0 : p.curve.getPoint(p.t); pkArr[i * 3] = q.x; pkArr[i * 3 + 1] = p.t <= 0 ? -50 : q.y; pkArr[i * 3 + 2] = q.z; }
+    pkGeo.attributes.position.needsUpdate = true;
+    renderer.render(scene, camera);
+    const w = stage.clientWidth, h = stage.clientHeight;
+    for (const tg of tags) { v.copy(tg.bar.g.position); v.y = tg.bar.fill.scale.y + 0.4; v.project(camera);
+      tg.el.style.left = ((v.x + 1) / 2 * w).toFixed(1) + "px"; tg.el.style.top = ((1 - v.y) / 2 * h).toFixed(1) + "px"; tg.el.classList.toggle("hot", tg.bar.heat > 0.3); }
+  }
+  function loop() { if (visible) frame(); requestAnimationFrame(loop); }
+  if (reduce) { t = 2.2; frame(); addEventListener("resize", () => { resize(); frame(); }); } else loop();
+})();
+</script>
