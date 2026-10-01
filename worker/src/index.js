@@ -1413,7 +1413,7 @@ async function handleUpdate(env, update) {
     return;
   }
   if (isOwner(env, chatId) && /^\/(grant|credit|costs)/i.test(text)) {
-    await lsAdmin(env, chatId, text);
+    await lsAdmin(env, chatId, text, env);
     return;
   }
   if (data === "radar" || text.startsWith("/radar")) {
@@ -3044,7 +3044,23 @@ async function lsShortMsg(env, chatId, lang, action) {
 }
 
 /** Владелец: /grant <id> <free|pro|max|promax>, /credit <id> <LS>, /costs — сверка прайса с фактом. */
-async function lsAdmin(env, chatId, text) {
+const GIFT_TEXT = {
+  ru: { plan: "🎁 Вам открыт тариф <b>%s</b>: %s LS на 30 дней, до %s.\nСпасибо, что тестируете Launch Scout!", credit: "🎁 Вам начислено <b>%s LS</b> — они не сгорают.\nСпасибо, что тестируете Launch Scout!" },
+  kk: { plan: "🎁 Сізге <b>%s</b> тарифі ашылды: 30 күнге %s LS, %s дейін.\nLaunch Scout-ты сынағаныңызға рахмет!", credit: "🎁 Сізге <b>%s LS</b> берілді — олар күймейді.\nLaunch Scout-ты сынағаныңызға рахмет!" },
+  en: { plan: "🎁 You now have the <b>%s</b> plan: %s LS for 30 days, until %s.\nThanks for testing Launch Scout!", credit: "🎁 You've received <b>%s LS</b> — they never expire.\nThanks for testing Launch Scout!" },
+};
+const PLAN_TITLE = { free: "Free", pro: "Pro", max: "Max", promax: "Pro Max" };
+
+/** Сообщить пользователю о подарке; возвращает пометку для админа. */
+async function giftNotify(userEnv, uid, kind, a, b, c) {
+  if (!userEnv) return "";
+  const lang = ((await getPrefs(userEnv, uid).catch(() => ({}))) || {}).lang || "ru";
+  const t = (GIFT_TEXT[lang] || GIFT_TEXT.ru)[kind];
+  const r = await tg(userEnv, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t, a, b, c) });
+  return r && r.ok ? " · пользователь уведомлён" : " · уведомить не вышло (он не запускал бота или заблокировал его)";
+}
+
+async function lsAdmin(env, chatId, text, userEnv = null) {
   const m = /^\/(grant|credit|costs)(?:@\w+)?[^0-9a-z]*(\d+)?[^0-9a-z]*([a-z]+|-?\d+)?/i.exec(text.trim()) || [];
   const cmd = m[1] ? "/" + m[1].toLowerCase() : "", uid = m[2], arg = m[3] ? m[3].toLowerCase() : "";
   if (cmd === "/grant" && uid && PLANS[arg]) {
@@ -3052,13 +3068,16 @@ async function lsAdmin(env, chatId, text) {
     const now = Math.floor(Date.now() / 1000);
     Object.assign(r, { plan: arg, paid_until: arg === "free" ? 0 : now + LS_PERIOD, period_end: now + LS_PERIOD, sub_ls: PLANS[arg].ls, warned: 0 });
     await lsSave(env, r);
-    return tg(env, "sendMessage", { chat_id: chatId, text: `✅ ${uid}: ${arg}, ${PLANS[arg].ls} LS до ${new Date(r.period_end * 1000).toISOString().slice(0, 10)}` });
+    const until = new Date(r.period_end * 1000).toISOString().slice(0, 10);
+    const note = arg === "free" ? "" : await giftNotify(userEnv, uid, "plan", PLAN_TITLE[arg], PLANS[arg].ls.toLocaleString("ru-RU").replace(/\u00a0/g, " "), until.split("-").reverse().join("."));
+    return tg(env, "sendMessage", { chat_id: chatId, text: `✅ ${uid}: ${PLAN_TITLE[arg]}, ${PLANS[arg].ls} LS до ${until}${note}` });
   }
   if (cmd === "/credit" && uid && Number(arg)) {
     const r = await lsGet(env, uid);
     r.credits = Math.max(0, r.credits + Math.round(Number(arg)));
     await lsSave(env, r);
-    return tg(env, "sendMessage", { chat_id: chatId, text: `✅ ${uid}: credits ${r.credits}` });
+    const note = Number(arg) > 0 ? await giftNotify(userEnv, uid, "credit", Math.round(Number(arg)).toLocaleString("ru-RU").replace(/\u00a0/g, " ")) : "";
+    return tg(env, "sendMessage", { chat_id: chatId, text: `✅ ${uid}: докупленных LS теперь ${r.credits}${note}` });
   }
   if (cmd === "/costs") {
     const since = Math.floor(Date.now() / 1000) - 7 * 86400;
@@ -3415,7 +3434,7 @@ async function handleAdminUpdate(env, update) {
     return;
   }
   if (/^\/(grant|credit|costs)/i.test(text)) {
-    await lsAdmin(aenv, chatId, text);
+    await lsAdmin(aenv, chatId, text, env);
     return;
   }
   if (/^\/refund\b/.test(text)) {
@@ -3423,6 +3442,10 @@ async function handleAdminUpdate(env, update) {
     // Оплата была в публичном боте — возвращает он, ответ — сюда.
     const r = await tg(env, "refundStarPayment", { user_id: Number(uid), telegram_payment_charge_id: charge });
     await tg(aenv, "sendMessage", { chat_id: chatId, text: r && r.ok ? `✅ возврат ${uid} ${charge}` : `не вышло: ${JSON.stringify(r).slice(0, 200)}` });
+    return;
+  }
+  if (raw.startsWith("/")) {
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: "Такой команды нет. Команды:\n/report — сводка\n/grant 369616668 max — тариф (free, pro, max, promax) на 30 дней\n/credit 369616668 1000 — LS, не сгорают\n/costs — себестоимость\n/users · /allow id · /deny id\n/refund id charge_id\n\nВопрос можно задать обычным текстом или голосом." });
     return;
   }
   let question = raw;
