@@ -209,7 +209,10 @@
     }
    ],
    "thou": " ",
-   "date": "{d} {m} {y}"
+   "date": "{d} {m} {y}",
+   "vLabel": "Ваучер участника",
+   "vCode": "Код",
+   "vText": "на первую покупку для участников {p}. Скидка уже подключена — откройте Launch Scout по любой кнопке на странице."
   },
   "kk": {
    "sectors": {
@@ -400,7 +403,10 @@
     }
    ],
    "thou": " ",
-   "date": "{d} {m} {y}"
+   "date": "{d} {m} {y}",
+   "vLabel": "Қатысушы ваучері",
+   "vCode": "Код",
+   "vText": "{p} қатысушыларына алғашқы сатып алуға. Жеңілдік қосылды — Launch Scout-ты осы беттегі кез келген батырмамен ашыңыз."
   },
   "en": {
    "sectors": {
@@ -591,7 +597,10 @@
     }
    ],
    "thou": ",",
-   "date": "{m} {d}, {y}"
+   "date": "{m} {d}, {y}",
+   "vLabel": "Participant voucher",
+   "vCode": "Code",
+   "vText": "off your first purchase for {p} participants. The discount is already on — open Launch Scout from any button on this page."
   }
  },
  "html": [

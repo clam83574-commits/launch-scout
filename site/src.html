@@ -109,6 +109,29 @@ p { margin: 0; }
 @keyframes shine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
 @keyframes wiggle { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-12deg); } 82% { transform: rotate(10deg); } 89% { transform: rotate(-6deg); } }
 .gift-sub { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.vwrap { max-width: 1180px; margin: 0 auto 26px; padding-inline: 24px; }
+.vbar { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 28px; align-items: center;
+  background: var(--blue); color: #fff; border-radius: 18px; padding: 22px 28px;
+  background-image: radial-gradient(circle at 85% 20%, rgba(255,255,255,.18), transparent 50%); }
+.vb-k { color: rgba(255,255,255,.8); font-size: 12px; }
+.vb-main { display: flex; align-items: center; gap: 18px; margin-top: 6px; }
+.vb-main b { font: 700 54px/1 var(--f-display); letter-spacing: -.04em; }
+.vb-main span { font-size: 16px; line-height: 1.4; max-width: 30em; }
+.vb-r { display: flex; align-items: center; gap: 16px; }
+.vb-logo { background: var(--ink); border-radius: 12px; padding: 10px 14px 9px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.vb-logo img { width: 128px; display: block; }
+.vb-logo b { font: 700 22px/1 var(--f-display); color: #fff; letter-spacing: -.01em; }
+.vb-code { display: flex; flex-direction: column; gap: 5px; }
+.vb-code .mono { color: rgba(255,255,255,.8); font-size: 11px; }
+.vb-code code { font: 500 20px var(--f-mono); letter-spacing: .1em; background: #fff; color: var(--blue); padding: 7px 12px; border-radius: 8px; }
+@media (max-width: 760px) {
+  .vwrap { padding-inline: 16px; margin-bottom: 16px; }
+  .vbar { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+  .vb-main { flex-direction: column; align-items: flex-start; gap: 6px; } .vb-main b { font-size: 44px; } .vb-main span { font-size: 14px; }
+  .vb-r { justify-content: space-between; }
+  .vb-logo img { width: 92px; } .vb-logo b { font-size: 16px; } .vb-logo { padding: 8px 10px 7px; }
+  .vb-r { gap: 10px; } .vb-code code { font-size: 15px; padding: 6px 9px; letter-spacing: .06em; }
+}
 .promo-note { border: 1px dashed var(--blue); background: var(--blue-soft); padding: 10px 12px; font-size: 14px; line-height: 1.45; max-width: 34em; }
 .promo-note b { font-family: var(--f-mono); font-weight: 500; color: var(--blue); letter-spacing: .04em; }
 .gift-sub span + span::before { content: "/"; margin-right: 14px; color: var(--line-2); }
@@ -507,6 +530,18 @@ section.sheet { padding-block: 76px; }
 <main id="top">
   <!-- 1. ГЕРОЙ -->
   <section class="hero">
+    <div class="vwrap" id="vbar" hidden>
+      <div class="vbar">
+        <div class="vb-l">
+          <span class="mono vb-k" id="vbLabel"></span>
+          <div class="vb-main"><b>−30%</b><span id="vbText"></span></div>
+        </div>
+        <div class="vb-r">
+          <div class="vb-logo" id="vbLogo" hidden><img src="/db-logo.png" alt="AI &amp; Digital Bridge"><b>BRIDGE</b></div>
+          <div class="vb-code"><span class="mono" id="vbCodeK"></span><code id="vbCode"></code></div>
+        </div>
+      </div>
+    </div>
     <div class="wrap">
       <div class="hero-text">
         <div class="rev"><span id="liveTxt">Рев. 01.10.2026</span><span>Пересчёт каждые 10 мин</span></div>
@@ -516,7 +551,7 @@ section.sheet { padding-block: 76px; }
         <div style="display:grid;gap:12px;justify-items:start">
           <a class="btn gift" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener"><span class="box"><svg><use href="#giftic"/></svg></span><span>Нажмите и получите <b>300 LS бесплатно</b></span></a>
           <div class="gift-sub mono"><span>≈ 30 ответов</span><span>без карты</span><span>прямо в Telegram</span></div>
-          <div class="promo-note" id="promoNote" hidden>Промокод <b id="promoCode">AIPRENEURS</b> — −30% на первую покупку. Подключится сам, когда откроете Launch Scout по любой кнопке на этой странице.</div>
+          <div class="promo-note" id="promoNote" hidden data-old>Промокод <b id="promoCode">AIPRENEURS</b> — −30% на первую покупку. Подключится сам, когда откроете Launch Scout по любой кнопке на этой странице.</div>
         </div>
       </div>
       <div class="stage" id="stage" aria-label="3D-схема: столбики — сектора рынка, высота — сколько денег вложили за 90 дней; луч радара проходит по ним, сигналы из источников стекаются к нишам">

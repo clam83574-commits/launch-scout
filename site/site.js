@@ -67,8 +67,15 @@
     const code = (new URLSearchParams(location.search).get("promo") || "").toLowerCase();
     if (!["aipreneurs", "tomorrowschool", "digitalbridge"].includes(code)) return;   // только известные коды: иначе плашка обещала бы скидку, которой нет
     document.querySelectorAll('a[href*="t.me/Launch_Scout_bot"]').forEach((a) => { a.href = "https://t.me/Launch_Scout_bot?start=" + code; });
-    document.getElementById("promoCode").textContent = code.toUpperCase();
-    document.getElementById("promoNote").hidden = false;
+    // Синий ваучер над первым экраном: от какого мероприятия скидка и какой код.
+    const PARTNERS = { aipreneurs: ["AI-preneurs", false], tomorrowschool: ["Tomorrow School", false], digitalbridge: ["AI & Digital Bridge", true] };
+    const [pname, logo] = PARTNERS[code];
+    document.getElementById("vbLabel").textContent = I.vLabel;
+    document.getElementById("vbText").textContent = I.vText.replace("{p}", pname);
+    document.getElementById("vbCodeK").textContent = I.vCode;
+    document.getElementById("vbCode").textContent = code.toUpperCase();
+    document.getElementById("vbLogo").hidden = !logo;
+    document.getElementById("vbar").hidden = false;
     document.querySelectorAll(".langs a").forEach((a) => { a.href = a.getAttribute("href").split("?")[0] + "?promo=" + code; });
   });
 
