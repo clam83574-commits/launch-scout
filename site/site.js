@@ -189,6 +189,22 @@
       const prog = tabs[i].querySelector(".prog"); void prog.offsetWidth; prog.classList.add("run");
       clearTimeout(autoT); autoT = setTimeout(() => { if (id === run) play((i + 1) % DEMOS.length); }, 6300);
     }
+    // Окно переписки не меняет высоту, пока «печатается» ответ: меряем все примеры заранее.
+    // Меряем на невидимой копии окна той же ширины — идущую «печать» не трогаем.
+    const fitChat = () => {
+      const m = chat.cloneNode(false);
+      m.removeAttribute("id");
+      m.style.cssText = "position:absolute;visibility:hidden;left:0;right:0;top:0;min-height:0;pointer-events:none";
+      chat.parentNode.appendChild(m);
+      let max = 0;
+      DEMOS.forEach((_, i) => { m.innerHTML = chatHTML(i); max = Math.max(max, m.offsetHeight); });
+      m.remove();
+      if (max) chat.style.minHeight = max + "px";
+    };
+    fitChat();
+    if (document.fonts) document.fonts.ready.then(fitChat);   // шрифты меняют высоту строк
+    let rz = 0, lastW = innerWidth;
+    addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(rz); rz = setTimeout(fitChat, 200); });
     tabs.forEach((t, i) => t.addEventListener("click", () => { clearTimeout(autoT); play(i); }));
     if (!reduce) new IntersectionObserver(([en], o) => { if (en.isIntersecting && !played) { played = true; o.disconnect(); play(0); } }, { threshold: 0.35 }).observe(chat);
   });
