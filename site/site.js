@@ -335,9 +335,13 @@
       bars.forEach((b, i) => {
         const e = ease((t - 0.4 - i * 0.07) / 1.3);
         const d = (sa - b.a + TAU * 2) % TAU;
-        if (d < 0.1 && b.scanT > 1.5) { b.scanT = 0; b.heat = 1; }
-        b.scanT += dt; b.heat = Math.max(0, b.heat - dt * 0.55);
-        const hh = Math.max(0.02, (b.h * (1 + Math.sin(t * 0.6 + b.phase) * 0.04) + b.heat * 0.25) * e);
+        if (d < 0.1 && b.scanT > 1.5) { b.scanT = 0; b.goal = 1; }
+        b.scanT += dt;
+        // подсветка нарастает и гаснет плавно — без скачка высоты в момент касания луча
+        b.goal = Math.max(0, (b.goal || 0) - dt * 0.5);
+        b.heat += (b.goal - b.heat) * (1 - Math.exp(-dt * (b.goal > b.heat ? 7 : 2.5)));
+        const bump = b.heat * b.heat * (3 - 2 * b.heat) * 0.12;
+        const hh = Math.max(0.02, (b.h * (1 + Math.sin(t * 0.6 + b.phase) * 0.04) + bump) * e);
         b.fill.scale.y = hh; b.edges.scale.y = hh;
         // кольцо-пинг у основания и рамка, которая пробегает макет снизу вверх
         const k = Math.min(b.scanT / 1.4, 1); b.ping.scale.setScalar(0.4 + k * 2); b.ping.material.opacity = (1 - k) * 0.8;
@@ -346,7 +350,7 @@
         b.fillMat.color.copy(WHITE).lerp(SOFT, b.heat);
       });
       for (let i = 0; i < PK; i++) { const p = packets[i]; p.t += dt * p.speed;
-        if (p.t >= 1) { p.bar.heat = Math.max(p.bar.heat, 0.5); newPacket(p); }
+        if (p.t >= 1) { p.bar.goal = Math.max(p.bar.goal || 0, 0.45); newPacket(p); }
         const q = p.t <= 0 ? p.curve.v0 : p.curve.getPoint(p.t); pkArr[i * 3] = q.x; pkArr[i * 3 + 1] = p.t <= 0 ? -50 : q.y; pkArr[i * 3 + 2] = q.z; }
       pkGeo.attributes.position.needsUpdate = true;
       renderer.render(scene, camera);
