@@ -48,8 +48,8 @@ def partner_html():
     top = os.path.join(HERE, "partner_logo_top.png")
     if CODE == "digitalbridge" and os.path.exists(top):
         # Нижнее слово в исходнике частично закрыто шаром — набираем его шрифтом.
-        return (f'<div class="ptile"><img alt="AI &amp; Digital Bridge" src="data:image/png;base64,{base64.b64encode(open(top, "rb").read()).decode()}">'
-                '<b>BRIDGE</b></div>')
+        return (f'<img alt="AI &amp; Digital Bridge" src="data:image/png;base64,{base64.b64encode(open(top, "rb").read()).decode()}">'
+                '<b>BRIDGE</b>')
     for name, mime in (("partner_logo.svg", "image/svg+xml"), ("partner_logo.png", "image/png")):
         p = os.path.join(HERE, name)
         if os.path.exists(p):
