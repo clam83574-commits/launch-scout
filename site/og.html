@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Карточка превью 1200×630: тот же лист чертежа, что и сайт. */
+:root { --paper: #fff; --ink: #0f1d3a; --muted: #56647f; --line: #e6ecf5; --line-2: #c9d5ea; --blue: #1d4fd8; --blue-soft: #eaf0fd; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body {
+  background: var(--paper); color: var(--ink); font-family: "Golos Text", sans-serif; position: relative;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+.frame { position: absolute; inset: 22px; border: 1.5px solid var(--ink); }
+.left { position: absolute; left: 64px; top: 58px; width: 600px; display: flex; flex-direction: column; gap: 26px; }
+.brand { display: flex; align-items: center; gap: 14px; font: 500 26px "Unbounded", sans-serif; letter-spacing: -.01em; }
+.brand svg { width: 44px; height: 44px; }
+h1 { font: 500 58px/1.04 "Unbounded", sans-serif; letter-spacing: -.035em; }
+h1 em { font-style: normal; color: var(--blue); }
+.sub { font-size: 25px; line-height: 1.35; color: var(--muted); max-width: 540px; }
+.gift { display: inline-flex; align-items: center; gap: 12px; align-self: flex-start; background: var(--blue); color: #fff; font: 600 23px "Golos Text", sans-serif; padding: 15px 22px 15px 16px; border-radius: 10px; }
+.gift i { width: 36px; height: 36px; border-radius: 9px; background: rgba(255,255,255,.18); display: grid; place-items: center; }
+.gift svg { width: 22px; height: 22px; }
+.stamp { position: absolute; left: 23.5px; right: 23.5px; bottom: 23.5px; height: 64px; display: grid; grid-template-columns: 1.15fr 1fr 1fr 1fr; border-top: 1.5px solid var(--ink); background: var(--paper); }
+.stamp div { border-left: 1.5px solid var(--ink); padding: 9px 16px; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.stamp div:first-child { border-left: 0; padding-left: 42px; }
+.stamp small { font: 400 12px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.stamp b { font: 500 21px "Unbounded", sans-serif; letter-spacing: -.02em; }
+#radar { position: absolute; right: 40px; top: 30px; width: 520px; height: 470px; }
+.corner { position: absolute; font: 400 12px "JetBrains Mono", monospace; letter-spacing: .08em; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="frame"></div>
+<span class="corner" style="right:44px;top:34px">ДЕНЬГИ ПО СЕКТОРАМ · 90 ДНЕЙ</span>
+<div class="left">
+  <div class="brand"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#0f1d3a" stroke-width="1.6"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#0f1d3a" stroke-width="1.2" opacity=".5"/><path d="M16 16 L27 8.5" stroke="#0f1d3a" stroke-width="1.8" stroke-linecap="round"/><circle cx="22.6" cy="11.4" r="2.2" fill="#1d4fd8"/></svg>Launch Scout</div>
+  <h1>Стройте там, куда <em>уже идут деньги</em></h1>
+  <p class="sub">ИИ-аналитик рынка стартапов в Telegram: ниша, конкуренты и оценка идеи — со ссылкой на источник у каждой цифры.</p>
+  <span class="gift"><i><svg viewBox="0 0 24 24"><g fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8C10 4 6.5 4.5 7 7c.3 1 2 1 5 1Zm0 0c2-4 5.5-3.5 5-1-.3 1-2 1-5 1Z"/></g></svg></i>300 LS бесплатно</span>
+</div>
+<svg id="radar" viewBox="0 0 520 470"></svg>
+<div class="stamp">
+  <div><small>Вложено за 90 дней</small><b id="usd">$102 млрд</b></div>
+  <div><small>Раундов</small><b id="rounds">1 616</b></div>
+  <div><small>Источников</small><b>17</b></div>
+  <div><small>Обновление</small><b>каждые 10 мин</b></div>
+</div>
+<script>
+const D = __PULSE__;
+const nf = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+document.getElementById("usd").textContent = "$" + Math.round(D.usd90 / 1e9) + " млрд";
+document.getElementById("rounds").textContent = nf(D.rounds90);
+
+// Изометрия: точка на карте (x, z) и высота y → координаты листа.
+const svg = document.getElementById("radar"), NS = "http://www.w3.org/2000/svg";
+const CX = 262, CY = 300, S = 19.5, C30 = Math.cos(Math.PI / 6), S30 = 0.5;
+const P = (x, z, y = 0) => [CX + (x - z) * C30 * S, CY + (x + z) * S30 * S - y * S];
+const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+const poly = (pts, attrs) => el("polygon", { points: pts.map((p) => p.join(",")).join(" "), ...attrs });
+
+// сетка и кольца
+for (let i = -11; i <= 11; i++) {
+  el("line", { x1: P(i, -11)[0], y1: P(i, -11)[1], x2: P(i, 11)[0], y2: P(i, 11)[1], stroke: "#c9d5ea", "stroke-width": 0.8, opacity: 0.8 });
+  el("line", { x1: P(-11, i)[0], y1: P(-11, i)[1], x2: P(11, i)[0], y2: P(11, i)[1], stroke: "#c9d5ea", "stroke-width": 0.8, opacity: 0.8 });
+}
+for (const r of [3.5, 7, 10.5]) el("ellipse", { cx: CX, cy: CY, rx: 1.2247 * S * r, ry: 0.7071 * S * r, fill: "none", stroke: "#1d4fd8", "stroke-width": 1.2, "stroke-dasharray": "5 4", opacity: 0.55 });
+// луч радара со шлейфом
+const sweep = (a0, a1, op) => { const pts = [P(0, 0)]; for (let t = a0; t <= a1 + 1e-6; t += (a1 - a0) / 16) pts.push(P(Math.cos(t) * 10.5, Math.sin(t) * 10.5)); poly(pts, { fill: "#1d4fd8", opacity: op }); };
+const A = 2.15;
+for (let k = 0; k < 8; k++) sweep(A - (k + 1) * 0.07, A - k * 0.07, 0.16 * (1 - k / 8));
+el("line", { x1: CX, y1: CY, x2: P(Math.cos(A) * 10.5, Math.sin(A) * 10.5)[0], y2: P(Math.cos(A) * 10.5, Math.sin(A) * 10.5)[1], stroke: "#1d4fd8", "stroke-width": 2 });
+
+// столбики-сектора: высота = деньги за 90 дней (реальные данные)
+const secs = (D.sectors || []).slice(0, 16), maxU = Math.max(...secs.map((s) => s.usd));
+const bars = secs.map((s, i) => { const ring = i % 2 ? 7.7 : 4.4 + (i % 3) * 0.9, a = i / secs.length * Math.PI * 2 + 0.3;
+  return { x: Math.cos(a) * ring, z: Math.sin(a) * ring, h: 0.6 + Math.sqrt(s.usd / maxU) * 6.2, hot: Math.abs(((a - A) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)) < 0.6 }; });
+bars.sort((a, b) => (a.x + a.z) - (b.x + b.z));
+const w = 0.33;
+for (const b of bars) {
+  const { x, z, h } = b, stroke = b.hot ? "#1d4fd8" : "#0f1d3a", fill = b.hot ? "#eaf0fd" : "#ffffff";
+  const at = { stroke, "stroke-width": 1.3, "stroke-linejoin": "round" };
+  poly([P(x - w, z + w), P(x + w, z + w), P(x + w, z + w, h), P(x - w, z + w, h)], { fill, ...at });   // левая грань
+  poly([P(x + w, z - w), P(x + w, z + w), P(x + w, z + w, h), P(x + w, z - w, h)], { fill: b.hot ? "#dfe8fd" : "#f5f8fd", ...at });   // правая грань
+  poly([P(x - w, z - w, h), P(x + w, z - w, h), P(x + w, z + w, h), P(x - w, z + w, h)], { fill, ...at });   // верх
+}
+// источники по краю
+for (let i = 0; i < 17; i++) { const a = i / 17 * Math.PI * 2, p = P(Math.cos(a) * 11.6, Math.sin(a) * 11.6);
+  poly([[p[0], p[1] - 5], [p[0] + 4, p[1]], [p[0], p[1] + 5], [p[0] - 4, p[1]]], { fill: "#0f1d3a" }); }
+</script>
+</body>
+</html>
