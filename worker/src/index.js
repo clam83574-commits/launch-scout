@@ -2410,7 +2410,7 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
     }
   }
   // Кто вкладывает: рейтинг посчитан кодом по всем раундам за полгода.
-  if (/инвест|инвестор|фонд|венчур|ангел|\bvc\b|investor|\bfunds?\b|backer|кто вкладыва|кто финансир/iu.test(question)) {
+  if (INVESTOR_Q.test(question)) {
     const inv = rep.investors_top || [];
     const secsQ = [...new Set(rows.map((d) => d.sector).filter(Boolean))];
     const pick = secsQ.length ? inv.filter((x) => secsQ.some((sx) => (x.sectors || {})[sx])).slice(0, 8) : [];
@@ -2593,6 +2593,8 @@ const WEB_SYSTEM = `You research a startup niche or idea on the web for founders
 Find real products that already do this: global leaders and players in Kazakhstan/CIS, with the price if published, and what customers complain about.
 Reply with JSON only: {"competitors": [{"name": "...", "url": "https://...", "market": "global|US|EU|KZ|RU|CIS|MENA", "price": "...", "note": "one line"}], "complaints": [{"text": "...", "source": "https://..."}], "pricing": "one line", "icp": "one line"}
 At most 8 competitors and 5 complaints, only ones you actually found with real URLs. Never invent.`;
+
+const INVESTOR_Q = /инвест|инвестор|фонд|венчур|ангел|\bvc\b|investor|\bfunds?\b|backer|кто вкладыва|кто финансир/iu;
 
 // ---------------------------------------------------------------------------
 // 🔎 Живой поиск по запросу
@@ -2895,7 +2897,10 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   // Живой поиск: вопрос о конкретной компании или событии, ниши в матрице
   // не нашлось или человек сам нажал «Искать везде».
   let liveRes = null, cleared = false;
-  if (plan && (live || plan.live || (!fx.niches.length && mode === "chat"))) {
+  // Вопрос «кто больше всех вкладывает» отвечает наш рейтинг инвесторов —
+  // веб на нём тянул пенсионные фонды и PE (замер 2026-10-01); сеть — по кнопке.
+  const invAnswered = INVESTOR_Q.test(question) && (((marketOf(snap) || {}).report || {}).investors_top || []).length > 0;
+  if (plan && (live || (plan.live && !invAnswered) || (!fx.niches.length && mode === "chat" && !invAnswered))) {
     liveRes = await liveSearch(env, chatId, question, plan, lang);
     for (const f of liveRes.facts) fx.facts.push({ id: fx.facts.length + 1, text: f.text, url: f.url });
   }
