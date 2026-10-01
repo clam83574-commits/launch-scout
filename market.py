@@ -44,6 +44,7 @@ import hashlib
 import html
 import json
 import math
+import os
 import re
 import sys
 import time
@@ -389,7 +390,16 @@ FEEDS = (
     # API Crunchbase платный с 2025 года, бесплатного тарифа нет, а сайт
     # закрыт Cloudflare и запрещает сбор правилами — поэтому только RSS.
     ("Crunchbase News", "https://news.crunchbase.com/feed/"),
+    # Пресс-релизы (2026-10-01): мелкие сиды часто объявляются только релизом
+    # и проходят мимо изданий — так база пропустила Nace.AI ($21,5M seed).
+    # Берём лишь заголовок и ссылку, текст релиза не перепубликуем.
+    ("PR Newswire", "https://www.prnewswire.com/rss/financial-services-latest-news/venture-capital-list.rss"),
+    ("GlobeNewswire", "https://www.globenewswire.com/RssFeed/keyword/funding/feedTitle/GlobeNewswire%20-%20funding"),
 )
+# Ленты релизов целиком через поиск по их сайтам: каталог RSS у Business Wire
+# закрыт (403), а заголовки всех трёх лент Google News отдаёт.
+WIRE_SITES = "(site:prnewswire.com OR site:businesswire.com OR site:globenewswire.com)"
+WIRE_OUTLETS = ("PR Newswire", "GlobeNewswire")
 BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/128.0 Safari/537.36")
 # Раунды любых секторов за последние дни — чтобы в поток денег попадало и
@@ -398,6 +408,11 @@ GENERAL_QUERIES = (
     '(raises OR raised OR secures OR lands) ("pre-seed" OR "seed round" OR "seed funding") startup when:3d',
     '(raises OR raised OR secures) ("Series A" OR "Series B") startup when:3d',
     '(raises OR raised) ("Series C" OR "Series D" OR "growth round") startup when:4d',
+)
+WIRE_QUERIES = (
+    WIRE_SITES + ' (raises OR secures OR closes OR announces) ("pre-seed" OR "seed round" OR "seed funding") %s',
+    WIRE_SITES + ' (raises OR secures OR closes OR announces) "Series A" %s',
+    WIRE_SITES + ' (raises OR secures OR closes OR announces) ("Series B" OR "Series C") %s',
 )
 
 
@@ -511,13 +526,21 @@ def refresh_deals(conn, now, verbose=True):
         for title, url, outlet, ts in rows:
             add_deal(conn, title, url, outlet, ts, now)
         time.sleep(0.8)
+    for q in WIRE_QUERIES:
+        rows, err = fetch_gnews(q % "when:4d")
+        if err:
+            errors.append("релизы: %s" % err)
+            continue
+        for title, url, outlet, ts in rows:
+            add_deal(conn, title, url, outlet, ts, now, src="wire")
+        time.sleep(0.8)
     for outlet, url in FEEDS:
         rows, err = fetch_feed(url, full=True)
         if err:
             errors.append("%s: %s" % (outlet, err))
             continue
         for title, link, ts, text, cats in rows:
-            is_deal = add_deal(conn, title, link, outlet, ts, now)
+            is_deal = add_deal(conn, title, link, outlet, ts, now, src="wire" if outlet in WIRE_OUTLETS else "news")
             store_article(conn, outlet, title, link, ts or now, text, cats, is_deal, now)
     conn.commit()
     db.kv_set(conn, "market_deal_raw", json.dumps({"%s|%s" % k: v["raw"] for k, v in stats.items()}))
@@ -1268,7 +1291,7 @@ def compute(conn, now):
             "yc_batches": [{"name": x["name"], "n": x["n"]} for x in yc],
             "niches": niches(conn, now, limit=30), "niche_days": NICHE_DAYS,
             "niche_names": niche_names(conn), "headlines": heads[:6],
-            "investors_top": investors_top(conn, now)}
+            "investors_top": investors_top(conn, now), "coverage": coverage_stats(conn, now)}
 
 
 # Одни и те же фонды пишут по-разному: «a16z» и «Andreessen Horowitz».
@@ -2145,7 +2168,7 @@ def backfill_deals(conn, now, verbose=True):
     todo = []
     for k in range(4, HISTORY_WEEKS):                 # последние 4 недели собирает refresh_deals
         a, b = base - (k + 1) * 7 * 86400, base - k * 7 * 86400
-        for sid in SECTOR_IDS + ["_general"]:
+        for sid in SECTOR_IDS + ["_general", "_wire_seed", "_wire_a", "_wire_bc"]:
             key = "%s|%s" % (_day(a), sid)
             if key not in done:
                 todo.append((key, sid, a, b))
@@ -2156,6 +2179,8 @@ def backfill_deals(conn, now, verbose=True):
         if sid == "_general":
             q = '(raises OR raised OR secures) ("pre-seed" OR "seed round" OR "Series A" OR "Series B" OR ' \
                 '"Series C") startup after:%s before:%s' % (_day(a), _day(b))
+        elif sid.startswith("_wire"):
+            q = WIRE_QUERIES[{"_wire_seed": 0, "_wire_a": 1, "_wire_bc": 2}[sid]] % ("after:%s before:%s" % (_day(a), _day(b)))
         else:
             q = '%s (startup OR company) (raises OR funding OR "seed round" OR "series a" OR "series b") ' \
                 'after:%s before:%s' % (SECTOR[sid]["q"], _day(a), _day(b))
@@ -2166,7 +2191,8 @@ def backfill_deals(conn, now, verbose=True):
                 break
             continue
         for title, url, outlet, ts in rows:
-            added += 1 if add_deal(conn, title, url, outlet, ts, now, sid=None if sid == "_general" else sid) else 0
+            added += 1 if add_deal(conn, title, url, outlet, ts, now, sid=None if sid.startswith("_") else sid,
+                                   src="wire" if sid.startswith("_wire") else "news") else 0
         done[key] = len(rows)
         time.sleep(0.8)
     db.kv_set(conn, "backfill_done", json.dumps(done))
@@ -2473,6 +2499,136 @@ def web_step(conn, now, rep, verbose=True):
         db.kv_set(conn, "niche_web", json.dumps(web, ensure_ascii=False))
         conn.commit()
     return done
+
+
+# ---------------------------------------------------------------------------
+# 📥 Раунды, найденные живым поиском в чате
+# ---------------------------------------------------------------------------
+_PAGE_MONEY = re.compile(r"([$€£₹])\s?([\d][\d.,]*)\s?(million|billion|mn|bn|m|b|k)?\b|([\d][\d.,]*)\s?(million|billion|crore|lakh)\s?(dollars|usd|euros?|eur|pounds?|rupees|inr)?",
+                         re.I)
+_FX = {"$": 1.0, "€": 1.08, "£": 1.27, "₹": 0.012, "usd": 1.0, "dollars": 1.0, "eur": 1.08, "euro": 1.08, "euros": 1.08,
+       "pound": 1.27, "pounds": 1.27, "inr": 0.012, "rupees": 0.012}
+
+
+def page_amounts(text):
+    """Суммы на странице в долларах (грубый курс для евро, фунтов и рупий)."""
+    out = []
+    for m in _PAGE_MONEY.finditer(text or ""):
+        cur, num, unit = (m.group(1), m.group(2), m.group(3)) if m.group(2) else ("", m.group(4), m.group(5))
+        try:
+            v = float(num.replace(",", "")) if not re.fullmatch(r"\d{1,3},\d{1,2}", num) else float(num.replace(",", "."))
+        except ValueError:
+            continue
+        v *= {"million": 1e6, "mn": 1e6, "m": 1e6, "billion": 1e9, "bn": 1e9, "b": 1e9, "k": 1e3,
+              "crore": 1e7, "lakh": 1e5}.get((unit or "").lower(), 1)
+        rate = _FX.get(cur or (m.group(6) or "").lower(), 1.0)
+        out.append(v * rate)
+    return out
+
+
+def _names_and_amount(text, company, usd):
+    squash = lambda x: re.sub(r"[^a-z0-9а-яё]", "", (x or "").lower())
+    if squash(company) not in squash(text):
+        return "no_company"
+    if not any(abs(v - usd) / usd <= 0.10 for v in page_amounts(text) if v > 0):
+        return "no_amount"
+    return "ok"
+
+
+def verify_found_round(row, timeout=20):
+    """
+    ('ok'|'ok_news'|причина отказа). Страница-источник должна называть
+    компанию и сумму (допуск 10%). Многие сайты закрыты для скриптов (Business
+    Wire отвечает 403) — тогда нужен независимый заголовок в Google News с
+    тем же названием и суммой.
+    """
+    usd = float(row["usd"] or 0)
+    if usd <= 0:
+        return "no_amount"
+    try:
+        r = requests.get(row["url"], headers={"User-Agent": BROWSER_UA}, timeout=timeout)
+        page = "http_%d" % r.status_code if r.status_code != 200 else _names_and_amount(_strip_html(r.text)[:200000], row["company"], usd)
+    except requests.RequestException:
+        page = "page_error"
+    if page == "ok":
+        return "ok"
+    rows, err = fetch_gnews('"%s" (raises OR raised OR funding OR secures)' % row["company"])
+    for title, _url, _outlet, _ts in rows or []:
+        if _names_and_amount(title, row["company"], usd) == "ok":
+            return "ok_news"
+    return page
+
+
+def learn_step(conn, now, verbose=True):
+    """
+    Забрать у бота раунды, найденные живым поиском, проверить по странице и
+    добавить в базу как обычный заголовок — дальше их разбирает ИИ-очередь.
+    """
+    url, secret = os.environ.get("WORKER_URL", "").strip(), os.environ.get("LS_INGEST_SECRET", "").strip()
+    if not url or not secret:
+        return 0
+    try:
+        rows = requests.get(url + "/found-rounds", headers={"x-ingest-secret": secret}, timeout=30).json().get("rows") or []
+    except (requests.RequestException, ValueError):
+        return 0
+    if not rows:
+        return 0
+    done, added = [], 0
+    for row in rows:
+        verdict = verify_found_round(row)
+        if verdict in ("ok", "ok_news"):
+            try:
+                ts = int(time.mktime(time.strptime(row["date"], "%Y-%m-%d"))) if row.get("date") else now
+            except ValueError:
+                ts = now
+            stage = {"pre-seed": "Pre-Seed", "seed": "Seed", "a": "Series A", "b": "Series B", "c+": "Series C"}.get(row.get("stage"), "")
+            title = "%s raises $%s %s" % (row["company"], _fmt_usd(row["usd"]), stage)
+            add_deal(conn, title, row["url"], re.sub(r"^https?://(www\.)?([^/]+).*$", r"\2", row["url"]), ts, now,
+                     src="live", company=row["company"], amount=float(row["usd"]))
+            added += 1
+        done.append({"company": row["company"], "url": row["url"], "status": verdict})
+    conn.commit()
+    try:
+        requests.post(url + "/found-rounds", json={"done": done}, headers={"x-ingest-secret": secret}, timeout=30)
+    except requests.RequestException:
+        pass
+    if verbose:
+        print("  раунды из чата: проверено %d, добавлено %d (%s)" % (
+            len(done), added, ", ".join(sorted({d["status"] for d in done}))))
+    return added
+
+
+def _fmt_usd(v):
+    v = float(v or 0)
+    return ("%.1fB" % (v / 1e9)) if v >= 1e9 else ("%.1fM" % (v / 1e6)) if v >= 1e6 else ("%.0fK" % (v / 1e3))
+
+
+def coverage_stats(conn, now, days=60):
+    """
+    Полнота базы: из раундов, пришедших независимым путём (пресс-релизы,
+    живой поиск в чате, топ Crunchbase), какая доля уже была в базе из
+    новостей раньше. Низкая доля — сбор новостей что-то пропускает.
+    """
+    rows = conn.execute("SELECT company, src, seen FROM deals WHERE is_round = 1 AND ts >= ? AND company IS NOT NULL",
+                        (now - days * 86400,)).fetchall()
+    first_news = {}
+    for r in rows:
+        if (r["src"] or "news") == "news":
+            k = company_norm(r["company"])
+            first_news[k] = min(first_news.get(k, r["seen"]), r["seen"])
+    out = {}
+    for src in ("wire", "live", "crunchbase"):
+        lst = [r for r in rows if r["src"] == src]
+        seen_keys, known = set(), 0
+        for r in lst:
+            k = company_norm(r["company"])
+            if not k or k in seen_keys:
+                continue
+            seen_keys.add(k)
+            known += 1 if k in first_news and first_news[k] <= r["seen"] else 0
+        if seen_keys:
+            out[src] = {"n": len(seen_keys), "known": known, "pct": round(100 * known / len(seen_keys))}
+    return out
 
 
 # ---------------------------------------------------------------------------

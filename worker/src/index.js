@@ -2510,12 +2510,69 @@ async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000
  * Итоговый текст: ссылки [F7] -> источники, строки с суммами и числами без
  * ссылки на факт — вон (так модель не может «вспомнить» свои цифры).
  */
+// ---------------------------------------------------------------------------
+// 🧷 Проверка ответа по фактам (защита от выдумок, 2026-10-01)
+//
+// Ссылка [F7] ещё не значит, что число взято из F7: модель могла сослаться и
+// написать своё. Каждое число в строке со ссылкой ищем среди чисел фактов
+// ($21,5 млн = $21.5M = 21.5 million, допуск 1,5% на округление); выделенное
+// название компании латиницей — в тексте фактов. Не нашлось — строку вон.
+// ---------------------------------------------------------------------------
+const UNIT = { "трлн": 1e12, "trillion": 1e12, "tn": 1e12, "млрд": 1e9, "bn": 1e9, "billion": 1e9, "b": 1e9, "млн": 1e6, "mn": 1e6, "million": 1e6, "m": 1e6,
+  "тыс": 1e3, "k": 1e3, "thousand": 1e3 };
+const NUM_RE = /(?<![\p{L}\d.,])([$€£]\s?)?(\d{1,3}(?:[ \u00a0\u202f,]\d{3})+|\d+(?:[.,]\d+)?)\s?(трлн|trillion|tn|млрд|млн|тыс|bn|billion|mn|million|thousand|[bmk](?![\p{L}]))?\.?(%)?/giu;
+
+/** Числа текста: [{v, money}] — суммы приведены к единицам, годы и номера пунктов пропущены. */
+function numbersIn(text) {
+  const out = [];
+  const t = String(text || "").replace(/<[^>]+>/g, " ").replace(/^\s*\d+[.)]\s/, " ");
+  for (const m of t.matchAll(NUM_RE)) {
+    let raw = m[2];
+    // «1,420» и «1 420» — тысячи; «4,7» — десятичная запятая.
+    // С единицей («2,357 трлн») запятая — десятичная.
+    if (/^\d{1,3}([ \u00a0\u202f,]\d{3})+$/.test(raw) && !(m[3] && /^\d{1,3},\d{3}$/.test(raw))) raw = raw.replace(/[ \u00a0\u202f,]/g, "");
+    else raw = raw.replace(",", ".");
+    let v = Number(raw);
+    if (!Number.isFinite(v)) continue;
+    const unit = (m[3] || "").toLowerCase();
+    if (!m[1] && !unit && !m[4] && v >= 1990 && v <= 2035 && Number.isInteger(v)) continue;   // год
+    if (!m[1] && !unit && !m[4] && v < 2) continue;                                            // «1» — шум
+    if (unit) v *= UNIT[unit] || 1;
+    out.push({ v, money: !!(m[1] || unit) });
+  }
+  return out;
+}
+
+const GENERIC_EN = /^(saas|paas|api|ai|llm|mvp|crm|erp|b2b|b2c|seed|pre-seed|series [a-e]\+?|growth|devops|fintech|edtech|healthtech|proptech|insurtech|legaltech|agentic ai|ai agents?|machine learning|open source|enterprise|startup|no-code|low-code|vertical saas|physical ai)$/i;
+
+function makeChecker(facts, extra = "") {
+  // Числа из вопроса и профиля тоже свои: «у меня $10 000» — не выдумка.
+  const pool = [...facts.flatMap((f) => numbersIn(f.text)), ...numbersIn(extra)];
+  const vals = pool.map((x) => x.v);
+  const squash = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9а-яё]/g, "");
+  const corpus = squash(facts.map((f) => f.text).join(" ") + " " + extra);
+  const pcts = new Set(pool.filter((x) => x.v > 0 && x.v < 100).map((x) => Math.round(x.v)));
+  // «медленнее 87% ниш» при факте «быстрее 13%» — то же утверждение.
+  const has = (v) => vals.some((x) => x === v || (x > 0 && Math.abs(x - v) / x <= 0.015)) || (v > 0 && v < 100 && pcts.has(Math.round(100 - v)));
+  return {
+    /** Числа строки, которых нет ни в одном факте. */
+    badNumbers: (line) => numbersIn(line).filter((n) => !has(n.v)).map((n) => n.v),
+    /** Выделенные названия латиницей, которых нет в фактах. */
+    badNames: (htmlLine) => [...htmlLine.matchAll(/<b>([^<]{2,60})<\/b>/g)].map((m) => m[1])
+      // Аббревиатуры (MVP, CRM) и общие слова (SaaS) — не названия компаний.
+      .filter((b) => /[A-Z][A-Za-z0-9.]{2,}/.test(b) && !/[$€£%]|\d/.test(b) && !/^[A-Z]{2,5}$/.test(b) && !GENERIC_EN.test(b))
+      .filter((b) => !corpus.includes(squash(b)) && !b.split(/\s+/).some((w) => w.length >= 4 && /^[A-Z]/.test(w) && corpus.includes(squash(w)))),
+  };
+}
+
 const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 const sup = (n) => String(n).split("").map((d) => SUP[Number(d)]).join("");
 
-function groundAnswer(text, facts) {
+function groundAnswer(text, facts, extra = "") {
   const byId = Object.fromEntries(facts.map((f) => [f.id, f]));
   const order = new Map();
+  const chk = makeChecker(facts, extra);
+  const unsupported = [];
   let dropped = 0;
   const lines = [];
   // Ссылка — одиночная [F6] или группа [F6, F7] / [F6-F8]: групповые раньше
@@ -2537,6 +2594,12 @@ function groundAnswer(text, facts) {
     const hasNumbers = /\$\s?\d|\d+\s?(млн|млрд|million|billion|M\b|B\b|%|раунд|round)/i.test(raw);
     if (hasNumbers && !valid.length) { dropped++; continue; }
     let line = esc(raw).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*\*/g, "");
+    // Строка со ссылками: числа и названия должны найтись в фактах.
+    if (valid.length) {
+      const plain = raw.replace(GROUP, " ");
+      const nums = chk.badNumbers(plain), names = chk.badNames(line.replace(GROUP, " "));
+      if (nums.length || names.length) { dropped++; unsupported.push({ line: plain.slice(0, 200), nums, names }); continue; }
+    }
     // Сноска — маленький номер по порядку появления (¹ ² ³), а не [17]:
     // в Telegram крупные «[4]» среди текста читались хуже самого текста.
     line = line.replace(/\s*\[(F\d+(?:\s*[,;–-]\s*F?\d+)*)\]/g, (m) => {
@@ -2553,7 +2616,7 @@ function groundAnswer(text, facts) {
     line = line.replace(/(<a href="([^"]+)">[^<]+<\/a>)(?:\s*<a href="\2">[^<]+<\/a>)+/g, "$1");
     lines.push(line.replace(/\s+$/, ""));
   }
-  return { html: lines.join("\n").replace(/\n{3,}/g, "\n\n").trim(), dropped };
+  return { html: lines.join("\n").replace(/\n{3,}/g, "\n\n").trim(), dropped, unsupported };
 }
 
 /** Поиск в сети: статус в чате на время поиска, потом он удаляется. */
@@ -2594,6 +2657,7 @@ Find real products that already do this: global leaders and players in Kazakhsta
 Reply with JSON only: {"competitors": [{"name": "...", "url": "https://...", "market": "global|US|EU|KZ|RU|CIS|MENA", "price": "...", "note": "one line"}], "complaints": [{"text": "...", "source": "https://..."}], "pricing": "one line", "icp": "one line"}
 At most 8 competitors and 5 complaints, only ones you actually found with real URLs. Never invent.`;
 
+let lastUnsupported = null;   // для /debug-chat
 const INVESTOR_Q = /инвест|инвестор|фонд|венчур|ангел|\bvc\b|investor|\bfunds?\b|backer|кто вкладыва|кто финансир/iu;
 
 // ---------------------------------------------------------------------------
@@ -2653,7 +2717,9 @@ async function webFacts(env, question, queries, { model = null, timeoutMs = 1600
     return (d.facts || []).filter((f) => f && f.text).slice(0, 10).map((f) => ({
       text: `WEB${f.date ? " " + f.date : ""}: ${String(f.text).slice(0, 300)}`,
       // Редирект Google-поиска живёт недолго — такую ссылку не показываем.
-      url: okUrl(f.url) && !/vertexaisearch|grounding-api-redirect/.test(f.url) ? String(f.url).replace(/[?&]utm_source=openai/, "") : null }));
+      url: okUrl(f.url) && !/vertexaisearch|grounding-api-redirect/.test(f.url) ? String(f.url).replace(/[?&]utm_source=openai/, "") : null }))
+      // Факт без страницы-источника проверить нельзя — в ответ он не идёт.
+      .filter((f) => f.url);
   } catch (e) {
     await noteAiError(env, "openrouter live web", 0, String(e));
     return [];
@@ -2702,10 +2768,75 @@ async function dbFacts(env, plan) {
   const cond = words.map((_, k) => `(${squash("company")} LIKE ?${k + 1} OR ${squash("key")} LIKE ?${k + 1})`).join(" OR ");
   const { results } = await env.DB.prepare(`SELECT * FROM rounds WHERE ${cond} ORDER BY ts DESC LIMIT 10`)
     .bind(...words.map((w) => `%${w.replace(/[.\s-]+/g, "")}%`)).all().catch(() => ({ results: [] }));
-  return (results || []).map((r) => ({
+  let rows = results || [];
+  // Опечатка или другое написание («Nase AI», «Anthropik»): кандидаты с тем же
+  // началом названия, расстояние Левенштейна до 1-2 букв.
+  if (!rows.length && plan.entities.length) {
+    for (const e of plan.entities.map((w) => w.toLowerCase().replace(/[^a-z0-9а-яё]/g, "")).filter((w) => w.length >= 5).slice(0, 3)) {
+      const { results: cand } = await env.DB.prepare(`SELECT * FROM rounds WHERE ${squash("company")} LIKE ?1 LIMIT 200`)
+        .bind(e.slice(0, 2) + "%").all().catch(() => ({ results: [] }));
+      const lim = e.length >= 9 ? 2 : 1;
+      rows.push(...(cand || []).filter((r) => levenshtein(e, String(r.company || "").toLowerCase().replace(/[^a-z0-9а-яё]/g, "")) <= lim));
+    }
+  }
+  return rows.slice(0, 10).map((r) => ({
     text: `ROUND ${new Date(r.ts * 1000).toISOString().slice(0, 10)}: ${r.company} — ${usdM(r.usd)}${r.stage ? " " + r.stage : ""}, niche "${r.niche}"${r.investors ? ", investors " + r.investors : ""}: ${r.what_en || r.what_ru || ""}`,
     url: r.url }));
 }
+
+function levenshtein(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 9;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// ---------------------------------------------------------------------------
+// 📥 Самообучение базы: раунды, найденные живым поиском
+//
+// Nace.AI ($21,5M seed, май 2026) не было в базе — сбор новостей его не
+// увидел, нашёл веб-поиск в чате (2026-10-01). Такие раунды бот откладывает в
+// found_rounds; пайплайн открывает страницу-источник, проверяет там название
+// и сумму и только тогда добавляет раунд — выдумка поиска в базу не попадёт.
+// ---------------------------------------------------------------------------
+const LEARN_SYSTEM = `From these web facts extract startup funding rounds. Reply JSON only:
+{"rounds": [{"company": "...", "usd": 21500000, "stage": "pre-seed|seed|a|b|c+|growth|unknown", "date": "YYYY-MM-DD or empty", "investors": ["..."], "fact": <number of the fact it comes from>}]}
+Only rounds explicitly stated in a fact (company name AND amount). Convert the amount to US dollars as a number. Never guess.`;
+
+async function learnRounds(env, facts) {
+  const web = facts.filter((f) => f.url && /^WEB/.test(f.text) && /rais|fund|seed|series|round|привлек|раунд|инвест/i.test(f.text));
+  if (!web.length) return 0;
+  try {
+    const r = await groqFetch(env, { temperature: 0, max_completion_tokens: 800, reasoning_effort: "low",
+      response_format: { type: "json_object" },
+      messages: [{ role: "system", content: LEARN_SYSTEM }, { role: "user", content: web.map((f, i) => `[${i + 1}] ${f.text}`).join("\n").slice(0, 6000) }] },
+    ["openai/gpt-oss-20b"], 8000);
+    if (!r || !r.ok) return 0;
+    const d = JSON.parse((await r.json()).choices[0].message.content || "{}");
+    let n = 0;
+    for (const x of (d.rounds || []).slice(0, 5)) {
+      const f = web[Number(x.fact) - 1];
+      if (!f || !x.company || !(Number(x.usd) > 0)) continue;
+      const key = String(x.company).toLowerCase().replace(/[^a-z0-9а-яё]/g, "");
+      const known = await env.DB.prepare("SELECT 1 FROM rounds WHERE replace(replace(replace(lower(company), '.', ''), ' ', ''), '-', '') = ?1 LIMIT 1")
+        .bind(key).first().catch(() => null);
+      if (known) continue;
+      const res = await env.DB.prepare("INSERT OR IGNORE INTO found_rounds (url, company, usd, stage, date, investors, fact, ts, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'new')")
+        .bind(f.url, String(x.company).slice(0, 80), Number(x.usd), String(x.stage || ""), String(x.date || ""),
+          JSON.stringify((x.investors || []).slice(0, 6)), f.text.slice(0, 400), Math.floor(Date.now() / 1000)).run().catch(() => null);
+      n += res && res.meta && res.meta.changes ? 1 : 0;
+    }
+    return n;
+  } catch (e) {
+    await noteAiError(env, "learn rounds", 0, String(e));
+    return 0;
+  }
+}
+
 
 /** Живой поиск со статусом в чате: [{text, url}] — факты для ответа. */
 async function liveSearch(env, chatId, question, plan, lang) {
@@ -2957,7 +3088,8 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   }
   const prof = /\nPROFILE:\s*(.+)$/s.exec(full);
   const body = full.replace(/\nPROFILE:.*$/s, "").trim();
-  const { html } = groundAnswer(body, fx.facts);
+  const { html, unsupported } = groundAnswer(body, fx.facts, question + " " + profile);
+  lastUnsupported = { unsupported, raw: body, facts: fx.facts.length };
   const finalText = (html || esc(body)).slice(0, 3900);
   // Кнопки под ответом: что можно сделать с этой нишей дальше.
   const prevCtx = mode === "chat" || mode === "check" ? {} : await loadCtx(env, chatId);
@@ -2973,6 +3105,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   } else {
     await tg(env, "sendMessage", { chat_id: chatId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb });
   }
+  if (liveRes) await learnRounds(env, liveRes.facts);
   // «Искать везде»: X и Google Trends — в GitHub Actions, дополнение придёт следом.
   if (research && plan) {
     const r = await researchDispatch(env, chatId, lang, question, plan);
@@ -3116,6 +3249,7 @@ async function ensureTables(env) {
     env.DB.prepare("CREATE INDEX IF NOT EXISTS rounds_niche ON rounds (niche)"),
     // Матрица ниш — готовые цифры для быстрого ответа (fastAnswer).
     env.DB.prepare("CREATE TABLE IF NOT EXISTS niche_matrix (niche TEXT PRIMARY KEY, name_ru TEXT, sector TEXT, data TEXT, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS found_rounds (url TEXT, company TEXT, usd REAL, stage TEXT, date TEXT, investors TEXT, fact TEXT, ts INTEGER, status TEXT, PRIMARY KEY (company, url))"),
   ]);
   // Таблица prefs создавалась раньше без языка и фильтров — дополняем на
   // месте. Повторное добавление колонки D1 отклоняет, это ожидаемо.
@@ -3544,7 +3678,7 @@ export default {
         { niche: url.searchParams.get("niche") || null, live: url.searchParams.get("live") === "1" });
       const cap = globalThis.__tgCap.map((c) => ({ ...c, t: c.t - t0 }));
       globalThis.__tgCap = null;
-      return json({ ok: okA, total_ms: Date.now() - t0, calls: cap });
+      return json({ ok: okA, total_ms: Date.now() - t0, calls: cap, check: lastUnsupported });
     }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-web") {
       const t0 = Date.now();
@@ -3593,9 +3727,9 @@ export default {
       let full = await streamOpenRouter(env, env.LS_FAST_MODEL || FAST_MODEL, dbgMsgs, onD, 25000, mode === "chat" ? 900 : 1800);
       if (!full) full = await streamOpenRouter(env, FALLBACK_FAST_MODEL, dbgMsgs, onD, 20000, mode === "chat" ? 900 : 1800, 8000);
       const t2 = Date.now();
-      const g = groundAnswer(full || "", fx.facts);
+      const g = groundAnswer(full || "", fx.facts, q);
       return json({ facts_ms: t1 - t0, first_token_ms: first ? first - t0 : null, total_ms: t2 - t0,
-        niches: fx.niches.map((d) => d.niche), kept: lastKept, matches: lastMatches, n_facts: fx.facts.length, dropped_lines: g.dropped, answer: full, facts: fx.facts });
+        niches: fx.niches.map((d) => d.niche), kept: lastKept, matches: lastMatches, n_facts: fx.facts.length, dropped_lines: g.dropped, unsupported: g.unsupported, final_html: g.html, answer: full, facts: fx.facts });
     }
 
     if (request.method === "POST" && url.pathname === "/ingest-matrix") {
@@ -3619,6 +3753,25 @@ export default {
       } catch (e) {
         return new Response(`не сохранено: ${String(e).slice(0, 300)}`, { status: 503 });
       }
+    }
+
+    // Самообучение: пайплайн забирает найденные чатом раунды и отмечает проверенные.
+    if (url.pathname === "/found-rounds") {
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) {
+        return new Response("нет", { status: 403 });
+      }
+      await ensureTables(env);
+      if (request.method === "GET") {
+        const { results } = await env.DB.prepare("SELECT * FROM found_rounds WHERE status = 'new' ORDER BY ts LIMIT 50").all();
+        return json({ rows: results || [] });
+      }
+      const body = await request.json().catch(() => null);
+      const done = (body && Array.isArray(body.done) ? body.done : []).slice(0, 100);
+      if (done.length) {
+        await env.DB.batch(done.map((d) => env.DB.prepare("UPDATE found_rounds SET status = ?1 WHERE company = ?2 AND url = ?3")
+          .bind(String(d.status || "done").slice(0, 20), String(d.company || ""), String(d.url || ""))));
+      }
+      return new Response(`отмечено: ${done.length}`);
     }
 
     // Глубокий поиск: Actions забирает задание по номеру и возвращает находки.

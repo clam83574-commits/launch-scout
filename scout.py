@@ -742,6 +742,10 @@ def market_step(conn, now, dry=False):
     if rep:
         print("  рынок пересчитан: растут %s" % (", ".join(
             s["id"] for s in rep["sectors"] if s["trend"] == "up") or "—"))
+        cov = rep.get("coverage") or {}
+        if cov:
+            # Полнота: какая доля раундов из релизов/чата/Crunchbase уже была в базе из новостей.
+            print("  полнота базы: " + "; ".join("%s %d%% из %d" % (k, v["pct"], v["n"]) for k, v in cov.items()))
         broadcast += market.alert_payloads(rep, market.shift_alerts(conn, rep))
     # SEC Form D: индексы EDGAR — раз в сутки, заявки — очередью каждый
     # прогон (их сотни в день, SEC пускает не больше 10 запросов в секунду).
@@ -771,6 +775,10 @@ def market_step(conn, now, dry=False):
         market.signals_step(conn, now)
     except Exception as e:          # сигналы — надстройка
         print("  сигналы: ошибка %s" % e)
+    try:
+        market.learn_step(conn, now)
+    except Exception as e:          # раунды из чата — надстройка
+        print("  раунды из чата: ошибка %s" % e)
     enriched = market.enrich_deals(conn, now)
     try:
         if market.split_step(conn, now):

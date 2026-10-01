@@ -113,7 +113,7 @@ def run():
         hit = (not expect) or any(e in hay for e in expect)
         niche_hit = (not expect) or any(e in " ".join(d.get("niches") or []).lower() for e in expect)
         bad = unknown_names(d.get("answer"), d.get("facts") or [])
-        row = {"q": q, "hit": hit, "niche_hit": niche_hit, "invented": bad, "dropped": d.get("dropped_lines", 0),
+        row = {"q": q, "hit": hit, "niche_hit": niche_hit, "invented": bad, "dropped": d.get("dropped_lines", 0), "unsupported": d.get("unsupported") or [],
                "first_ms": d.get("first_token_ms"), "total_ms": d.get("total_ms"), "facts": d.get("n_facts"),
                "niches": d.get("niches"), "empty": not (d.get("answer") or "").strip(), "answer": d.get("answer")}
         rows.append(row)

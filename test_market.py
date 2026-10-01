@@ -189,6 +189,11 @@ def niche_extras():
     check("поиск: пустой ряд не считается", market.search_signal(gt, "rare") is None, "")
     check("инвесторы: a16z = Andreessen Horowitz", market._investor_key("a16z") == market._investor_key("Andreessen Horowitz"), "")
     check("инвесторы: «led by» отрезается", market._investor_key("led by Sequoia") == "sequoia capital", market._investor_key("led by Sequoia"))
+    amts = market.page_amounts("raised $21.5 million; €20M; $2,500,000 seed")
+    check("суммы на странице: $, €, полная запись", 21.5e6 in amts and 2.5e6 in amts and any(abs(a - 21.6e6) < 1e5 for a in amts), amts)
+    check("проверка раунда: имя и сумма", market._names_and_amount("Nace.AI Secures $21.5M seed", "Nace.AI", 21.5e6) == "ok", "")
+    check("проверка раунда: чужая сумма", market._names_and_amount("Nace.AI Secures $21.5M seed", "Nace.AI", 48e6) == "no_amount", "")
+    check("проверка раунда: нет компании", market._names_and_amount("Nace.AI Secures $21.5M seed", "Harvey", 21.5e6) == "no_company", "")
     from sources import gtrends
     flat = gtrends.summarize([(i, 50) for i in range(52)])
     check("поиск: ровный ряд — рост ×1", flat["g3m"] == 1.0 and not flat["low"], flat)
