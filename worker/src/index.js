@@ -4339,6 +4339,14 @@ export default {
       if (which === "admin" && !env.LS_ADMIN_TOKEN) return json({ error: "нет LS_PUBLIC_BOT_TOKEN — служебный бот ещё не выделен" }, 400);
       return json(await setupBot(env, which, await request.arrayBuffer()));
     }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-hello") {
+      await ensureTables(env);
+      await ownerNotify(env, { parse_mode: "HTML", reply_markup: adminKb(),
+        text: "✅ <b>Dashboard Launch Scout подключён.</b> Сюда будут приходить служебные уведомления. Спросите голосом или текстом «как дела?», /report — сводка, кнопка ниже — дашборд." });
+      const wi = await tg(adminEnv(env), "getWebhookInfo", {}), wp = await tg(env, "getWebhookInfo", {});
+      return json({ admin: wi.result && { url: wi.result.url, pending: wi.result.pending_update_count, err: wi.result.last_error_message },
+        public: wp.result && { url: wp.result.url, pending: wp.result.pending_update_count, err: wp.result.last_error_message } });
+    }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-invoice") {
       return json({ link: await starsLink(env, url.searchParams.get("uid") || "1", url.searchParams.get("item") || "pro", "ru") });
     }
