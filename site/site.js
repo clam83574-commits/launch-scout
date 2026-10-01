@@ -37,8 +37,10 @@
       ["q", "globe", "Где пусто", "В СНГ за 90 дней — ни одного раунда в proptech"],
       ["q", "bulb", "Идея", "Повторить рабочую модель из Кореи или Германии для своего города"] ] },
   ];
-  const ico = (id) => `<svg class="ico"><use href="#i-${id}"/></svg>`;
-  const KB = `<div class="kb"><span>${ico("search")}Глубже</span><span>${ico("map")}Карта идеи</span><span>${ico("compass")}Смежные ниши</span><span>${ico("flag")}Конкуренты</span><span>${ico("bell")}Следить</span><span>${ico("globe")}Искать везде</span></div>`;
+  // В переписке — эмодзи, как в самом Telegram; свои иконки — только на сайте вокруг.
+  const EMO = { coin: "💸", compass: "🧭", target: "🎯", alert: "⚠️", flask: "🧪", flag: "🏁", globe: "🌍", bulb: "💡", search: "🔎", map: "🗺", bell: "🔔" };
+  const ico = (id) => (EMO[id] || "") + " ";
+  const KB = `<div class="kb"><span>${ico("search")}Глубже</span><span>${ico("map")}Карта идеи</span><span>${ico("compass")}Смежные ниши</span><span>${ico("flag")}Конкуренты</span><span>${ico("bell")}Следить</span><span>🌐 Искать везде</span></div>`;
   function tickerHTML(D) {
     const items = (D.recent || []).filter((r) => r.c && r.usd).map((r) => {
       const d = new Date(r.ts * 1000);
