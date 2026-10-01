@@ -1299,6 +1299,8 @@ async function handleUpdate(env, update) {
   await ensureTables(env);
   if (msg && raw.startsWith("/start")) await refCapture(env, chatId, raw);
   if (msg && /^\/start\s+site\b/i.test(raw)) await setMeta(env, "from_site", String(Number((await meta(env, "from_site")) || 0) + 1));
+  const promoStart = msg && /^\/start\s+([a-z0-9_]+)/i.exec(raw);
+  if (promoStart && PROMOS[promoStart[1].toLowerCase()]) await promoActivate(env, chatId, promoStart[1].toLowerCase(), "ru", false);
   if (!(await hasAccess(env, chatId))) {
     // Закрытый доступ: выдаёт админ по ID (решение владельца 2026-10-02), кодов нет.
     await accessGate(env, chatId, msg, cb, data);
@@ -1326,12 +1328,14 @@ async function handleUpdate(env, update) {
         await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).lang_set + " " + L(lang).menu_hint, reply_markup: menuKb(lang) });
         await setMeta(env, "menu_" + chatId, MENU_V);
         await tg(env, "sendMessage", { chat_id: chatId, text: await helloText(env, lang), parse_mode: "HTML", reply_markup: startKb(lang) });
+        await promoShowPending(env, chatId, lang);
         return;
       }
     }
     await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).lang_set + " " + L(lang).menu_hint, reply_markup: menuKb(lang) });
     await setMeta(env, "menu_" + chatId, MENU_V);
     await tg(env, "sendMessage", { chat_id: chatId, text: await helloText(env, lang), parse_mode: "HTML", reply_markup: startKb(lang) });
+    await promoShowPending(env, chatId, lang);
     return;
   }
   // Язык спрашиваем при первом входе и по /lang. Нажатие кнопки под
@@ -1343,6 +1347,8 @@ async function handleUpdate(env, update) {
   }
   const lang = prefs.lang || "ru";
   const s = L(lang);
+  const promoTyped = msg && /^\/?(?:promo\s+)?([a-z0-9_]{4,30})\s*$/i.exec(raw);
+  if (promoTyped && PROMOS[promoTyped[1].toLowerCase()]) { await promoActivate(env, chatId, promoTyped[1].toLowerCase(), lang); return; }
 
   if (data === "noop") return;
   if (data && (await settingsAction(env, chatId, msgId, data, prefs, lang))) return;
@@ -1381,9 +1387,9 @@ async function handleUpdate(env, update) {
   if (data.startsWith("buy:")) {
     if (!STAR_ITEMS[data.slice(4)]) return;
     const link = await starsLink(env, chatId, data.slice(4), lang);
-    const it = STAR_ITEMS[data.slice(4)];
+    const price = await starsPrice(env, chatId, data.slice(4));
     await tg(env, "sendMessage", link
-      ? { chat_id: chatId, text: L(lang).st_pay_hint, reply_markup: { inline_keyboard: [[{ text: fmt(L(lang).st_pay_btn, it.stars), url: link }]] } }
+      ? { chat_id: chatId, text: L(lang).st_pay_hint, reply_markup: { inline_keyboard: [[{ text: fmt(L(lang).st_pay_btn, price), url: link }]] } }
       : { chat_id: chatId, text: L(lang).research_err });
     return;
   }
@@ -1582,6 +1588,7 @@ async function handleUpdate(env, update) {
     await tg(env, "sendMessage", { chat_id: chatId, text: s.refresh_ok, reply_markup: keyboardFor(lang) });
   } else if (text.startsWith("/start") || text.startsWith("/help")) {
     await tg(env, "sendMessage", { chat_id: chatId, text: await helloText(env, lang), parse_mode: "HTML", reply_markup: startKb(lang) });
+    await promoShowPending(env, chatId, lang);
     // Меню внизу — тем, у кого его ещё нет (старые пользователи).
     if ((await meta(env, "menu_" + chatId)) !== MENU_V) {
       await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).menu_hint, reply_markup: menuKb(lang) });
@@ -3033,14 +3040,14 @@ async function lsBalanceMsg(env, chatId, lang) {
   const r = await lsGet(env, chatId);
   const text = [fmt(s.ls_balance, s["ls_name_" + r.plan] || r.plan, r.sub_ls, r.credits,
     new Date(r.period_end * 1000).toISOString().slice(0, 10)), "", lsTariffs(s)].join("\n");
-  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", reply_markup: starsButtons(s) });
+  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", reply_markup: starsButtons(s, await promoActive(env, chatId)) });
 }
 
 async function lsShortMsg(env, chatId, lang, action) {
   const s = L(lang);
   const r = await lsGet(env, chatId);
   await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML",
-    text: fmt(s.ls_short, LS_PRICE[action] || 10, r.sub_ls + r.credits) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s) });
+    text: fmt(s.ls_short, LS_PRICE[action] || 10, r.sub_ls + r.credits) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s, await promoActive(env, chatId)) });
 }
 
 /** Владелец: /grant <id> <free|pro|max|promax>, /credit <id> <LS>, /costs — сверка прайса с фактом. */
@@ -3110,31 +3117,100 @@ const STAR_ITEMS = {
   pack: { stars: 270, ls: 1000, sub: false },
 };
 
+// ---------------------------------------------------------------------------
+// 🎟 Промокоды (2026-10-01): скидка на ПЕРВУЮ покупку, действует N дней с
+// активации. Подписка со скидкой — разовый счёт на 30 дней: у подписки Stars
+// цена зашита навсегда, и скидка продлевалась бы каждый месяц. Дальше человек
+// продлевает обычной подпиской.
+// ---------------------------------------------------------------------------
+const PROMOS = { aipreneurs: { title: "AIPRENEURS", off: 0.3, days: 7 } };
+const promoStars = (stars, off) => Math.round(stars * (1 - off));
+const PROMO_TEXT = {
+  ru: { on: "🎟 Промокод <b>%s</b> активирован: <b>−%s%%</b> на первую покупку — любой тариф или пакет LS. Действует до %s.\n\nPro — <b>%s ⭐</b> вместо %s · Max — <b>%s ⭐</b> вместо %s · Pro Max — <b>%s ⭐</b> вместо %s.\nПервый месяц по скидке, дальше — обычная подписка, если захотите.",
+    used: "Промокод действует только на первую покупку — у вас она уже была.", late: "Срок промокода истёк.", paid: "🎟 Скидка по промокоду %s применена. Это месяц без автопродления: когда он закончится, продлить можно в /balance." },
+  kk: { on: "🎟 <b>%s</b> промокоды қосылды: алғашқы сатып алуға <b>−%s%%</b> — кез келген тариф не LS пакеті. %s дейін жарамды.\n\nPro — %s орнына <b>%s ⭐</b> · Max — %s орнына <b>%s ⭐</b> · Pro Max — %s орнына <b>%s ⭐</b>.",
+    used: "Промокод тек алғашқы сатып алуға жарамды — сізде ол болған.", late: "Промокод мерзімі бітті.", paid: "🎟 %s промокоды бойынша жеңілдік қолданылды. Бұл автоұзартусыз ай: біткен соң /balance арқылы ұзартуға болады." },
+  en: { on: "🎟 Promo code <b>%s</b> is on: <b>−%s%%</b> off your first purchase — any plan or LS pack. Valid until %s.\n\nPro — <b>%s ⭐</b> instead of %s · Max — <b>%s ⭐</b> instead of %s · Pro Max — <b>%s ⭐</b> instead of %s.\nFirst month at the discount, then a regular plan if you like.",
+    used: "The promo code works only for a first purchase — you already have one.", late: "This promo code has expired.", paid: "🎟 Promo %s applied. This month does not auto-renew: when it ends, renew in /balance." },
+};
+
+/** Активный промокод человека или null (истёк, уже была покупка). */
+async function promoActive(env, uid) {
+  let pr = null;
+  try { pr = JSON.parse((await meta(env, "promo_" + uid)) || "null"); } catch { pr = null; }
+  if (!pr || !PROMOS[pr.code] || Math.floor(Date.now() / 1000) > pr.until) return null;
+  const paid = await env.DB.prepare("SELECT 1 FROM payments WHERE user_id = ?1 LIMIT 1").bind(String(uid)).first().catch(() => null);
+  return paid ? null : { ...PROMOS[pr.code], code: pr.code, until: pr.until };
+}
+
+/** Включить промокод (ссылкой /start <код> или текстом кода) и показать цены со скидкой. */
+async function promoActivate(env, uid, code, lang, show = true) {
+  const P = PROMOS[code], t = PROMO_TEXT[lang] || PROMO_TEXT.ru;
+  if (!P) return;
+  const paid = await env.DB.prepare("SELECT 1 FROM payments WHERE user_id = ?1 LIMIT 1").bind(String(uid)).first().catch(() => null);
+  if (paid) { if (show) await tg(env, "sendMessage", { chat_id: uid, text: t.used }); return; }
+  let pr = null;
+  try { pr = JSON.parse((await meta(env, "promo_" + uid)) || "null"); } catch { pr = null; }
+  if (!pr || pr.code !== code) {
+    pr = { code, until: Math.floor(Date.now() / 1000) + P.days * 86400 };
+    await setMeta(env, "promo_" + uid, JSON.stringify(pr));
+    await setMeta(env, "promo_n_" + code, String(Number((await meta(env, "promo_n_" + code)) || 0) + 1));
+    await ownerNotify(env, { text: `🎟 Промокод ${P.title} активировал ${uid}` });
+  }
+  if (!show) { await setMeta(env, "promo_show_" + uid, "1"); return; }
+  if (Math.floor(Date.now() / 1000) > pr.until) { await tg(env, "sendMessage", { chat_id: uid, text: t.late }); return; }
+  const d = new Date(pr.until * 1000).toISOString().slice(0, 10).split("-").reverse().join(".");
+  const st = (k) => [promoStars(STAR_ITEMS[k].stars, P.off), STAR_ITEMS[k].stars];
+  const args = lang === "kk" ? ["pro", "max", "promax"].flatMap((k) => st(k).reverse()) : ["pro", "max", "promax"].flatMap(st);
+  await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.on, P.title, Math.round(P.off * 100), d, ...args),
+    reply_markup: starsButtons(L(lang), { ...P, code }) });
+}
+
+/** Отложенный показ: человек пришёл по ссылке с кодом и сначала выбирал язык. */
+async function promoShowPending(env, uid, lang) {
+  if ((await meta(env, "promo_show_" + uid)) !== "1") return;
+  await setMeta(env, "promo_show_" + uid, "");
+  const pr = await promoActive(env, uid);
+  if (pr) await promoActivate(env, uid, pr.code, lang);
+}
+
 async function starsLink(env, uid, item, lang) {
   const s = L(lang);
   const it = STAR_ITEMS[item];
   if (!it) return null;
+  const promo = await promoActive(env, uid);
   const title = it.sub ? fmt(s.st_title_sub, s["ls_name_" + it.plan]) : fmt(s.st_title_pack, it.ls);
   const descr = it.sub ? fmt(s.st_descr_sub, PLANS[it.plan].ls) : s.st_descr_pack;
+  const stars = promo ? promoStars(it.stars, promo.off) : it.stars;
   const r = await tg(env, "createInvoiceLink", {
-    title: title.slice(0, 32), description: descr.slice(0, 255), payload: `${item}:${uid}`, currency: "XTR", provider_token: "",
-    prices: [{ label: title.slice(0, 32), amount: it.stars }], ...(it.sub ? { subscription_period: 2592000 } : {}),
+    title: title.slice(0, 32), description: descr.slice(0, 255), payload: `${item}:${uid}${promo ? ":" + promo.code : ""}`, currency: "XTR", provider_token: "",
+    prices: [{ label: title.slice(0, 32), amount: stars }], ...(it.sub && !promo ? { subscription_period: 2592000 } : {}),
   });
   return r && r.ok ? r.result : null;
 }
 
-function starsButtons(s) {
+/** Сколько звёзд будет в счёте у этого человека (с промокодом — меньше). */
+async function starsPrice(env, uid, item) {
+  const it = STAR_ITEMS[item], promo = await promoActive(env, uid);
+  return it ? (promo ? promoStars(it.stars, promo.off) : it.stars) : 0;
+}
+
+function starsButtons(s, promo = null) {
+  const p = (k) => (promo ? `${promoStars(STAR_ITEMS[k].stars, promo.off)} (−${Math.round(promo.off * 100)}%)` : STAR_ITEMS[k].stars);
   return { inline_keyboard: [
     [{ text: s.kb_invite, callback_data: "invite" }],
-    [{ text: `⭐ Pro — ${STAR_ITEMS.pro.stars}`, callback_data: "buy:pro" }, { text: `⭐ Max — ${STAR_ITEMS.max.stars}`, callback_data: "buy:max" }],
-    [{ text: `⭐ Pro Max — ${STAR_ITEMS.promax.stars}`, callback_data: "buy:promax" }, { text: fmt(s.st_pack_btn, STAR_ITEMS.pack.stars), callback_data: "buy:pack" }],
+    [{ text: `⭐ Pro — ${p("pro")}`, callback_data: "buy:pro" }, { text: `⭐ Max — ${p("max")}`, callback_data: "buy:max" }],
+    [{ text: `⭐ Pro Max — ${p("promax")}`, callback_data: "buy:promax" }, { text: fmt(s.st_pack_btn, p("pack")).replace(/%d/, ""), callback_data: "buy:pack" }],
   ] };
 }
 
 /** Проверка перед списанием звёзд: товар существует и счёт выставлен этому человеку. */
 async function starsPreCheckout(env, q) {
-  const [item, uid] = String(q.invoice_payload || "").split(":");
-  const ok = !!STAR_ITEMS[item] && String(uid) === String(q.from.id) && q.currency === "XTR" && q.total_amount === STAR_ITEMS[item].stars;
+  const [item, uid, code] = String(q.invoice_payload || "").split(":");
+  // Счёт по промокоду: цена со скидкой; код уже мог истечь, пока человек
+  // открывал счёт, — выставленный счёт всё равно принимаем.
+  const want = STAR_ITEMS[item] ? (code && PROMOS[code] ? promoStars(STAR_ITEMS[item].stars, PROMOS[code].off) : STAR_ITEMS[item].stars) : -1;
+  const ok = !!STAR_ITEMS[item] && String(uid) === String(q.from.id) && q.currency === "XTR" && q.total_amount === want;
   await tg(env, "answerPreCheckoutQuery", { pre_checkout_query_id: q.id, ok, ...(ok ? {} : { error_message: "Счёт устарел — откройте /balance и оплатите заново." }) });
 }
 
@@ -3142,15 +3218,16 @@ async function starsPreCheckout(env, q) {
 async function starsPaid(env, chatId, msg, lang) {
   const p = msg.successful_payment;
   const s = L(lang);
-  const [item] = String(p.invoice_payload || "").split(":");
+  const [item, , code] = String(p.invoice_payload || "").split(":");
   const it = STAR_ITEMS[item];
+  const promoBuy = !!(code && PROMOS[code]);
   const now = Math.floor(Date.now() / 1000);
   const ins = await env.DB.prepare("INSERT OR IGNORE INTO payments (charge_id, user_id, ts, item, stars, sub_exp, recurring) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")
     .bind(p.telegram_payment_charge_id, String(chatId), now, item || "?", p.total_amount, p.subscription_expiration_date || 0, p.is_recurring ? 1 : 0).run();
   // Telegram может прислать то же событие повторно (ретрай вебхука) — второй
   // раз не начисляем (QA 2026-10-01: повтор давал +1000 LS бесплатно).
   if (!(ins && ins.meta && ins.meta.changes)) return;
-  await ownerNotify(env, { text: `💰 Оплата: ${item} — ${p.total_amount} ⭐${p.is_recurring && !p.is_first_recurring ? " (продление)" : ""} от ${chatId}` });
+  await ownerNotify(env, { text: `💰 Оплата: ${item} — ${p.total_amount} ⭐${promoBuy ? ` (промокод ${PROMOS[code].title})` : ""}${p.is_recurring && !p.is_first_recurring ? " (продление)" : ""} от ${chatId}` });
   if (!it) return;
   const r = await lsGet(env, chatId);
   if (it.sub) {
@@ -3168,7 +3245,7 @@ async function starsPaid(env, chatId, msg, lang) {
     }
     if (!p.is_recurring || p.is_first_recurring) await refReward(env, chatId);
     await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.st_ok_sub, s["ls_name_" + it.plan], PLANS[it.plan].ls,
-      new Date(r.period_end * 1000).toISOString().slice(0, 10)) });
+      new Date(r.period_end * 1000).toISOString().slice(0, 10)) + (promoBuy ? "\n\n" + fmt((PROMO_TEXT[lang] || PROMO_TEXT.ru).paid, PROMOS[code].title) : "") });
   } else {
     r.credits += it.ls;
     await lsSave(env, r);
@@ -4216,7 +4293,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   } else {
     await tg(env, "sendMessage", { chat_id: chatId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb });
   }
-  if (charge.warn) await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.ls_low, charge.left) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s) });
+  if (charge.warn) await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.ls_low, charge.left) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s, await promoActive(env, chatId)) });
   if (liveRes) await learnRounds(env, liveRes.facts);
   // «Искать везде»: X и Google Trends — в GitHub Actions, дополнение придёт следом.
   if (research && plan && !(await lsCanAfford(env, chatId, "research"))) {
