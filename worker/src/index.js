@@ -3168,9 +3168,11 @@ async function promoActivate(env, uid, code, lang, show = true) {
   if (Math.floor(Date.now() / 1000) > pr.until) { await tg(env, "sendMessage", { chat_id: uid, text: t.late }); return; }
   const d = new Date(pr.until * 1000).toISOString().slice(0, 10).split("-").reverse().join(".");
   const n = (v) => v.toLocaleString("ru-RU").replace(/\u00a0/g, " ");
+  // Цена в долларах — та же, что в тарифах (PLANS / CREDIT_PACK), со скидкой; округление вниз до цента.
+  const usdOf = (k, off) => (Math.floor((k === "pack" ? CREDIT_PACK.usd : PLANS[k].usd) * (1 - off) * 100 + 1e-6) / 100).toFixed(2);
   const rows = [["pro", "Pro"], ["max", "Max"], ["promax", "Pro Max"], ["pack", "+1 000 LS"]].map(([k, name]) =>
-    `${name} — <b>${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐</b>  <s>${n(STAR_ITEMS[k].stars)}</s>`);
-  const btn = (k, name) => ({ text: `${name} · ${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐`, callback_data: "buy:" + k });
+    `${name} — <b>$${usdOf(k, P.off)}</b> · ${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐  <s>$${usdOf(k, 0)}</s>`);
+  const btn = (k, name) => ({ text: `${name} · $${usdOf(k, P.off)}`, callback_data: "buy:" + k });
   await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML",
     text: `${fmt(t.head, P.title, Math.round(P.off * 100), d)}\n\n<blockquote>${rows.join("\n")}</blockquote>\n\n<i>${t.foot}</i>`,
     reply_markup: { inline_keyboard: [[btn("pro", "Pro"), btn("max", "Max")], [btn("promax", "Pro Max"), btn("pack", "+1 000 LS")]] } });
