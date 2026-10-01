@@ -103,7 +103,9 @@
   .lsbox small { color: var(--hint); font-size: 12px; }
   .lsbuy { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
   .lsbuy button { border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 10px; padding: 8px 6px; font-size: 13px; cursor: pointer; }
-  .lsbuy button b { display: block; font-size: 14px; }
+  .lsbuy button b { display: block; font-size: 15px; }
+  .lsbuy button span { display: block; font-size: 13px; margin: 2px 0; }
+  .lsbuy button small { display: block; color: var(--hint); font-size: 12px; }
   @keyframes breathe { 0%, 100% { transform: scale(.75); opacity: .55; box-shadow: 0 0 0 0 color-mix(in srgb, var(--btn) 45%, transparent); }
     50% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 10px transparent; } }
   @media (prefers-reduced-motion: reduce) { .busy .orb { animation: none; } }
@@ -319,7 +321,7 @@
       tap_topic: "Нажмите на тему — откроется лента по ней.", topics_pending: "Темы ещё проставляются.",
       rising: "Растут", prelim: " (предварительно)", history_note: "История {d} дн. — надёжно после 14.", was: "было",
       new_topics: "Новое, чего нет в привычных темах", story: "🧠 Выводы", other: "прочее", day_col: "День", total_col: "Всего",
-      s_lang: "Язык", ls_renew: "обновится %s", ls_credits: "докупленные: %d — не сгорают", s_notify: "Уведомления в чате",
+      s_lang: "Язык", ls_month: "%d LS в месяц", ls_forever: "%d LS, не сгорают", ls_pack_t: "Пакет LS", ls_owner: "Владелец — без лимита", ls_note: "Вопрос — 10 LS, живой поиск — 40 LS. Цена в $ примерная: звёзды с телефона дороже, чем с компьютера.", ls_renew: "обновится %s", ls_credits: "докупленные: %d — не сгорают", s_notify: "Уведомления в чате",
       n_brief: "☀️ Сводка дня", n_brief_d: "Одно короткое сообщение: новые стартапы и ниши, куда пошли деньги",
       n_hot: "🔥 Горячие находки — сразу", n_hot_d: "Запуск быстро набирает внимание",
       n_digest: "📋 Сводка — дважды в день", n_digest_d: "До 12 заметных находок за полдня",
@@ -357,7 +359,7 @@
       tap_topic: "Тақырыпты басыңыз — сол бойынша лента ашылады.", topics_pending: "Тақырыптар әлі қойылып жатыр.",
       rising: "Өсіп жатқандар", prelim: " (алдын ала)", history_note: "Тарих {d} күн — 14 күннен кейін сенімді.", was: "бұрын",
       new_topics: "Әдеттегі тақырыптарда жоқ жаңалар", story: "🧠 Қорытынды", other: "басқа", day_col: "Күн", total_col: "Барлығы",
-      s_lang: "Тіл", ls_renew: "%s жаңарады", ls_credits: "сатып алынған: %d — күймейді", s_notify: "Чаттағы хабарламалар",
+      s_lang: "Тіл", ls_month: "айына %d LS", ls_forever: "%d LS, күймейді", ls_pack_t: "LS пакеті", ls_owner: "Иесі — шектеусіз", ls_note: "Сұрақ — 10 LS, тікелей іздеу — 40 LS. $ бағасы шамамен: телефоннан жұлдыз компьютерден қымбатырақ.", ls_renew: "%s жаңарады", ls_credits: "сатып алынған: %d — күймейді", s_notify: "Чаттағы хабарламалар",
       n_brief: "☀️ Күн шолуы", n_brief_d: "Бір қысқа хабарлама: жаңа стартаптар және ақша келген тауашалар",
       n_hot: "🔥 Ыстық табылымдар — бірден", n_hot_d: "Іске қосылым тез назар жинап жатыр",
       n_digest: "📋 Шолу — күніне екі рет", n_digest_d: "Жарты күндегі 12-ге дейін байқалған табылым",
@@ -395,7 +397,7 @@
       tap_topic: "Tap a topic to open its feed.", topics_pending: "Topics are still being assigned.",
       rising: "Rising", prelim: " (preliminary)", history_note: "{d} days of history — reliable after 14.", was: "was",
       new_topics: "New, outside the usual topics", story: "🧠 Takeaways", other: "other", day_col: "Day", total_col: "Total",
-      s_lang: "Language", ls_renew: "renews %s", ls_credits: "purchased: %d — never expire", s_notify: "Chat notifications",
+      s_lang: "Language", ls_month: "%d LS a month", ls_forever: "%d LS, never expire", ls_pack_t: "LS pack", ls_owner: "Owner — unlimited", ls_note: "A question is 10 LS, live search 40 LS. $ price is approximate: Stars cost more on mobile than on desktop.", ls_renew: "renews %s", ls_credits: "purchased: %d — never expire", s_notify: "Chat notifications",
       n_brief: "☀️ Daily brief", n_brief_d: "One short message: new startups and the niches money went into",
       n_hot: "🔥 Hot findings — instantly", n_hot_d: "A launch is gaining attention fast",
       n_digest: "📋 Digest — twice a day", n_digest_d: "Up to 12 notable findings per half-day",
@@ -718,11 +720,18 @@
     const pct = Math.min(100, Math.round(used / cap * 100));
     const name = { free: "Free", pro: "Pro", max: "Max", promax: "Pro Max" }[r.plan] || r.plan;
     const date = new Date(r.period_end * 1000).toLocaleDateString(state.lang === "en" ? "en-GB" : "ru-RU", { day: "numeric", month: "short" });
-    const btn = (k, label) => `<button data-buy="${k}"><b>${label}</b>${r.stars[k].stars} ⭐</button>`;
-    box.innerHTML = `<div class="top"><b>💳 ${esc(name)}</b><span>${r.owner ? "∞" : `${total} / ${cap} LS`}</span></div>
+    // На кнопке — что получаешь и примерная цена в долларах: одни звёзды ничего не говорят.
+    const fmtN = (n) => Number(n).toLocaleString("ru-RU");
+    const btn = (k, label) => {
+      const isPack = k === "pack", p = isPack ? r.pack : r.plans[k];
+      const what = isPack ? tr("ls_forever").replace("%d", fmtN(p.ls)) : tr("ls_month").replace("%d", fmtN(p.ls));
+      return `<button data-buy="${k}"><b>${label}</b><span>${esc(what)}</span><small>≈ $${p.usd.toFixed(2)} · ${r.stars[k].stars} ⭐</small></button>`;
+    };
+    box.innerHTML = `<div class="top"><b>💳 ${esc(r.owner ? tr("ls_owner") : name)}</b><span>${r.owner ? "∞" : `${total} / ${cap} LS`}</span></div>
       ${r.owner ? "" : `<div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i class="${pct >= 90 ? "low" : ""}" style="width:${pct}%"></i></div>`}
       <small>${esc(tr("ls_renew").replace("%s", date))}${r.credits ? " · " + esc(tr("ls_credits").replace("%d", r.credits)) : ""}</small>
-      <div class="lsbuy">${r.plan !== "pro" ? btn("pro", "Pro") : ""}${r.plan !== "max" ? btn("max", "Max") : ""}${r.plan !== "promax" ? btn("promax", "Pro Max") : ""}${btn("pack", "+1000 LS")}</div>`;
+      <div class="lsbuy">${r.plan !== "pro" ? btn("pro", "Pro") : ""}${r.plan !== "max" ? btn("max", "Max") : ""}${r.plan !== "promax" ? btn("promax", "Pro Max") : ""}${btn("pack", tr("ls_pack_t"))}</div>
+      <small>${esc(tr("ls_note"))}</small>`;
     box.hidden = false;
   }
   document.addEventListener("click", async (e) => {

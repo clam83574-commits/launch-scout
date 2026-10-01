@@ -3884,7 +3884,7 @@ export default {
         await ensureTables(env);
         const r = await lsGet(env, user.id);
         return json({ plan: r.plan, sub_ls: r.sub_ls, credits: r.credits, plan_ls: (PLANS[r.plan] || PLANS.free).ls, period_end: r.period_end,
-          owner: isOwner(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE });
+          owner: isOwner(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE, pack: CREDIT_PACK });
       }
       if (url.pathname === "/api/buy") {
         const lang = (await getPrefs(env, user.id)).lang || "ru";
