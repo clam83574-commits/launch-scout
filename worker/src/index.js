@@ -3130,7 +3130,10 @@ const STAR_ITEMS = {
 // цена зашита навсегда, и скидка продлевалась бы каждый месяц. Дальше человек
 // продлевает обычной подпиской.
 // ---------------------------------------------------------------------------
-const PROMOS = { aipreneurs: { title: "AIPRENEURS", off: 0.3, days: 7 } };
+const PROMOS = {
+  aipreneurs: { title: "AIPRENEURS", off: 0.3, days: 7 },
+  tomorrowschool: { title: "TOMORROWSCHOOL", off: 0.3, days: 7 },
+};
 const promoStars = (stars, off) => Math.round(stars * (1 - off));
 const PROMO_TEXT = {
   ru: { head: "🎟 <b>Промокод %s активирован</b>\n−%s%% на первую покупку · действует до %s", foot: "Тариф по скидке — на 30 дней, без автопродления.",
