@@ -223,7 +223,7 @@ async function tokenReminder(env, now) {
 const LANGS = ["ru", "kk", "en"];
 const I18N = {
   ru: {
-    hello: "<b>Launch Scout</b> — радар рынка для фаундеров.\n\n💰 Куда идут деньги: раунды, инвесторы, SEC.\n💡 Какие ниши открываются и где уже перегрев.\n🇰🇿 Что свободно в Казахстане и СНГ.\n🔎 Живой поиск по сети, X и Google Trends.\n\nСпросите что угодно — текстом или голосом.",
+    hello: "<b>Launch Scout</b> — радар рынка для фаундеров.\n\n<blockquote>💰 <b>Куда идут деньги</b>\nРаунды, инвесторы и ниши за полгода — в цифрах и со ссылками.</blockquote>\n\n<blockquote>🔎 <b>Живой поиск</b>\nСпросите о любой компании или идее — найду в сети, X и Google Trends.</blockquote>\n\n<blockquote>🇰🇿 <b>Что свободно у нас</b>\nЧто уже взлетает в мире, но пусто в Казахстане и СНГ.</blockquote>\n\nСпросите что угодно — текстом или голосом. Или начните с вопроса ниже 👇",
     kb_top: "🔥 Топ-10", kb_fresh: "🆕 За сутки", kb_trends: "📈 Тренды", kb_cats: "🗂 Категории", kb_app: "📱 Открыть приложение",
     empty: "Пока пусто: за это окно источники ничего не принесли.", no_more: "Больше нет.",
     next: "Дальше?", more10: "➡️ Ещё 10", start_over: "🔄 В начало",
@@ -250,7 +250,7 @@ const I18N = {
     digest: "📋 <b>Сводка</b>",
   },
   kk: {
-    hello: "<b>Launch Scout</b> — фаундерлерге арналған нарық радары.\n\n💰 Ақша қайда барады: раундтар, инвесторлар, SEC.\n💡 Қай тауашалар ашылып жатыр, қайда қызып кетті.\n🇰🇿 Қазақстан мен ТМД-да не бос.\n🔎 Желіден, X пен Google Trends-тен тікелей іздеу.\n\nКез келген сұрақ қойыңыз — мәтінмен немесе дауыспен.",
+    hello: "<b>Launch Scout</b> — фаундерлерге арналған нарық радары.\n\n<blockquote>💰 <b>Ақша қайда барады</b>\nСоңғы жарты жылдағы раундтар, инвесторлар мен тауашалар — сандармен және сілтемелермен.</blockquote>\n\n<blockquote>🔎 <b>Тікелей іздеу</b>\nКез келген компания не идея туралы сұраңыз — желіден, X пен Google Trends-тен табамын.</blockquote>\n\n<blockquote>🇰🇿 <b>Бізде не бос</b>\nӘлемде өсіп жатқан, бірақ Қазақстан мен ТМД-да бос нәрселер.</blockquote>\n\nКез келген сұрақ қойыңыз — мәтінмен не дауыспен. Немесе төмендегі сұрақтан бастаңыз 👇",
     kb_top: "🔥 Үздік 10", kb_fresh: "🆕 Тәулік ішінде", kb_trends: "📈 Трендтер", kb_cats: "🗂 Санаттар", kb_app: "📱 Қосымшаны ашу",
     empty: "Әзірге бос: осы уақыт аралығында көздер ештеңе әкелмеді.", no_more: "Басқа жоқ.",
     next: "Әрі қарай?", more10: "➡️ Тағы 10", start_over: "🔄 Басына",
@@ -277,7 +277,7 @@ const I18N = {
     digest: "📋 <b>Шолу</b>",
   },
   en: {
-    hello: "<b>Launch Scout</b> — a market radar for founders.\n\n💰 Where the money goes: rounds, investors, SEC.\n💡 Which niches are opening and which are overheated.\n🇰🇿 What is still free in Kazakhstan and CIS.\n🔎 Live search across the web, X and Google Trends.\n\nAsk anything — by text or voice.",
+    hello: "<b>Launch Scout</b> — a market radar for founders.\n\n<blockquote>💰 <b>Where the money goes</b>\nRounds, investors and niches over six months — in numbers, with links.</blockquote>\n\n<blockquote>🔎 <b>Live search</b>\nAsk about any company or idea — I search the web, X and Google Trends.</blockquote>\n\n<blockquote>🇰🇿 <b>What is still free here</b>\nWhat is taking off globally but empty in Kazakhstan and CIS.</blockquote>\n\nAsk anything — by text or voice. Or start with a question below 👇",
     kb_top: "🔥 Top 10", kb_fresh: "🆕 Last 24h", kb_trends: "📈 Trends", kb_cats: "🗂 Categories", kb_app: "📱 Open the app",
     empty: "Nothing yet: the sources brought nothing in this window.", no_more: "No more.",
     next: "More?", more10: "➡️ 10 more", start_over: "🔄 From the top",
@@ -308,7 +308,6 @@ const I18N = {
 // перекраивать основной; казахский — машинный перевод, как и остальной.
 const EXTRA = {
   ru: {
-    hello: "<b>launch-scout</b> — радар рынка для стартаперов.\n\n🧭 <b>Рынок</b> — куда идут деньги инвесторов, по секторам и в цифрах: раунды и их стадии, доля в батчах YC, запросы людей.\n💡 <b>Ниши</b> — где за месяц прошло несколько ранних раундов: туда инвесторы только начали ставить.\n🔥 <b>Находки</b> — продукты с реальным откликом или свежим раундом, а не три лайка.\n💬 <b>Спросите</b> — напишите, чем занимаетесь, и ИИ-аналитик ответит по раундам за полгода и свежим запускам, с датами и ссылками.\n🧪 <b>/check идея</b> — бот сначала попробует её опровергнуть фактами и скажет, стоит ли делать.\n⚙️ <b>Настройки</b> — какие секторы, источники и какие уведомления присылать.",
     kb_market: "🧭 Рынок", kb_sectors: "🗂 Секторы", kb_settings: "⚙️ Настройки", kb_niches: "💡 Ниши",
     commands: "Команды: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nИли просто напишите вопрос — например: «я делаю CRM для клиник, что рядом со мной сейчас получает деньги?»",
     niches_title: "💡 <b>Ниши, куда пошли деньги</b> — %d дн.\nНиша — где несколько компаний подняли раунды. Ранние раунды (pre-seed, seed, A) значат, что ниша только открывается.",
@@ -332,6 +331,7 @@ const EXTRA = {
     why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
+    rq_market: "🎯 Подберу ниши под вас — два коротких вопроса.\n\n<b>1/2. Где запускаете?</b>", rq_model: "<b>2/2. Что строите?</b>", rq_kz: "🇰🇿 Казахстан", rq_cis: "🌍 СНГ", rq_global: "🌐 Весь мир", rq_unsure: "🤷 Пока не знаю", pf_title: "👤 <b>Ваш профиль</b> — по нему радар подбирает ниши, а чат — советы.", pf_chat: "<b>Из разговора бот понял:</b>", pf_hint: "Профиль сам пополняется из чата. Поправить — кнопками ниже.", pf_edit_m: "✏️ Рынок", pf_edit_t: "✏️ Что строю", pf_full: "⚙️ Подробнее", pf_reset: "🧹 Сбросить",
     ex_title: "С чего начать? Нажмите вопрос или задайте свой — текстом или голосом.", ex_1: "💰 Куда сейчас идут деньги?", ex_2: "🇰🇿 Какие ниши свободны в Казахстане?", ex_3: "🧪 Как проверить мою идею?",
     ab_live_p: "📡 Искать везде · +%d LS", ab_xtrends: "📡 X и Google Trends · %d LS",
     st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS в месяц на вопросы, поиск и разборы. Продление каждые 30 дней, отмена в любой момент.", st_descr_pack: "Докупленные LS не сгорают и тратятся после подписочных.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Счёт готов — оплата в один клик звёздами Telegram.", st_pay_btn: "Оплатить %d ⭐", st_ok_sub: "✅ Тариф <b>%s</b> подключён: %d LS до %s.", st_ok_pack: "✅ +%d LS. Докупленных теперь %d — они не сгорают.", st_support_hint: "Опишите проблему одним сообщением: /paysupport <текст>. Передам владельцу.", st_support_ok: "Передал — ответим здесь же.", ls_pay_soon: "Оплата — звёздами Telegram, кнопки ниже. Условия — /terms.", st_terms: "<b>Условия Launch Scout</b>\n\n1. Сервис даёт аналитику рынка и ответы ИИ по открытым данным. Это не инвестиционная рекомендация; решения вы принимаете сами.\n2. Действия оплачиваются внутренними единицами LS по фиксированному прайсу (/balance): вопрос — 10 LS; если для ответа нужен живой поиск в интернете (вопрос о конкретной компании, продукте или новостях) — 40 LS, и бот сообщает об этом в начале поиска. Подписочные LS действуют один расчётный месяц и не переносятся; докупленные LS не сгорают.\n3. Подписка оплачивается Telegram Stars и продлевается каждые 30 дней, пока вы её не отмените в настройках Telegram. Сервис не начисляет проценты, штрафы и скрытые платежи.\n4. Оплата за оказанный период не возвращается. Исключение — технический сбой: звёзды списаны, а тариф или LS не начислены, или списание прошло дважды. Напишите /paysupport, исправим или вернём звёзды.\n5. Вопросы об оплате — /paysupport.",
@@ -364,7 +364,6 @@ const EXTRA = {
     aud_b2b: "B2B", aud_b2c: "B2C", aud_b2g: "B2G",
   },
   kk: {
-    hello: "<b>launch-scout</b> — стартаперларға арналған нарық радары.\n\n🧭 <b>Нарық</b> — инвесторлардың ақшасы қайда бара жатыр, салалар бойынша және сандармен: раундтар мен олардың кезеңдері, YC батчтарындағы үлес, адамдардың сұраулары.\n💡 <b>Тауашалар</b> — бір айда бірнеше ерте раунд өткен жерлер.\n🔥 <b>Табылымдар</b> — нақты үн қатуы немесе жаңа раунды бар өнімдер.\n💬 <b>Сұраңыз</b> — немен айналысатыныңызды жазыңыз, ЖИ-талдаушы жарты жылдағы раундтар мен жаңа іске қосулар бойынша күні мен сілтемесімен жауап береді.\n🧪 <b>/check идея</b> — бот алдымен оны фактілермен жоққа шығаруға тырысады және жасау керек пе, айтады.\n⚙️ <b>Баптаулар</b> — қандай салалар, көздер және хабарламалар.",
     kb_market: "🧭 Нарық", kb_sectors: "🗂 Салалар", kb_settings: "⚙️ Баптаулар", kb_niches: "💡 Тауашалар",
     commands: "Командалар: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nНемесе сұрағыңызды жай жазыңыз — мысалы: «мен клиникаларға CRM жасаймын, қазір маған жақын не ақша алып жатыр?»",
     niches_title: "💡 <b>Ақша келген тауашалар</b> — %d күн\nТауаша — бірнеше компания раунд тартқан жер. Ерте раундтар (pre-seed, seed, A) тауашаның енді ашылып жатқанын білдіреді.",
@@ -388,6 +387,7 @@ const EXTRA = {
     why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
+    rq_market: "🎯 Сізге тауашаларды таңдаймын — екі қысқа сұрақ.\n\n<b>1/2. Қай жерде іске қосасыз?</b>", rq_model: "<b>2/2. Не жасап жатырсыз?</b>", rq_kz: "🇰🇿 Қазақстан", rq_cis: "🌍 ТМД", rq_global: "🌐 Бүкіл әлем", rq_unsure: "🤷 Әзірге білмеймін", pf_title: "👤 <b>Сіздің профиліңіз</b> — радар тауашаларды, чат кеңестерді осы бойынша таңдайды.", pf_chat: "<b>Әңгімеден бот түсінгені:</b>", pf_hint: "Профиль чаттан өзі толығады. Түзету — төмендегі батырмалармен.", pf_edit_m: "✏️ Нарық", pf_edit_t: "✏️ Не жасаймын", pf_full: "⚙️ Толығырақ", pf_reset: "🧹 Тазарту",
     ex_title: "Неден бастаймыз? Сұрақты басыңыз немесе өзіңіздікін қойыңыз — мәтінмен не дауыспен.", ex_1: "💰 Қазір ақша қайда барады?", ex_2: "🇰🇿 Қазақстанда қай тауашалар бос?", ex_3: "🧪 Идеямды қалай тексеремін?",
     ab_live_p: "📡 Барлық жерден іздеу · +%d LS", ab_xtrends: "📡 X және Google Trends · %d LS",
     st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "Айына %d LS: сұрақтар, іздеу және талдаулар. 30 күн сайын ұзартылады, кез келген уақытта тоқтатуға болады.", st_descr_pack: "Сатып алынған LS күймейді және жазылым LS-тен кейін жұмсалады.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Шот дайын — Telegram жұлдыздарымен бір рет басып төлеңіз.", st_pay_btn: "%d ⭐ төлеу", st_ok_sub: "✅ <b>%s</b> тарифі қосылды: %d LS, %s дейін.", st_ok_pack: "✅ +%d LS. Сатып алынғандары енді %d — күймейді.", st_support_hint: "Мәселені бір хабарламамен жазыңыз: /paysupport <мәтін>.", st_support_ok: "Жіберілді — осында жауап береміз.", ls_pay_soon: "Төлем — Telegram жұлдыздарымен, батырмалар төменде. Шарттар — /terms.", st_terms: "<b>Launch Scout шарттары</b>\n\n1. Сервис ашық деректер бойынша нарық аналитикасын және ЖИ жауаптарын береді. Бұл инвестициялық кеңес емес.\n2. Әрекеттер LS бірліктерімен тұрақты баға бойынша төленеді (/balance): сұрақ — 10 LS; жауапқа интернеттен тікелей іздеу керек болса (нақты компания, өнім не жаңалық туралы сұрақ) — 40 LS, бот бұл туралы іздеу басында хабарлайды. Жазылым LS бір есеп айы жарамды және келесі айға ауыспайды; сатып алынған LS күймейді.\n3. Жазылым Telegram Stars арқылы төленеді және 30 күн сайын ұзартылады. Сервис пайыз, айыппұл және жасырын төлем алмайды.\n4. Көрсетілген кезең үшін төлем қайтарылмайды. Ерекшелік — техникалық ақау: жұлдыздар алынды, бірақ тариф не LS берілмеді, не екі рет алынды. /paysupport жазыңыз.\n5. Төлем сұрақтары — /paysupport.",
@@ -420,7 +420,6 @@ const EXTRA = {
     aud_b2b: "B2B", aud_b2c: "B2C", aud_b2g: "B2G",
   },
   en: {
-    hello: "<b>launch-scout</b> — a market radar for founders.\n\n🧭 <b>Market</b> — where investor money is moving, by sector and in numbers: rounds and their stages, share of YC batches, what people ask for.\n💡 <b>Niches</b> — where several early rounds closed within a month: investors have just started betting there.\n🔥 <b>Findings</b> — products with real traction or a fresh round, not three likes.\n💬 <b>Ask</b> — tell it what you build, and the AI analyst answers from six months of rounds and fresh launches, with dates and links.\n🧪 <b>/check idea</b> — the bot first tries to refute it with facts and tells you whether it is worth doing.\n⚙️ <b>Settings</b> — which sectors, sources and notifications you get.",
     kb_market: "🧭 Market", kb_sectors: "🗂 Sectors", kb_settings: "⚙️ Settings", kb_niches: "💡 Niches",
     commands: "Commands: /market, /niches, /top, /new, /sectors, /settings, /lang, /reset\n\nOr just type a question — e.g. “I build a CRM for clinics, what near me is getting funded right now?”",
     niches_title: "💡 <b>Niches the money went into</b> — %d days\nA niche is where several companies raised rounds. Early rounds (pre-seed, seed, A) mean the niche is only opening up.",
@@ -444,6 +443,7 @@ const EXTRA = {
     why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
+    rq_market: "🎯 I'll pick niches for you — two quick questions.\n\n<b>1/2. Where are you launching?</b>", rq_model: "<b>2/2. What are you building?</b>", rq_kz: "🇰🇿 Kazakhstan", rq_cis: "🌍 CIS", rq_global: "🌐 Worldwide", rq_unsure: "🤷 Not sure yet", pf_title: "👤 <b>Your profile</b> — the radar picks niches and the chat tailors advice from it.", pf_chat: "<b>From the conversation the bot understood:</b>", pf_hint: "The profile updates itself from the chat. Fix it with the buttons below.", pf_edit_m: "✏️ Market", pf_edit_t: "✏️ What I build", pf_full: "⚙️ More", pf_reset: "🧹 Reset",
     ex_title: "Where to start? Tap a question or ask your own — by text or voice.", ex_1: "💰 Where is the money going now?", ex_2: "🇰🇿 Which niches are free in Kazakhstan?", ex_3: "🧪 How do I check my idea?",
     ab_live_p: "📡 Search everywhere · +%d LS", ab_xtrends: "📡 X and Google Trends · %d LS",
     st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS a month for questions, search and deep dives. Renews every 30 days, cancel anytime.", st_descr_pack: "Purchased LS never expire and are spent after plan LS.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Invoice ready — one-tap payment with Telegram Stars.", st_pay_btn: "Pay %d ⭐", st_ok_sub: "✅ Plan <b>%s</b> is on: %d LS until %s.", st_ok_pack: "✅ +%d LS. Purchased LS now %d — they never expire.", st_support_hint: "Describe the problem in one message: /paysupport <text>.", st_support_ok: "Sent — we will reply here.", ls_pay_soon: "Pay with Telegram Stars — buttons below. Terms — /terms.", st_terms: "<b>Launch Scout terms</b>\n\n1. The service provides market analytics and AI answers based on public data. It is not investment advice.\n2. Actions are paid in internal LS units at a fixed price list (/balance): a question is 10 LS; if the answer needs a live web search (a question about a specific company, product or news) it is 40 LS, and the bot says so when the search starts. Plan LS are valid for one billing month and do not roll over; purchased LS never expire.\n3. Plans are paid in Telegram Stars and renew every 30 days until you cancel in Telegram settings. No interest, penalties or hidden fees.\n4. Payments for a period already provided are not refunded. Exception — a technical failure: Stars were charged but the plan or LS were not credited, or you were charged twice. Write /paysupport and we will fix it or return the Stars.\n5. Payment questions — /paysupport.",
@@ -1239,11 +1239,9 @@ async function handleUpdate(env, update) {
       // получал бы всё подряд и не знал бы, что можно настроить.
       const snap = await loadSnapshot(env);
       if (marketOf(snap)) {
-        await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).lang_set + "\n\n" + L(lang).hello, parse_mode: "HTML", reply_markup: keyboardFor(lang) });
-        // Первый вход: три вопроса-примера в одно касание. Анкету с первого
-        // экрана убрали (отзыв владельца 2026-10-01: «стена кнопок не дружелюбна»);
-        // профиль чат узнаёт из разговора, анкета — в /profile и радаре.
-        await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).ex_title, reply_markup: examplesKb(lang) });
+        // Первый вход: одно сообщение — что умеет бот и три вопроса в одно
+        // касание (отзыв владельца 2026-10-01: «стена кнопок не дружелюбна»).
+        await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).hello, parse_mode: "HTML", reply_markup: startKb(lang) });
         return;
       }
     }
@@ -1320,7 +1318,39 @@ async function handleUpdate(env, update) {
     return;
   }
   if (data === "fprof" || text.startsWith("/profile")) {
-    await show(env, chatId, data ? msgId : null, founderView(prefs, lang));
+    const v = await profileView(env, chatId, prefs, lang);
+    if (data && msgId) await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, ...v });
+    else await tg(env, "sendMessage", { chat_id: chatId, ...v });
+    return;
+  }
+  if (data === "fview") {
+    await show(env, chatId, msgId, founderView(prefs, lang));
+    return;
+  }
+  if (data === "pfreset") {
+    await setPrefs(env, chatId, { founder: {} });
+    await env.DB.prepare("DELETE FROM chat_profile WHERE user_id = ?1").bind(String(chatId)).run().catch(() => null);
+    await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, ...(await profileView(env, chatId, { ...prefs, founder: {} }, lang)) });
+    return;
+  }
+  if (data.startsWith("rqe:")) {
+    await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, ...rqView(lang, data.slice(4), true) });
+    return;
+  }
+  if (data.startsWith("rq:")) {
+    // Ответ на вопрос радара: рынок -> следующий вопрос, модель -> сам радар
+    // (или назад в профиль, если правили оттуда — суффикс :p).
+    const [, step, v, back] = data.split(":");
+    const q = RQ[step];
+    if (!q || !q.opts.some(([x]) => x === v)) return;
+    const f = { ...(prefs.founder || {}) };
+    if (step === "m") f.markets = v === "global" ? ["global"] : [v];
+    else f.models = v === "none" ? [] : [v];
+    const p = await saveFounder(env, chatId, f);
+    if (back) { await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, ...(await profileView(env, chatId, p, lang)) }); return; }
+    if (step === "m" && !("models" in f)) { await tg(env, "editMessageText", { chat_id: chatId, message_id: msgId, ...rqView(lang, "t") }); return; }
+    await tg(env, "deleteMessage", { chat_id: chatId, message_id: msgId });
+    await radarMsg(env, chatId, lang, p);
     return;
   }
   if (data.startsWith("fp:")) {
@@ -1429,8 +1459,7 @@ async function handleUpdate(env, update) {
     await setMeta(env, "last_manual_refresh", now);
     await tg(env, "sendMessage", { chat_id: chatId, text: s.refresh_ok, reply_markup: keyboardFor(lang) });
   } else if (text.startsWith("/start") || text.startsWith("/help")) {
-    await tg(env, "sendMessage", { chat_id: chatId, text: s.hello, parse_mode: "HTML", reply_markup: keyboardFor(lang) });
-    await tg(env, "sendMessage", { chat_id: chatId, text: s.ex_title, reply_markup: examplesKb(lang) });
+    await tg(env, "sendMessage", { chat_id: chatId, text: s.hello, parse_mode: "HTML", reply_markup: startKb(lang) });
   } else if (text.startsWith("/top")) {
     await listTop(env, chatId, 0, 72, s.top_title, null, lang);
   } else if (text.startsWith("/new")) {
@@ -3725,10 +3754,56 @@ const MODEL_SECTORS = {
 };
 const HEAVY = new Set(["hardware", "defense_space", "energy", "ai_infra"]);
 
-/** Первые вопросы в одно касание — человек сразу видит пользу, без анкеты. */
-function examplesKb(lang) {
+/** Под приветствием: три вопроса в одно касание и приложение — без анкеты и меню из 11 кнопок. */
+function startKb(lang) {
   const s = L(lang);
-  return { inline_keyboard: [1, 2, 3].map((i) => [{ text: s["ex_" + i], callback_data: "ex:" + i }]) };
+  return { inline_keyboard: [...[1, 2, 3].map((i) => [{ text: s["ex_" + i], callback_data: "ex:" + i }]),
+    [{ text: s.kb_app, web_app: { url: APP_URL } }]] };
+}
+
+// ---------------------------------------------------------------------------
+// 🎯 Профиль по шагам (2026-10-01): радар спрашивает только два вопроса — по
+// одному за раз; остальное чат узнаёт из разговора. /profile показывает, что
+// бот о человеке понял, и даёт поправить.
+// ---------------------------------------------------------------------------
+const RQ = {
+  m: { key: "markets", opts: [["kz", "rq_kz"], ["cis", "rq_cis"], ["global", "rq_global"]] },
+  t: { key: "models", opts: [["saas", "fa_models_saas"], ["marketplace", "fa_models_marketplace"], ["agent", "fa_models_agent"],
+    ["fintech", "fa_models_fintech"], ["hardware", "fa_models_hardware"], ["none", "rq_unsure"]] },
+};
+
+function rqView(lang, step, back) {
+  const s = L(lang);
+  const q = RQ[step];
+  const btns = q.opts.map(([v, label]) => ({ text: s[label], callback_data: `rq:${step}:${v}${back ? ":p" : ""}` }));
+  const rows = [];
+  for (let i = 0; i < btns.length; i += step === "m" ? 3 : 2) rows.push(btns.slice(i, i + (step === "m" ? 3 : 2)));
+  return { text: step === "m" ? s.rq_market : s.rq_model, reply_markup: { inline_keyboard: rows } };
+}
+
+async function saveFounder(env, chatId, f) {
+  const p = await setPrefs(env, chatId, { founder: f });
+  const sum = founderSummary(f);
+  if (sum) await env.DB.prepare("INSERT OR REPLACE INTO chat_profile (user_id, about, ts) VALUES (?1, ?2, ?3)")
+    .bind(String(chatId), sum, Math.floor(Date.now() / 1000)).run().catch(() => null);
+  return p;
+}
+
+async function profileView(env, chatId, prefs, lang) {
+  const s = L(lang);
+  const f = prefs.founder || {};
+  const names = (k, arr) => (arr || []).map((v) => s[`fa_${k}_${v}`] || v).join(", ") || "—";
+  const prof = await env.DB.prepare("SELECT about FROM chat_profile WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
+  const about = prof && prof.about && prof.about !== founderSummary(f) ? prof.about : "";
+  const lines = [s.pf_title, "",
+    `<blockquote>${s.fq_markets}: ${esc(names("markets", f.markets))}\n${s.fq_models}: ${esc(names("models", f.models))}\n${s.fq_budget}: ${esc(f.budget ? s["fa_budget_" + f.budget] : "—")}\n${s.fq_skills}: ${esc(names("skills", f.skills))}\n${s.fq_horizon}: ${esc(f.horizon ? s["fa_horizon_" + f.horizon] : "—")}</blockquote>`];
+  if (about) lines.push("", `${s.pf_chat}\n<i>${esc(about)}</i>`);
+  lines.push("", s.pf_hint);
+  return { text: lines.join("\n"), parse_mode: "HTML", reply_markup: { inline_keyboard: [
+    [{ text: s.pf_edit_m, callback_data: "rqe:m" }, { text: s.pf_edit_t, callback_data: "rqe:t" }],
+    [{ text: s.pf_full, callback_data: "fview" }, { text: s.pf_reset, callback_data: "pfreset" }],
+    [{ text: s.radar_show, callback_data: "radar" }],
+  ] } };
 }
 
 /** Возможности под профиль: [{n, score, reasons}] — лучшие первыми. */
@@ -3743,7 +3818,7 @@ function radarFor(rep, f) {
     const o = n.opp || {};
     let score = o.score || 0;
     const why = [];
-    const sectors = (f.models || []).flatMap((m) => MODEL_SECTORS[m] || []);
+    const sectors = (f.models || []).filter((m) => MODEL_SECTORS[m]).flatMap((m) => MODEL_SECTORS[m] || []);
     if (sectors.length && sectors.includes(n.sector)) { score += 15; why.push("fit_model"); }
     if (sectors.length && !sectors.includes(n.sector)) score -= 10;
     if (f.budget === "5k" && HEAVY.has(n.sector)) { score -= 25; why.push("heavy"); }
@@ -3797,10 +3872,9 @@ function founderView(p, lang, step = null) {
 
 async function radarMsg(env, chatId, lang, prefs) {
   const s = L(lang);
-  if (!prefs.founder || !Object.keys(prefs.founder).length) {
-    await show(env, chatId, null, founderView(prefs, lang));
-    return;
-  }
+  const f0 = prefs.founder || {};
+  if (!(f0.markets || []).length) { await tg(env, "sendMessage", { chat_id: chatId, ...rqView(lang, "m") }); return; }
+  if (!("models" in f0)) { await tg(env, "sendMessage", { chat_id: chatId, ...rqView(lang, "t") }); return; }
   const rep = ((marketOf(await loadSnapshot(env))) || {}).report || {};
   const text = radarText(rep, prefs.founder, lang, 5) || s.niches_empty;
   await tg(env, "sendMessage", { chat_id: chatId, text: text.slice(0, 3900), parse_mode: "HTML", disable_web_page_preview: true,
@@ -4356,6 +4430,13 @@ export default {
       const wi = await tg(adminEnv(env), "getWebhookInfo", {}), wp = await tg(env, "getWebhookInfo", {});
       return json({ admin: wi.result && { url: wi.result.url, pending: wi.result.pending_update_count, err: wi.result.last_error_message },
         public: wp.result && { url: wp.result.url, pending: wp.result.pending_update_count, err: wp.result.last_error_message } });
+    }
+    if (env.LS_DEBUG === "1" && request.method === "POST" && url.pathname === "/debug-update") {
+      // Прогнать апдейт Telegram без отправки: вызовы ботa пишутся в ответ.
+      globalThis.__tgCap = [];
+      await handleUpdate(env, await request.json());
+      const cap = globalThis.__tgCap; globalThis.__tgCap = null;
+      return json(cap);
     }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-invoice") {
       return json({ link: await starsLink(env, url.searchParams.get("uid") || "1", url.searchParams.get("item") || "pro", "ru") });
