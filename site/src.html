@@ -108,7 +108,7 @@ p { margin: 0; }
 .stage .corner { position: absolute; font-family: var(--f-mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; z-index: 2; }
 .stage .tl { top: 12px; left: 14px; } .stage .tr { top: 12px; right: 14px; text-align: right; }
 .stage .bl { bottom: 12px; left: 14px; } .stage .br { bottom: 12px; right: 14px; }
-.tag3d { position: absolute; left: 0; top: 0; z-index: 3; opacity: 0; transition: opacity .6s, border-color .3s, box-shadow .3s; pointer-events: none; font-family: var(--f-mono); font-size: 11px; line-height: 1.25; color: var(--ink);
+.tag3d { position: absolute; left: 0; top: 0; z-index: 3; opacity: 0; transition: opacity .8s ease, border-color .3s, box-shadow .3s; pointer-events: none; font-family: var(--f-mono); font-size: 11px; line-height: 1.25; color: var(--ink);
   background: var(--paper); border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 7px; white-space: nowrap; transform: translate(-50%, -100%); }
 .tag3d b { color: var(--blue); font-weight: 500; }
 .tag3d.sm { font-size: 9.5px; padding: 2px 5px; color: var(--muted); }
@@ -341,6 +341,77 @@ section.sheet { padding-block: 76px; }
 .titleblock small { color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 @media (max-width: 600px) { .titleblock { grid-template-columns: 1fr 1fr; } .titleblock div:nth-child(3) { border-left: 0; } .titleblock div:nth-child(n+3) { border-top: 1px solid var(--ink); } }
 
+
+/* ---------- телефон: компактно ---------- */
+@media (max-width: 600px) {
+  body { font-size: 15.5px; }
+  h2 { font-size: 25px; }
+  .top .wrap { min-height: 56px; gap: 12px; }
+  .brand { font-size: 15px; } .brand svg { width: 26px; height: 26px; }
+  .top .btn.sm { padding: 9px 12px; font-size: 13px; }
+  .hero { padding-block: 22px 10px; }
+  .hero .wrap { gap: 22px; }
+  .hero-text { gap: 16px; }
+  .hero h1 { font-size: 34px; }
+  .hero .lead { font-size: 16px; }
+  .rev { font-size: 10px; } .rev span { padding: 6px 8px; }
+  .gift { width: 100%; white-space: normal; justify-content: flex-start; padding: 14px 16px; font-size: 16px; line-height: 1.25; }
+  .hero .gift-sub { font-size: 11px; }
+  .stage { aspect-ratio: 1 / 1; border-radius: 14px; }
+  .stage .corner { font-size: 9.5px; } .stage .tr, .stage .br { display: none; }
+  .ticker { margin-top: 10px; } .ticker .it { padding: 11px 16px; font-size: 14px; }
+  section.sheet { padding-block: 44px; }
+  .sheet-head { margin-bottom: 22px; gap: 10px; }
+  .sheet-head p { font-size: 14.5px; }
+  .k { margin-bottom: 10px; }
+  .vs { gap: 10px; } .vs article { padding: 16px; gap: 8px; }
+  .vs .pair { grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 12px; }
+  .vs .old { font-size: 17px; } .vs .new { font-size: 26px; }
+  .vs p { font-size: 14px; }
+  .chart { padding: 12px 12px; }
+  .chart .row { grid-template-columns: 92px minmax(0, 1fr) 68px; gap: 8px; font-size: 12.5px; padding: 4px 0; }
+  .chart .row .v { font-size: 11.5px; } .chart .row .cnt { font-size: 10px; }
+  .chart .foot { font-size: 10px; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .fact { padding: 12px; } .fact b { font-size: 22px; } .fact span { font-size: 12.5px; line-height: 1.35; }
+  .fact.cis { grid-column: 1 / -1; }
+  .demo { gap: 22px; }
+  .demo-copy { gap: 14px; }
+  .tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .tab { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 10px 6px; gap: 6px; }
+  .tab .ic { width: 30px; height: 30px; font-size: 15px; }
+  .tab b { font-size: 12.5px; line-height: 1.25; } .tab small { display: none; }
+  .phone { border-radius: 24px; box-shadow: 0 30px 60px -36px rgba(15, 29, 58, .45), 0 0 0 6px var(--paper), 0 0 0 7px var(--line-2); }
+  .tg-body { min-height: 400px; font-size: 13.5px; padding: 12px 10px 14px; }
+  .msg blockquote { font-size: 12.5px; }
+  .kb span { font-size: 11.5px; padding: 7px 3px; }
+  .truth { gap: 24px; }
+  .scan { padding: 14px; } .srow { padding: 10px; } .srow .tx { font-size: 13.5px; } .srow .st { font-size: 10.5px; padding: 5px 6px; }
+  .scan .out { font-size: 13.5px; }
+  .steps3 li { padding: 12px 0 12px 42px; font-size: 14px; } .steps3 li::before { top: 11px; width: 28px; height: 28px; }
+  /* схема и тарифы — листаются пальцем */
+  .flow, .plans { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: -16px; padding: 4px 16px 14px; scrollbar-width: none; }
+  .flow::-webkit-scrollbar, .plans::-webkit-scrollbar { display: none; }
+  .node { flex: 0 0 78%; scroll-snap-align: center; margin: 0; }
+  .node:not(:last-child)::after, .node:not(:last-child)::before { display: none; }
+  .node .viz { min-height: 120px; }
+  .plan { flex: 0 0 80%; scroll-snap-align: center; padding: 18px 16px; margin-top: 10px; }
+  .plan:hover { transform: none; }
+  .swipe { display: block; }
+  .feats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .feat { padding: 14px 12px; gap: 6px; }
+  .feat svg { width: 24px; height: 24px; }
+  .feat h3 { font-size: 14px; } .feat p { font-size: 12.5px; line-height: 1.4; }
+  .pack { padding: 14px; } .pack p { font-size: 14px; } .pack .btn { width: 100%; justify-content: center; }
+  .costs { gap: 6px; } .costs span { font-size: 11px; padding: 7px 8px; }
+  .final { padding-block: 40px 28px; }
+  .final .card { padding: 22px 18px; border-radius: 16px; gap: 18px; }
+  .final h2 { font-size: 25px; } .final p { font-size: 14.5px; }
+  .final .act { justify-items: stretch; }
+  .final .rings { width: 240px; height: 240px; right: -90px; top: -90px; }
+  .titleblock { font-size: 11px; }
+}
+.swipe { display: none; margin-top: 4px; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -521,6 +592,7 @@ section.sheet { padding-block: 76px; }
           <div class="chips"><span>Глубже</span><span>Карта идеи</span><span>Конкуренты</span></div></div></div>
           <h3>Ответ в Telegram</h3><p>Коротко, со ссылками и кнопками, чтобы копнуть глубже.</p></article>
       </div>
+      <div class="swipe mono">← листайте →</div>
     </div>
   </section>
 
@@ -590,6 +662,7 @@ section.sheet { padding-block: 76px; }
           <p>≈ 700 ответов. Для акселераторов, фондов и команд.</p>
         </article>
       </div>
+      <div class="swipe mono">← листайте тарифы →</div>
       <div class="pack">
         <p><b>Кончились LS? Докупите 1 000 за $3.49</b> — дешевле американо. Докупленные LS не сгорают.</p>
         <a class="btn ghost sm" href="https://t.me/Launch_Scout_bot?start=site" target="_blank" rel="noopener">Открыть в Telegram</a>

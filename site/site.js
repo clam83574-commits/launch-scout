@@ -286,7 +286,7 @@
     const SRC_N = 11, srcPos = [], srcMat = new THREE.MeshBasicMaterial({ color: INK });
     for (let i = 0; i < SRC_N; i++) { const a = i / SRC_N * Math.PI * 2, p = new THREE.Vector3(Math.cos(a) * 12.3, 0, Math.sin(a) * 12.3); srcPos.push(p);
       const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.24), srcMat); m.position.copy(p).setY(0.3); world.add(m); }
-    const PK = 30, pkArr = new Float32Array(PK * 3), pkGeo = new THREE.BufferGeometry(); pkGeo.setAttribute("position", new THREE.BufferAttribute(pkArr, 3));
+    const PK = 18, pkArr = new Float32Array(PK * 3), pkGeo = new THREE.BufferGeometry(); pkGeo.setAttribute("position", new THREE.BufferAttribute(pkArr, 3));
     world.add(new THREE.Points(pkGeo, new THREE.PointsMaterial({ color: BLUE, size: 0.24 })));
     const trailMat = new THREE.LineBasicMaterial({ color: BLUE, transparent: true, opacity: 0.1 });
     function newPacket(p) {
@@ -326,10 +326,8 @@
       target.set(Math.sin(t * 0.07) * 1.4, 1.6 + Math.sin(t * 0.13) * 0.4, Math.cos(t * 0.09) * 1.4);
       camera.lookAt(target);
 
-      // радар: на дальней стороне разгоняется, ближе к зрителю притормаживает
-      const far = orbit + Math.PI;
-      const w = 1.15 * (1 + 0.78 * Math.cos(sa - far));
-      sa = (sa + w * dt) % TAU;
+      // радар
+      sa = (sa + 0.9 * dt) % TAU;                         // радар — одна ровная скорость
       sweepPivot.rotation.y = -sa;
 
       bars.forEach((b, i) => {
@@ -337,11 +335,10 @@
         const d = (sa - b.a + TAU * 2) % TAU;
         if (d < 0.1 && b.scanT > 1.5) { b.scanT = 0; b.goal = 1; }
         b.scanT += dt;
-        // подсветка нарастает и гаснет плавно — без скачка высоты в момент касания луча
+        // луч только подсвечивает макет: высота столбика не меняется
         b.goal = Math.max(0, (b.goal || 0) - dt * 0.5);
         b.heat += (b.goal - b.heat) * (1 - Math.exp(-dt * (b.goal > b.heat ? 7 : 2.5)));
-        const bump = b.heat * b.heat * (3 - 2 * b.heat) * 0.12;
-        const hh = Math.max(0.02, (b.h * (1 + Math.sin(t * 0.6 + b.phase) * 0.04) + bump) * e);
+        const hh = Math.max(0.02, b.h * e);
         b.fill.scale.y = hh; b.edges.scale.y = hh;
         // кольцо-пинг у основания и рамка, которая пробегает макет снизу вверх
         const k = Math.min(b.scanT / 1.4, 1); b.ping.scale.setScalar(0.4 + k * 2); b.ping.material.opacity = (1 - k) * 0.8;
@@ -350,21 +347,25 @@
         b.fillMat.color.copy(WHITE).lerp(SOFT, b.heat);
       });
       for (let i = 0; i < PK; i++) { const p = packets[i]; p.t += dt * p.speed;
-        if (p.t >= 1) { p.bar.goal = Math.max(p.bar.goal || 0, 0.45); newPacket(p); }
+        if (p.t >= 1) { p.bar.tagUntil = t + 3; newPacket(p); }   // сигнал дошёл до верха — подпись на 3 секунды
         const q = p.t <= 0 ? p.curve.v0 : p.curve.getPoint(p.t); pkArr[i * 3] = q.x; pkArr[i * 3 + 1] = p.t <= 0 ? -50 : q.y; pkArr[i * 3 + 2] = q.z; }
       pkGeo.attributes.position.needsUpdate = true;
       renderer.render(scene, camera);
       const W = stage.clientWidth, Hh = stage.clientHeight;
       const placed = [];
-      for (const tg of tags) {                            // теги идут от крупных секторов к мелким
+      // сначала уже показанные подписи (чтобы не мигали), потом новые
+      const order = tags.filter((g) => g.on).concat(tags.filter((g) => !g.on));
+      for (const tg of order) {
         v.copy(tg.bar.g.position); v.y = tg.bar.fill.scale.y + 0.4; v.project(camera);
         const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * Hh;
         if (!tg.w) { tg.w = tg.el.offsetWidth; tg.h = tg.el.offsetHeight; }
         const r = { l: x - tg.w / 2, r: x + tg.w / 2, t: y - tg.h, b: y };
-        const free = r.l > 4 && r.r < W - 4 && r.t > 22 && r.b < Hh - 22 && !placed.some((p) => r.l < p.r && r.r > p.l && r.t < p.b && r.b > p.t);
+        const want = (tg.bar.tagUntil || 0) > t;
+        const free = want && r.l > 4 && r.r < W - 4 && r.t > 22 && r.b < Hh - 22 && !placed.some((p) => r.l < p.r && r.r > p.l && r.t < p.b && r.b > p.t);
         if (free) placed.push(r);
+        tg.on = free;
         tg.el.style.left = x.toFixed(1) + "px"; tg.el.style.top = y.toFixed(1) + "px";
-        tg.el.style.opacity = t > 2 && free ? 1 : 0; tg.el.classList.toggle("hot", tg.bar.heat > 0.3);
+        tg.el.style.opacity = free ? 1 : 0; tg.el.classList.toggle("hot", tg.bar.heat > 0.3);
       }
     }
     function loop() { if (visible) frame(); requestAnimationFrame(loop); }
