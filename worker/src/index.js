@@ -1412,7 +1412,7 @@ async function handleUpdate(env, update) {
     await lsBalanceMsg(env, chatId, lang);
     return;
   }
-  if (isOwner(env, chatId) && /^\/(grant|credit|costs)\b/.test(text)) {
+  if (isOwner(env, chatId) && /^\/(grant|credit|costs)/i.test(text)) {
     await lsAdmin(env, chatId, text);
     return;
   }
@@ -2679,6 +2679,8 @@ Interpret, do not just list: say whether the evidence shows an open window (dema
 Market numbers (money, rounds, investors, niches) come from our dataset facts (TOTAL, NICHE, ROUND, INVESTOR LEADERBOARD); WEB, HACKER NEWS and GITHUB facts describe specific companies and products or complement the dataset. Ignore facts that do not answer the question (other countries' corporate spending, unrelated companies).
 CONVERSATION: earlier messages are the same founder talking about the same project. Read a short follow-up in the light of them and keep their product, market and price in mind; never answer a follow-up as if it were a new unrelated question.
 THE FOUNDER'S OWN PRODUCT: when the founder describes a product and gives its site or name ("check mysite.com", "our product", "we have"), that product is THEIRS. Never list it as a competitor, never say "it already exists" about it, never compare it with itself — evaluate it and compare it with OTHER companies. Features of their product (e.g. built-in AI agents) are parts of that product: judge them inside its category and for its buyers, not as a separate market.
+BE CONCRETE: name exact buyer segments (industry + type of company + the person who decides, e.g. "small building-materials wholesalers — the owner or chief accountant"; give a size range only if it comes from FACTS or the founder) and exact problems (a specific workflow that hurts, e.g. "reconciling supplier invoices with warehouse receipts by hand"), never just "SMBs" or "businesses". When the founder's product has a feature (e.g. AI agents), name 2-3 concrete jobs that feature does for that buyer.
+PRICES: always keep the unit of every price exactly as the fact states it (per user per month, per company, per N users, one-off). Never compare prices with different units as if they were the same — write both with their units (e.g. "Odoo $24.90 per user/month vs your €19 for up to 10 users") so the difference is visible.
 NARROW BEATS BROAD: when the question is about a specific category (e.g. AI agents built into an ERP for small businesses), base the verdict on the NICHE facts that match it most narrowly. Never carry a broad niche's verdict over to it: if the broad niche (e.g. enterprise AI agents) is overheated but the narrow one has few funded players, say exactly that, with both numbers.
 Never open with what is missing (no "В данных нет…", "No data on…"): the first line answers the question with what the evidence shows; if something asked is not in FACTS, say it in one short line at the end.
 FORMAT for a phone screen: the first line is the verdict in one sentence wrapped in **double asterisks**. Then blocks, one per line, each like: "<ONE emoji> **Short title, 2-4 words** — 1-2 short sentences". Emojis: 💰 money · 📈 growth · 🔎 search interest · 🏁 competitors · 🇰🇿 Kazakhstan/CIS · 💼 investors · 🙋 demand · ⚠️ risk · 💡 idea. Key numbers and names in **bold**. A blank line between blocks. No # headers, no tables, no other markdown. Answer in %LANG%.`;
@@ -3043,7 +3045,8 @@ async function lsShortMsg(env, chatId, lang, action) {
 
 /** Владелец: /grant <id> <free|pro|max|promax>, /credit <id> <LS>, /costs — сверка прайса с фактом. */
 async function lsAdmin(env, chatId, text) {
-  const [cmd, uid, arg] = text.trim().split(/\s+/);
+  const m = /^\/(grant|credit|costs)(?:@\w+)?[^0-9a-z]*(\d+)?[^0-9a-z]*([a-z]+|-?\d+)?/i.exec(text.trim()) || [];
+  const cmd = m[1] ? "/" + m[1].toLowerCase() : "", uid = m[2], arg = m[3] ? m[3].toLowerCase() : "";
   if (cmd === "/grant" && uid && PLANS[arg]) {
     const r = await lsGet(env, uid);
     const now = Math.floor(Date.now() / 1000);
@@ -3070,7 +3073,7 @@ async function lsAdmin(env, chatId, text) {
     lines.push(`Итого: ${tl} LS ($${(tl / 1000).toFixed(2)} по прайсу), факт $${tu.toFixed(2)}`);
     return tg(env, "sendMessage", { chat_id: chatId, text: lines.join("\n") });
   }
-  return tg(env, "sendMessage", { chat_id: chatId, text: "/grant <id> <free|pro|max|promax> · /credit <id> <LS> · /costs" });
+  return tg(env, "sendMessage", { chat_id: chatId, text: "Как выдать:\n/grant 369616668 max — тариф (free, pro, max или promax) на 30 дней\n/credit 369616668 1000 — докинуть LS, они не сгорают\n/costs — себестоимость за неделю\n\nID — число, которое бот показывает у пользователя." });
 }
 
 // ---------------------------------------------------------------------------
@@ -3364,7 +3367,7 @@ async function handleAdminUpdate(env, update) {
   if (text.startsWith("/start") || text.startsWith("/help")) {
     await tg(aenv, "sendMessage", { chat_id: chatId, parse_mode: "HTML", reply_markup: adminKb(),
       text: "🛠 <b>Dashboard Launch Scout</b>\n\nСюда приходят служебные уведомления: сбор молчит, токены, баланс OpenRouter, оплаты, новые пользователи, /paysupport.\n\n" +
-        "/report — сводка · /costs — себестоимость действий за неделю\n/users — у кого доступ · /allow &lt;id&gt; · /deny &lt;id&gt; · /open или /close — открыть бот всем или закрыть\n/grant &lt;id&gt; &lt;free|pro|max|promax&gt; · /credit &lt;id&gt; &lt;LS&gt; · /refund &lt;id&gt; &lt;charge_id&gt;\n\nИли спросите текстом/голосом: «как дела за неделю?», «сколько новых пользователей?»." });
+        "/report — сводка · /costs — себестоимость действий за неделю\n/users — у кого доступ · /allow &lt;id&gt; · /deny &lt;id&gt; · /open или /close — открыть бот всем или закрыть\n/grant 369616668 max — тариф · /credit 369616668 1000 — LS · /refund &lt;id&gt; &lt;charge_id&gt;\n\nИли спросите текстом/голосом: «как дела за неделю?», «сколько новых пользователей?»." });
     return;
   }
   // Доступ к публичному боту: кнопки на запрос и команды.
@@ -3411,7 +3414,7 @@ async function handleAdminUpdate(env, update) {
     await tg(aenv, "sendMessage", { chat_id: chatId, text: adminReport(await adminStats(env)), parse_mode: "HTML", reply_markup: adminKb() });
     return;
   }
-  if (/^\/(grant|credit|costs)\b/.test(text)) {
+  if (/^\/(grant|credit|costs)/i.test(text)) {
     await lsAdmin(aenv, chatId, text);
     return;
   }
