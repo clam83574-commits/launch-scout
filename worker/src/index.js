@@ -1220,6 +1220,7 @@ async function handleUpdate(env, update) {
     return;
   }
 
+  await env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) VALUES (?1, ?2)").bind(String(chatId), Math.floor(Date.now() / 1000)).run().catch(() => null);
   const prefs = await getPrefs(env, chatId);
   const msgId = cb && cb.message ? cb.message.message_id : null;
   if (data.startsWith("lang:")) {
@@ -2952,6 +2953,88 @@ async function starsPaid(env, chatId, msg, lang) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 📊 Дашборд владельца (мини-приложение, вкладка «Админ»)
+//
+// Выручка — по оплатам звёздами (выплата ≈ STAR_USD за звезду через
+// Fragment), затраты — реальный расход OpenRouter по его API (бот и пайплайн
+// на одном аккаунте) плюс комиссия пополнения: OpenRouter 5–5,5% и карта
+// Bybit — у владельца $10 кредитов стоили $11,02 (2026-10-01).
+// ---------------------------------------------------------------------------
+const STAR_USD = 0.013;          // примерная выплата за звезду; уточнять по факту вывода
+const TOPUP_FEE = 0.102;         // наценка пополнения OpenRouter: 11,02 / 10 − 1
+const FIXED_USD_MONTH = 0;       // Cloudflare и Actions сейчас бесплатны
+const NOT_USERS = new Set(["debug", "lstest1"]);
+
+async function orCredits(env) {
+  if (!env.LS_OPENROUTER_KEY) return null;
+  const r = await fetch("https://openrouter.ai/api/v1/credits", { headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}` } }).catch(() => null);
+  if (!r || !r.ok) return null;
+  const d = ((await r.json().catch(() => ({}))) || {}).data || {};
+  return { total: Number(d.total_credits) || 0, used: Number(d.total_usage) || 0 };
+}
+
+/** Отметка расхода OpenRouter на начало месяца — от неё считается расход месяца. */
+async function orMonthMark(env, credits) {
+  const month = new Date().toISOString().slice(0, 7);
+  const key = "or_used_" + month;
+  let mark = await meta(env, key);
+  if (!mark && credits) { mark = JSON.stringify({ used: credits.used, ts: Math.floor(Date.now() / 1000) }); await setMeta(env, key, mark); }
+  try { return JSON.parse(mark || "null"); } catch { return null; }
+}
+
+async function adminStats(env) {
+  const now = Math.floor(Date.now() / 1000);
+  const d0 = new Date(); d0.setUTCDate(1); d0.setUTCHours(0, 0, 0, 0);
+  const monthStart = Math.floor(d0.getTime() / 1000);
+  const owners = (env.LS_BOT_ALLOW || "").split(",").map((x) => x.trim()).filter(Boolean);
+  const skip = [...NOT_USERS, ...owners];
+  const notIn = `user_id NOT IN (${skip.map((_, i) => "?" + (i + 1)).join(",")})`;
+  const q = (sql, ...extra) => env.DB.prepare(sql).bind(...skip, ...extra);
+  const one = async (sql, ...extra) => (await q(sql, ...extra).first().catch(() => null)) || {};
+  const all = async (sql, ...extra) => ((await q(sql, ...extra).all().catch(() => ({ results: [] }))).results) || [];
+  const n = skip.length;
+
+  const users = await one(`SELECT COUNT(*) n FROM users_seen WHERE ${notIn}`);
+  const new7 = await one(`SELECT COUNT(*) n FROM users_seen WHERE ${notIn} AND ts >= ?${n + 1}`, now - 7 * 86400);
+  const act7 = await one(`SELECT COUNT(DISTINCT user_id) n FROM ls_log WHERE ${notIn} AND ts >= ?${n + 1}`, now - 7 * 86400);
+  const act30 = await one(`SELECT COUNT(DISTINCT user_id) n FROM ls_log WHERE ${notIn} AND ts >= ?${n + 1}`, now - 30 * 86400);
+  const plans = await all(`SELECT plan, COUNT(*) n FROM ls_balance WHERE ${notIn} AND plan != 'free' AND paid_until > ?${n + 1} GROUP BY plan`, now);
+  const paid = plans.reduce((a, x) => a + x.n, 0);
+  const payM = await one(`SELECT COUNT(*) n, COALESCE(SUM(stars),0) stars FROM payments WHERE ${notIn} AND ts >= ?${n + 1}`, monthStart);
+  const payAll = await one(`SELECT COUNT(*) n, COALESCE(SUM(stars),0) stars, COUNT(DISTINCT user_id) payers FROM payments WHERE ${notIn}`);
+  const lsM = await all(`SELECT action, COUNT(*) n, SUM(ls) ls, SUM(cost_usd) usd FROM ls_log WHERE ${notIn} AND ts >= ?${n + 1} GROUP BY action ORDER BY n DESC`, monthStart);
+  const daily = await all(`SELECT CAST((ts - ?${n + 1}) / 86400 AS INTEGER) d, COUNT(DISTINCT user_id) users, COUNT(*) actions, SUM(cost_usd) usd FROM ls_log WHERE ${notIn} AND ts >= ?${n + 1} GROUP BY d`, now - 30 * 86400);
+  const dailyNew = await all(`SELECT CAST((ts - ?${n + 1}) / 86400 AS INTEGER) d, COUNT(*) n FROM users_seen WHERE ${notIn} AND ts >= ?${n + 1} GROUP BY d`, now - 30 * 86400);
+  const dailyPay = await all(`SELECT CAST((ts - ?${n + 1}) / 86400 AS INTEGER) d, SUM(stars) stars FROM payments WHERE ${notIn} AND ts >= ?${n + 1} GROUP BY d`, now - 30 * 86400);
+  // Подписки, не продлённые после окончания, за 30 дней — отток.
+  const churn = await one(`SELECT COUNT(DISTINCT p.user_id) n FROM payments p WHERE p.${notIn.replace("user_id", "user_id")} AND p.sub_exp > 0 AND p.sub_exp BETWEEN ?${n + 1} AND ?${n + 2}
+    AND NOT EXISTS (SELECT 1 FROM payments x WHERE x.user_id = p.user_id AND x.ts > p.ts)`, now - 30 * 86400, now);
+
+  const credits = await orCredits(env);
+  const mark = await orMonthMark(env, credits);
+  const aiMonth = credits && mark ? Math.max(0, credits.used - mark.used) : lsM.reduce((a, x) => a + (x.usd || 0), 0);
+  const costMonth = aiMonth * (1 + TOPUP_FEE) + FIXED_USD_MONTH;
+  const revenueMonth = payM.stars * STAR_USD;
+  const bal = await tg(env, "getMyStarBalance", {});
+  const series = (rows, key) => { const a = Array(30).fill(0); for (const r of rows) if (r.d >= 0 && r.d < 30) a[r.d] = Math.round((r[key] || 0) * 1000) / 1000; return a; };
+  return {
+    users: users.n || 0, new7: new7.n || 0, active7: act7.n || 0, active30: act30.n || 0,
+    paid, free: Math.max(0, (users.n || 0) - paid), plans: Object.fromEntries(plans.map((x) => [x.plan, x.n])),
+    conversion: users.n ? Math.round(paid / users.n * 1000) / 10 : 0,
+    revenue_month: Math.round(revenueMonth * 100) / 100, stars_month: payM.stars, payments_month: payM.n,
+    revenue_all: Math.round(payAll.stars * STAR_USD * 100) / 100, payers_all: payAll.payers || 0,
+    cost_month: Math.round(costMonth * 100) / 100, ai_month: Math.round(aiMonth * 100) / 100, cost_since: mark ? mark.ts : null,
+    profit_month: Math.round((revenueMonth - costMonth) * 100) / 100,
+    arppu: paid ? Math.round(revenueMonth / paid * 100) / 100 : 0, churn30: churn.n || 0,
+    or_balance: credits ? Math.round((credits.total - credits.used) * 100) / 100 : null,
+    stars_balance: bal && bal.ok ? bal.result.amount : null,
+    actions: lsM.map((x) => ({ action: x.action, n: x.n, ls: x.ls, usd: Math.round((x.usd || 0) * 10000) / 10000 })),
+    daily: { users: series(daily, "users"), actions: series(daily, "actions"), cost: series(daily, "usd"), new: series(dailyNew, "n"), stars: series(dailyPay, "stars") },
+    assumptions: { star_usd: STAR_USD, topup_fee: TOPUP_FEE, fixed: FIXED_USD_MONTH },
+  };
+}
+
 let lastUnsupported = null;   // для /debug-chat
 const INVESTOR_Q = /инвест|инвестор|фонд|венчур|ангел|\bvc\b|investor|\bfunds?\b|backer|кто вкладыва|кто финансир/iu;
 
@@ -3604,6 +3687,9 @@ async function ensureTables(env) {
     // Матрица ниш — готовые цифры для быстрого ответа (fastAnswer).
     env.DB.prepare("CREATE TABLE IF NOT EXISTS niche_matrix (niche TEXT PRIMARY KEY, name_ru TEXT, sector TEXT, data TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_balance (user_id TEXT PRIMARY KEY, plan TEXT, paid_until INTEGER, period_end INTEGER, sub_ls INTEGER, credits INTEGER, warned INTEGER, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS users_seen (user_id TEXT PRIMARY KEY, ts INTEGER)"),
+    // Первое появление — для «новых за неделю»; прошлых пользователей берём из настроек.
+    env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) SELECT user_id, ts FROM prefs"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS payments (charge_id TEXT PRIMARY KEY, user_id TEXT, ts INTEGER, item TEXT, stars INTEGER, sub_exp INTEGER, recurring INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_log (user_id TEXT, ts INTEGER, action TEXT, ls INTEGER, cost_usd REAL)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS ls_log_ts ON ls_log (ts)"),
@@ -3926,6 +4012,11 @@ export default {
         return json(snap || { findings: [] });
       }
       if (url.pathname === "/api/fav") return favorites(env, request, user, url);
+      if (url.pathname === "/api/admin") {
+        if (!isOwner(env, user.id)) return json({ error: "forbidden" }, 403);
+        await ensureTables(env);
+        return json(await adminStats(env));
+      }
       if (url.pathname === "/api/ls") {
         await ensureTables(env);
         const r = await lsGet(env, user.id);
@@ -4091,6 +4182,10 @@ export default {
       const t0 = Date.now();
       return json({ plan: await planSearch(env, url.searchParams.get("q") || ""), ms: Date.now() - t0 });
     }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-admin") {
+      await ensureTables(env);
+      return json(await adminStats(env));
+    }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-invoice") {
       return json({ link: await starsLink(env, url.searchParams.get("uid") || "1", url.searchParams.get("item") || "pro", "ru") });
     }
@@ -4221,6 +4316,17 @@ export default {
     const err = await dispatchRun(env, { digest: "auto" });
     await setMeta(env, "last_dispatch_error", err || "");
     await watchdog(env, now);
+    // Расход OpenRouter на начало месяца — для затрат в дашборде; при остатке
+    // меньше $3 — напоминание владельцу раз в сутки (иначе бот замолчит).
+    const orc = await orCredits(env).catch(() => null);
+    await orMonthMark(env, orc).catch(() => null);
+    const day = new Date().toISOString().slice(0, 10);
+    if (orc && orc.total - orc.used < 3 && (await meta(env, "or_low_alert")) !== day) {
+      await setMeta(env, "or_low_alert", day);
+      for (const owner of (env.LS_BOT_ALLOW || "").split(",").map((x) => x.trim()).filter(Boolean)) {
+        await tg(env, "sendMessage", { chat_id: owner, text: `⚠️ На OpenRouter осталось $${(orc.total - orc.used).toFixed(2)} — пополните, иначе ИИ-ответы остановятся.` });
+      }
+    }
     await tokenReminder(env, now);
     await setupCommands(env);
   },

@@ -95,6 +95,21 @@
     background: radial-gradient(circle at 35% 35%, #9fd0ff, var(--btn)); animation: breathe 1.6s ease-in-out infinite; }
   .busy small { display: block; color: var(--hint); font-size: 12px; margin-top: 2px; }
   /* Баланс LS: тонкая полоса расхода месячного лимита. */
+  /* Дашборд владельца */
+  .adm { padding: 4px 0 24px; }
+  .adm .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .adm .t { background: var(--bg2); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .adm .t b { display: block; font-size: 20px; line-height: 1.2; }
+  .adm .t span { color: var(--hint); font-size: 12px; }
+  .adm .t.bad b { color: var(--hot); }
+  .adm .t.good b { color: var(--s3); }
+  .adm h3 { font-size: 15px; margin: 18px 0 6px; }
+  .adm .bars { display: flex; align-items: flex-end; gap: 2px; height: 56px; background: var(--bg2); border-radius: 10px; padding: 6px; }
+  .adm .bars i { flex: 1; background: var(--btn); border-radius: 2px 2px 0 0; min-height: 1px; }
+  .adm table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .adm td, .adm th { padding: 5px 4px; border-bottom: 1px solid var(--line); text-align: right; }
+  .adm td:first-child, .adm th:first-child { text-align: left; }
+  .adm .note { color: var(--hint); font-size: 12px; margin-top: 10px; }
   .lsbox { background: var(--bg2); border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px; }
   .lsbox .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .lsbox .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 8px 0 6px; }
@@ -268,6 +283,8 @@
   <section id="saved" hidden></section>
 
   <section id="settings" hidden></section>
+
+  <section id="admin" hidden></section>
 </main>
 
 <nav>
@@ -275,6 +292,7 @@
   <button data-tab="trends"><i aria-hidden="true">🧭</i><span data-t="tab_trends"></span></button>
   <button data-tab="saved"><i aria-hidden="true">⭐</i><span data-t="tab_saved"></span></button>
   <button data-tab="settings"><i aria-hidden="true">⚙️</i><span data-t="tab_settings"></span></button>
+  <button data-tab="admin" hidden><i aria-hidden="true">📊</i><span>Админ</span></button>
 </nav>
 
 <dialog id="dlg"><button class="x" id="dlgClose" aria-label="✕">✕</button><div class="dlg" id="dlgBody"></div></dialog>
@@ -709,7 +727,57 @@
       ${["b2b", "b2c", "b2g"].map((a) => `<label class="pref"><input type="checkbox" data-a="${a}"${mineA.has(a) ? " checked" : ""}>${esc(tr("aud_" + a))}</label>`).join("")}`;
     loadLs();
   }
+  // --- дашборд владельца ----------------------------------------------------
+  async function renderAdmin() {
+    const box = $("#admin");
+    box.innerHTML = `<div class="adm"><p class="note">Загружаю…</p></div>`;
+    let d;
+    try { d = await api("/api/admin"); } catch (e) { d = null; }
+    if (!d || d.error) { box.innerHTML = `<div class="adm"><p class="note">Нет доступа</p></div>`; return; }
+    const usd = (v) => (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2);
+    const tile = (val, label, cls = "") => `<div class="t ${cls}"><b>${val}</b><span>${esc(label)}</span></div>`;
+    const bars = (arr, label) => {
+      const max = Math.max(1, ...arr);
+      return `<h3>${esc(label)}</h3><div class="bars" role="img" aria-label="${esc(label)}">${arr.map((v) => `<i style="height:${Math.round(v / max * 100)}%" title="${v}"></i>`).join("")}</div>`;
+    };
+    const planTxt = Object.entries(d.plans || {}).map(([k, v]) => `${({ pro: "Pro", max: "Max", promax: "Pro Max" })[k] || k}: ${v}`).join(" · ") || "—";
+    const since = d.cost_since ? new Date(d.cost_since * 1000).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) : "";
+    box.innerHTML = `<div class="adm">
+      <h3>Пользователи</h3>
+      <div class="tiles">
+        ${tile(d.users, `всего · новых за 7 дн: ${d.new7}`)}
+        ${tile(`${d.active7} / ${d.active30}`, "активных за 7 / 30 дн")}
+        ${tile(d.paid, `платных · ${planTxt}`)}
+        ${tile(d.free, "бесплатных")}
+        ${tile(d.conversion + "%", "доля платных")}
+        ${tile(d.churn30, "не продлили за 30 дн")}
+      </div>
+      <h3>Деньги за месяц</h3>
+      <div class="tiles">
+        ${tile(usd(d.revenue_month), `выручка · ${d.stars_month} ⭐, оплат: ${d.payments_month}`)}
+        ${tile(usd(d.cost_month), `затраты · ИИ ${usd(d.ai_month)} + комиссии${since ? " · с " + since : ""}`)}
+        ${tile(usd(d.profit_month), "чистая прибыль", d.profit_month < 0 ? "bad" : "good")}
+        ${tile(usd(d.arppu), "выручка на платящего")}
+        ${tile(usd(d.revenue_all), `выручка за всё время · ${d.payers_all} плательщ.`)}
+        ${tile(d.stars_balance == null ? "—" : d.stars_balance + " ⭐", "баланс звёзд бота")}
+        ${tile(d.or_balance == null ? "—" : usd(d.or_balance), "остаток на OpenRouter", d.or_balance != null && d.or_balance < 5 ? "bad" : "")}
+      </div>
+      ${bars(d.daily.users, "Активные по дням (30 дн)")}
+      ${bars(d.daily.new, "Новые по дням")}
+      ${bars(d.daily.stars, "Оплаты по дням, ⭐")}
+      ${bars(d.daily.cost, "Расход ИИ по дням, $")}
+      <h3>Действия за месяц</h3>
+      <table><tr><th>действие</th><th>шт.</th><th>LS</th><th>себест.</th></tr>
+        ${(d.actions || []).map((a) => `<tr><td>${esc(a.action)}</td><td>${a.n}</td><td>${a.ls}</td><td>$${a.usd.toFixed(3)}</td></tr>`).join("") || `<tr><td colspan="4">пока нет</td></tr>`}</table>
+      <p class="note">Без учёта владельца. Выручка — по ${d.assumptions.star_usd} $ за звезду (выплата Fragment), затраты — расход OpenRouter по его данным + ${Math.round(d.assumptions.topup_fee * 100)}% на пополнение (OpenRouter + карта).</p>
+    </div>`;
+  }
+
   // --- баланс LS и оплата звёздами ------------------------------------------
+  async function showAdminTab() {
+    try { const r = await api("/api/ls"); if (r && r.owner) document.querySelector('nav [data-tab="admin"]').hidden = false; } catch (e) { /* не владелец */ }
+  }
+  if (!demo) showAdminTab();
   async function loadLs() {
     const box = $("#lsBox");
     if (!box) return;
@@ -1128,11 +1196,12 @@
     if (state.tab === "trends") renderTrends();
     if (state.tab === "saved") renderSaved();
     if (state.tab === "settings") renderSettings();
+    if (state.tab === "admin") renderAdmin();
   }
   function setTab(tab) {
     state.tab = tab;
     document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-current", b.dataset.tab === tab ? "page" : "false"));
-    for (const id of ["feed", "trends", "saved", "settings"]) $("#" + id).hidden = id !== tab;
+    for (const id of ["feed", "trends", "saved", "settings", "admin"]) $("#" + id).hidden = id !== tab;
     $("#hdr").hidden = tab !== "feed";
     render();
     scrollTo(0, 0);
