@@ -23,21 +23,22 @@
   const DEMOS = [
     { q: "Куда идут деньги в ИИ-агентах?", a: [
       ["v", "<b>Горячо.</b> 148 раундов и $11,5 млрд за 90 дней — четвёртое место из 16 секторов."],
-      ["q", "💸 Свежие сделки", "Flow Engineering — $50 млн, Series B · Medow Health AI — $2,3 млн, Seed"],
-      ["q", "🧭 Где свободнее", "Агенты под одну отрасль: недвижимость, медицина, юристы"],
-      ["q", "🎯 Первый шаг", "Выберите отрасль и проверьте идею командой /check"] ] },
+      ["q", "coin", "Свежие сделки", "Flow Engineering — $50 млн, Series B · Medow Health AI — $2,3 млн, Seed"],
+      ["q", "compass", "Где свободнее", "Агенты под одну отрасль: недвижимость, медицина, юристы"],
+      ["q", "target", "Первый шаг", "Выберите отрасль и проверьте идею командой /check"] ] },
     { q: "/check ИИ-ассистент для частных клиник в Казахстане", a: [
       ["v", "<b>Делать, но узко.</b> Медицина — самый частый сектор: 278 раундов за 90 дней."],
-      ["q", "💸 Деньги в нише есть", "Alma — $17 млн, Series A · Aleph Surgery — $7,5 млн, Pre-seed"],
-      ["q", "⚠️ Что против", "В СНГ за 90 дней — 1 раунд в медицине. Платить будут клиники, а продажи им долгие"],
-      ["q", "🧪 Проверка за 7 дней", "10 интервью с главврачами частных сетей и лендинг с ценой"] ] },
+      ["q", "coin", "Деньги в нише есть", "Alma — $17 млн, Series A · Aleph Surgery — $7,5 млн, Pre-seed"],
+      ["q", "alert", "Что против", "В СНГ за 90 дней — 1 раунд в медицине. Платить будут клиники, а продажи им долгие"],
+      ["q", "flask", "Проверка за 7 дней", "10 интервью с главврачами частных сетей и лендинг с ценой"] ] },
     { q: "Кто конкуренты в proptech?", a: [
       ["v", "<b>Ниша не перегрета:</b> 43 раунда и $1,9 млрд за 90 дней."],
-      ["q", "🏁 Кто привлёк", "Kuro (Германия) — $10,8 млн, Seed · Zaritalk (Корея) — $10,7 млн, Series A · Quotr (США) — $4 млн, Seed"],
-      ["q", "🌍 Где пусто", "В СНГ за 90 дней — ни одного раунда в proptech"],
-      ["q", "🎯 Идея", "Повторить рабочую модель из Кореи или Германии для своего города"] ] },
+      ["q", "flag", "Кто привлёк", "Kuro (Германия) — $10,8 млн, Seed · Zaritalk (Корея) — $10,7 млн, Series A · Quotr (США) — $4 млн, Seed"],
+      ["q", "globe", "Где пусто", "В СНГ за 90 дней — ни одного раунда в proptech"],
+      ["q", "bulb", "Идея", "Повторить рабочую модель из Кореи или Германии для своего города"] ] },
   ];
-  const KB = `<div class="kb"><span>🔎 Глубже</span><span>🗺 Карта идеи</span><span>🧭 Смежные ниши</span><span>🏁 Конкуренты</span><span>🔔 Следить</span><span>🌐 Искать везде</span></div>`;
+  const ico = (id) => `<svg class="ico"><use href="#i-${id}"/></svg>`;
+  const KB = `<div class="kb"><span>${ico("search")}Глубже</span><span>${ico("map")}Карта идеи</span><span>${ico("compass")}Смежные ниши</span><span>${ico("flag")}Конкуренты</span><span>${ico("bell")}Следить</span><span>${ico("globe")}Искать везде</span></div>`;
   function tickerHTML(D) {
     const items = (D.recent || []).filter((r) => r.c && r.usd).map((r) => {
       const d = new Date(r.ts * 1000);
@@ -57,7 +58,7 @@
   function chatHTML(i) {
     const d = DEMOS[i];
     return `<div class="msg me">${esc(d.q)}</div><div class="msg bot">` + d.a.map((p) => p[0] === "v"
-      ? `<span class="verdict">${p[1]}</span>` : `<blockquote><b>${p[1]}</b>${p[2]}</blockquote>`).join("") + `</div>` + KB;
+      ? `<span class="verdict">${p[1]}</span>` : `<blockquote><b>${ico(p[1])}${p[2]}</b>${p[3]}</blockquote>`).join("") + `</div>` + KB;
   }
   const srcsHTML = () => SOURCES.map((s, i) => `<span style="--d:${(i * .29).toFixed(2)}s">${s}</span>`).join("");
   const matrixHTML = () => "<i></i>".repeat(40);
@@ -148,6 +149,7 @@
     (function loop(now) {
       const dt = Math.min((now - last) / 1000, 0.05); last = now; t += dt;
       const n = narrow();
+      if (innerWidth < 600) { phone.style.transform = "none"; requestAnimationFrame(loop); return; }   // на телефоне без наклона
       const tx = hover ? -(my - 0.5) * 6 : (n ? 3 : 5);
       const ty = hover ? (mx - 0.5) * 9 : (n ? -6 : -12) + Math.sin(t * 0.5) * 1.5;
       const k = 1 - Math.exp(-dt * (hover ? 3.2 : 1.8));  // мягкое приближение без рывков
@@ -183,7 +185,7 @@
       for (const p of d.a) {
         if (p[0] === "v") { const s = document.createElement("span"); s.className = "verdict"; bot.appendChild(s); if (!(await typeInto(s, p[1], id))) return; }
         else { const b = document.createElement("blockquote"), h = document.createElement("b"), tx = document.createElement("span");
-          h.textContent = p[1]; b.append(h, tx); bot.appendChild(b); if (!(await typeInto(tx, p[2], id))) return; }
+          h.innerHTML = ico(p[1]) + esc(p[2]); b.append(h, tx); bot.appendChild(b); if (!(await typeInto(tx, p[3], id))) return; }
         await sleep(110);
       }
       chat.insertAdjacentHTML("beforeend", KB.replace('class="kb"', 'class="kb wait"'));
