@@ -2425,6 +2425,7 @@ async function matrixFacts(env, question, { niche = null, snap = null } = {}) {
 
 const FAST_RULES = `Never add up or compute numbers yourself: for any sum or count across niches quote the TOTAL fact. Answer ONLY from the FACTS list. After every claim put the fact number in square brackets, e.g. [F3]; a claim with a company, a sum or a count MUST carry one. Never use companies, numbers or events from your own memory. If FACTS do not answer the question, say so in one line and say what the data does show.
 Interpret, do not just list: say whether the evidence shows an open window (demand, few funded players), a forming market (many early rounds and similar products — look for an unserved vertical) or an overheated one (mega-rounds, late stages, dozens of players).
+Market numbers (money, rounds, investors, niches) come from our dataset facts (TOTAL, NICHE, ROUND, INVESTOR LEADERBOARD); WEB, HACKER NEWS and GITHUB facts describe specific companies and products or complement the dataset. Ignore facts that do not answer the question (other countries' corporate spending, unrelated companies).
 Never open with what is missing (no "В данных нет…", "No data on…"): the first line answers the question with what the evidence shows; if something asked is not in FACTS, say it in one short line at the end.
 FORMAT for a phone screen: the first line is the verdict in one sentence wrapped in **double asterisks**. Then short bullets, each starting with ONE fitting emoji instead of a dot (💰 money · 📈 growth · 🔎 search interest · 🏁 competitors · 🇰🇿 Kazakhstan/CIS · 💼 investors · 🙋 demand · ⚠️ risk · 💡 idea); key numbers and names in **bold**. A blank line between blocks. No # headers, no tables, no other markdown. Answer in %LANG%.`;
 
@@ -2606,14 +2607,16 @@ At most 8 competitors and 5 complaints, only ones you actually found with real U
 // ---------------------------------------------------------------------------
 const PLAN_SYSTEM = `You plan a live search for a market radar for startup founders. Reply JSON only:
 {"live": true|false, "queries": ["English search phrase, 2-5 words", "... at most 3"], "terms": ["1-3 word phrase people type into Google about this topic, at most 3"], "entities": ["company, product, fund or person names from the question"]}
-live = true if the question names a specific company, product, fund, person or event, asks for news or anything recent, or asks something a database of startup funding rounds and niches would not answer (e.g. how a product works, user numbers, pricing). Otherwise false.`;
+live = true if the question names a specific company, product, fund, person or event, asks for news or anything recent, or asks something a database of startup funding rounds and niches would not answer (e.g. how a product works, user numbers, pricing). Otherwise false.
+Questions like "which investors are most active", "where does the money go", "which niches are hot" are answered by the rounds database: live = false. Search phrases must not contain years unless the user gave one.`;
 
 async function planSearch(env, question) {
   const fallback = { live: false, queries: [question.slice(0, 80)], terms: [], entities: [] };
   try {
     const r = await groqFetch(env, { temperature: 0, max_completion_tokens: 400, reasoning_effort: "low",
       response_format: { type: "json_object" },
-      messages: [{ role: "system", content: PLAN_SYSTEM }, { role: "user", content: question.slice(0, 800) }] },
+      messages: [{ role: "system", content: PLAN_SYSTEM }, { role: "user", content: `TODAY: ${new Date().toISOString().slice(0, 10)}
+QUESTION: ${question.slice(0, 800)}` }] },
     ["openai/gpt-oss-20b"], 5000);
     if (!r || !r.ok) return fallback;
     const d = JSON.parse((await r.json()).choices[0].message.content || "{}");
@@ -3543,6 +3546,23 @@ export default {
       const f = await webFacts(env, url.searchParams.get("q") || "", [url.searchParams.get("q") || ""],
         { model: url.searchParams.get("model"), timeoutMs: 40000 });
       return json({ ms: Date.now() - t0, n: f.length, facts: f, err: JSON.parse((await meta(env, "ai_errors")) || "[]")[0] });
+    }
+    if (env.LS_DEBUG === "1" && url.pathname === "/debug-research") {
+      const q = url.searchParams.get("q") || "";
+      const plan = await planSearch(env, q);
+      return json({ plan, r: await researchDispatch(env, "debug", "ru", q, plan) });
+    }
+    if (env.LS_DEBUG === "1" && request.method === "POST" && url.pathname === "/debug-brand") {
+      // Название и аватар бота (просьба владельца 2026-10-01). Только в отладке.
+      const api = (m) => `https://api.telegram.org/bot${env.LS_BOT_TOKEN}/${m}`;
+      const name = await fetch(api("setMyName"), { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: url.searchParams.get("name") || "Launch Scout" }) }).then((r) => r.json());
+      const fd = new FormData();
+      fd.append("photo", JSON.stringify({ type: "static", photo: "attach://avatar" }));
+      fd.append("avatar", new Blob([await request.arrayBuffer()], { type: "image/png" }), "avatar.png");
+      const photo = await fetch(api("setMyProfilePhoto"), { method: "POST", body: fd }).then((r) => r.json()).catch((e) => ({ error: String(e) }));
+      const me = await fetch(api("getMe")).then((r) => r.json());
+      return json({ name, photo, me: me.result && { first_name: me.result.first_name, username: me.result.username } });
     }
     if (env.LS_DEBUG === "1" && url.pathname === "/debug-adj") {
       globalThis.__tgCap = [];

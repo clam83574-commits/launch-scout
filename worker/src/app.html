@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>launch-scout</title>
+<title>Launch Scout</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   /* Цвета интерфейса берутся из темы Telegram (он сам выставляет эти
@@ -204,7 +204,7 @@
 <body>
 <div id="gate" hidden>
   <div class="gate-in">
-    <div class="logo">launch-scout</div>
+    <div class="logo">Launch Scout</div>
     <h1>Выберите язык<span>Тілді таңдаңыз · Choose your language</span></h1>
     <button data-lang="ru">Русский</button>
     <button data-lang="kk">Қазақша</button>
@@ -691,7 +691,7 @@
       ${secs.map((x) => `<label class="pref"><input type="checkbox" data-s="${esc(x.id)}"${mineS.has(x.id) ? " checked" : ""}>${esc(sectorName(x))}</label>`).join("")}` : ""}
       <h2>${esc(tr("s_sources"))}</h2>
       <div class="note">${esc(tr("s_sources_note"))}</div>
-      ${["x", "hn", "yc", "gh"].map((k) => `<label class="pref"><input type="checkbox" data-src="${k}"${mineSrc.has(k) ? " checked" : ""}>${esc(SRC[k])}</label>`).join("")}
+      ${["x", "hn", "yc", "gh", "ph"].map((k) => `<label class="pref"><input type="checkbox" data-src="${k}"${mineSrc.has(k) ? " checked" : ""}>${esc(SRC[k])}</label>`).join("")}
       <h2>${esc(tr("s_aud"))}</h2>
       <div class="note">${esc(tr("s_aud_note"))}</div>
       ${["b2b", "b2c", "b2g"].map((a) => `<label class="pref"><input type="checkbox" data-a="${a}"${mineA.has(a) ? " checked" : ""}>${esc(tr("aud_" + a))}</label>`).join("")}`;
