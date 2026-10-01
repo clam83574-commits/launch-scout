@@ -3647,11 +3647,11 @@ async function errorDigest(env, snap) {
   const lines = ["🩺 <b>Сводка ошибок за сутки</b>"];
   if ((results || []).length) {
     lines.push("", "<b>Бот</b>");
-    for (const r of results) lines.push(`• ${esc(r.kind)} — ${r.n} раз\n   <i>${esc(String(r.text || "").slice(0, 160))}</i>`);
+    for (const r of results) lines.push(`• ${esc(r.kind)} ×${r.n}\n   <i>${esc(String(r.text || "").slice(0, 160))}</i>`);
   }
   if (Object.keys(pipe).length) {
     lines.push("", "<b>Пайплайн</b>");
-    for (const [w, p] of Object.entries(pipe)) lines.push(`• ${esc(w)} — ${p.n} раз\n   <i>${esc(p.text.slice(0, 160))}</i>`);
+    for (const [w, p] of Object.entries(pipe)) lines.push(`• ${esc(w)} ×${p.n}\n   <i>${esc(p.text.slice(0, 160))}</i>`);
   }
   if (Object.keys(bad).length) {
     lines.push("", "<b>Источники не работают</b>");
