@@ -777,7 +777,7 @@
   async function showAdminTab() {
     try {
       const r = await api("/api/ls");
-      if (r && r.owner) {
+      if (r && (r.owner || r.admin)) {
         document.querySelector('nav [data-tab="admin"]').hidden = false;
         if (location.hash === "#admin") setTab("admin");
       }

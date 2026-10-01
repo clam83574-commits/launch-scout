@@ -50,6 +50,10 @@ jobs:
   scout:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # actions: write — чтобы удалять старые копии базы из кэша (шаг в конце).
+    permissions:
+      contents: read
+      actions: write
     # Секреты подняты на уровень job СПЕЦИАЛЬНО: в `if:` шага контекст env
     # видит только переменные job, а не объявленные внутри самого шага —
     # объявленный в шаге секрет в его же условии всегда пуст, и шаг молча
@@ -173,3 +177,15 @@ jobs:
           path: data/scout.log
           retention-days: 7
           if-no-files-found: ignore
+
+      # Каждый прогон сохраняет новую копию базы (~7 МБ) — к 2026-10-02 их
+      # накопилось 856 на 5,9 ГБ при лимите кэша репозитория 10 ГБ. Оставляем
+      # 10 последних; текущая сохранится после этого шага.
+      - name: Почистить старые копии базы в кэше
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh cache list -R "$GITHUB_REPOSITORY" --key scout-db- --sort created_at --order desc --limit 300 --json id -q '.[10:][].id'             | while read -r id; do gh cache delete "$id" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || true; done
+

@@ -331,6 +331,7 @@ const EXTRA = {
     why_kz_crowded: "в КЗ занято", why_kz_tasks: "компании КЗ просят такое", why_fast: "можно быстро", why_hiring: "компании ниши нанимают", search_fast: "🔎 Google «%s»: интерес растёт быстрее, чем у %d%% ниш", search_slow: "🔎 Google «%s»: интерес растёт медленнее, чем у %d%% ниш",
     searching_niche: "🔎 Ищу в интернете конкурентов, цены и жалобы клиентов в нише «%s»…",
     searching_idea: "🔎 Ищу в интернете конкурентов для вашей идеи…",
+    fb_ask: "🐞 Расскажите, что не работает или чего не хватает — текстом или голосом. Это бесплатно, передам владельцу.", fb_thanks: "🙏 Спасибо! Передал владельцу — это правда помогает делать бота лучше.", kb_feedback: "🐞 Проблема или идея", kb_invite: "🤝 Пригласить друга", ref_text: "🤝 <b>Приглашайте друзей</b>\n\nКогда друг оформит любую подписку, вы оба получите <b>+%d LS</b> — они не сгорают.\n\nВаша ссылка:\n%s\n\nПриглашено: %d · оформили подписку: %d", ref_share: "📤 Отправить другу", ref_share_text: "Launch Scout — ИИ-аналитик рынка стартапов: куда идут деньги и какие ниши свободны", ref_paid_inviter: "🎉 Ваш друг оформил подписку — вам +%d LS, они не сгорают.", ref_paid_friend: "🎉 Вы пришли по приглашению — вам +%d LS в подарок, они не сгорают.", ex_3_answer: "🧪 <b>Как проверить идею</b>\n\nНапишите /check и одной фразой идею, например:\n<code>/check сервис доставки воды по подписке в Алматы</code>\n\nБот сначала попробует её <b>опровергнуть</b> фактами: конкуренты и их цены, жалобы клиентов, куда идут деньги в этой нише — и честно скажет, делать, делать узко или не делать. Потом — 3 шага проверки за 7 дней.",
     about: "ℹ️ <b>Что умеет Launch Scout</b>\n\n<blockquote>💰 <b>Деньги — из первоисточников</b>\nSEC Form D (официальные заявки о раундах в США), Crunchbase News, TechCrunch, EU-Startups, пресс-релизы PR Newswire, Business Wire и GlobeNewswire, Google News на русском и английском.</blockquote>\n\n<blockquote>🚀 <b>Запуски и спрос</b>\nY Combinator, Product Hunt, Hacker News, GitHub, X; интерес людей — Google Trends; задачи компаний Казахстана — Astana Hub; найм и хакатоны.</blockquote>\n\n<blockquote>🧷 <b>Почему цифрам можно верить</b>\nКаждая цифра в ответе — со ссылкой. Ответ сверяется с фактами: строка с числом или компанией, которых нет в источниках, вырезается. Оценку компании не путаем с суммой раунда, новые находки проверяем по странице-источнику.</blockquote>\n\n<blockquote>🛠 <b>Что можно сделать</b>\nСпросить про любую компанию или нишу · /check — проверить идею · карта идеи и конкуренты одной кнопкой · следить за нишей и получать её новые раунды · /radar — ниши под ваш профиль · сводка дня.</blockquote>\n\n💳 Бесплатно — 300 LS в месяц (~30 вопросов). Тарифы — /balance.", small_talk: "👋 Я отвечаю на вопросы о рынке стартапов — цифрами и со ссылками. Спросите о компании, нише или идее, или нажмите вопрос ниже.", kb_about: "ℹ️ Что умеет",
     rq_market: "🎯 Подберу ниши под вас — два коротких вопроса.\n\n<b>1/2. Где запускаете?</b>", rq_model: "<b>2/2. Что строите?</b>", rq_kz: "🇰🇿 Казахстан", rq_cis: "🌍 СНГ", rq_global: "🌐 Весь мир", rq_unsure: "🤷 Пока не знаю", pf_title: "👤 <b>Ваш профиль</b> — по нему радар подбирает ниши, а чат — советы.", pf_chat: "<b>Из разговора бот понял:</b>", pf_hint: "Профиль сам пополняется из чата. Поправить — кнопками ниже.", pf_edit_m: "✏️ Рынок", pf_edit_t: "✏️ Что строю", pf_full: "⚙️ Подробнее", pf_reset: "🧹 Сбросить",
     ex_title: "С чего начать? Нажмите вопрос или задайте свой — текстом или голосом.", ex_1: "💰 Куда сейчас идут деньги?", ex_2: "🇰🇿 Какие ниши свободны в Казахстане?", ex_3: "🧪 Как проверить мою идею?",
@@ -388,6 +389,7 @@ const EXTRA = {
     why_kz_crowded: "ҚЗ-да бос емес", why_kz_tasks: "ҚЗ компаниялары сұрайды", why_fast: "тез жасауға болады", why_hiring: "компаниялар жалдап жатыр", search_fast: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан жылдам өсуде", search_slow: "🔎 Google «%s»: қызығушылық тауашалардың %d%%-нан баяу өсуде",
     searching_niche: "🔎 «%s» тауашасындағы бәсекелестерді, бағаларды және шағымдарды интернеттен іздеп жатырмын…",
     searching_idea: "🔎 Идеяңыздың бәсекелестерін интернеттен іздеп жатырмын…",
+    fb_ask: "🐞 Не жұмыс істемейтінін не неге жетпейтінін жазыңыз — мәтінмен не дауыспен. Бұл тегін, иесіне жеткіземін.", fb_thanks: "🙏 Рахмет! Иесіне жеткіздім — бұл ботты жақсартуға шын көмектеседі.", kb_feedback: "🐞 Қате не ұсыныс", kb_invite: "🤝 Досты шақыру", ref_text: "🤝 <b>Достарыңызды шақырыңыз</b>\n\nДосыңыз кез келген жазылымды рәсімдегенде, екеуіңіз де <b>+%d LS</b> аласыздар — олар күймейді.\n\nСіздің сілтемеңіз:\n%s\n\nШақырылды: %d · жазылым рәсімдеді: %d", ref_share: "📤 Досқа жіберу", ref_share_text: "Launch Scout — стартаптар нарығының ЖИ-талдаушысы", ref_paid_inviter: "🎉 Досыңыз жазылым рәсімдеді — сізге +%d LS, олар күймейді.", ref_paid_friend: "🎉 Сіз шақыру бойынша келдіңіз — сізге +%d LS сыйлық, олар күймейді.", ex_3_answer: "🧪 <b>Идеяны қалай тексеру</b>\n\n/check деп жазып, идеяны бір сөйлеммен қосыңыз, мысалы:\n<code>/check Алматыда жазылыммен су жеткізу</code>\n\nБот алдымен оны фактілермен <b>жоққа шығаруға</b> тырысады: бәсекелестер мен бағалар, клиент шағымдары, тауашаға ақша қайда барады — және адал айтады: жасау, тар жасау не жасамау. Кейін — 7 күнде тексерудің 3 қадамы.",
     about: "ℹ️ <b>Launch Scout не істей алады</b>\n\n<blockquote>💰 <b>Ақша — бастапқы көздерден</b>\nSEC Form D (АҚШ-тағы раундтар туралы ресми өтінімдер), Crunchbase News, TechCrunch, EU-Startups, PR Newswire, Business Wire, GlobeNewswire баспасөз релиздері, орыс және ағылшын тіліндегі Google News.</blockquote>\n\n<blockquote>🚀 <b>Іске қосулар және сұраныс</b>\nY Combinator, Product Hunt, Hacker News, GitHub, X; адамдардың қызығушылығы — Google Trends; Қазақстан компанияларының тапсырмалары — Astana Hub; жалдау және хакатондар.</blockquote>\n\n<blockquote>🧷 <b>Неге сандарға сенуге болады</b>\nЖауаптағы әр сан — сілтемемен. Жауап фактілермен тексеріледі: дереккөзде жоқ сан не компания бар жол алынып тасталады. Компания бағасын раунд сомасымен шатастырмаймыз.</blockquote>\n\n<blockquote>🛠 <b>Не істеуге болады</b>\nКез келген компания не тауаша туралы сұрау · /check — идеяны тексеру · идея картасы және бәсекелестер · тауашаны бақылау · /radar — профиліңізге тауашалар · күнделікті шолу.</blockquote>\n\n💳 Тегін — айына 300 LS (~30 сұрақ). Тарифтер — /balance.", small_talk: "👋 Мен стартаптар нарығы туралы сұрақтарға сандармен және сілтемелермен жауап беремін. Компания, тауаша не идея туралы сұраңыз немесе төмендегі сұрақты басыңыз.", kb_about: "ℹ️ Не істей алады",
     rq_market: "🎯 Сізге тауашаларды таңдаймын — екі қысқа сұрақ.\n\n<b>1/2. Қай жерде іске қосасыз?</b>", rq_model: "<b>2/2. Не жасап жатырсыз?</b>", rq_kz: "🇰🇿 Қазақстан", rq_cis: "🌍 ТМД", rq_global: "🌐 Бүкіл әлем", rq_unsure: "🤷 Әзірге білмеймін", pf_title: "👤 <b>Сіздің профиліңіз</b> — радар тауашаларды, чат кеңестерді осы бойынша таңдайды.", pf_chat: "<b>Әңгімеден бот түсінгені:</b>", pf_hint: "Профиль чаттан өзі толығады. Түзету — төмендегі батырмалармен.", pf_edit_m: "✏️ Нарық", pf_edit_t: "✏️ Не жасаймын", pf_full: "⚙️ Толығырақ", pf_reset: "🧹 Тазарту",
     ex_title: "Неден бастаймыз? Сұрақты басыңыз немесе өзіңіздікін қойыңыз — мәтінмен не дауыспен.", ex_1: "💰 Қазір ақша қайда барады?", ex_2: "🇰🇿 Қазақстанда қай тауашалар бос?", ex_3: "🧪 Идеямды қалай тексеремін?",
@@ -445,6 +447,7 @@ const EXTRA = {
     why_kz_crowded: "crowded in KZ", why_kz_tasks: "KZ companies ask for it", why_fast: "quick to launch", why_hiring: "niche companies are hiring", search_fast: "🔎 Google “%s”: interest growing faster than %d%% of niches", search_slow: "🔎 Google “%s”: interest growing slower than %d%% of niches",
     searching_niche: "🔎 Searching the web for competitors, prices and complaints in “%s”…",
     searching_idea: "🔎 Searching the web for competitors of your idea…",
+    fb_ask: "🐞 Tell me what is broken or missing — by text or voice. It's free; I'll pass it to the owner.", fb_thanks: "🙏 Thanks! Passed to the owner — it really helps make the bot better.", kb_feedback: "🐞 Bug or idea", kb_invite: "🤝 Invite a friend", ref_text: "🤝 <b>Invite friends</b>\n\nWhen a friend subscribes to any plan, you both get <b>+%d LS</b> — they never expire.\n\nYour link:\n%s\n\nInvited: %d · subscribed: %d", ref_share: "📤 Send to a friend", ref_share_text: "Launch Scout — an AI analyst of the startup market", ref_paid_inviter: "🎉 Your friend subscribed — you get +%d LS, they never expire.", ref_paid_friend: "🎉 You came by invitation — here are +%d LS, they never expire.", ex_3_answer: "🧪 <b>How to check an idea</b>\n\nType /check and your idea in one sentence, e.g.:\n<code>/check water delivery subscription in Almaty</code>\n\nThe bot first tries to <b>disprove</b> it with facts: competitors and prices, customer complaints, where the money goes in the niche — then says honestly: do it, do it narrow, or don't. Then 3 steps to test it in 7 days.",
     about: "ℹ️ <b>What Launch Scout can do</b>\n\n<blockquote>💰 <b>Money — from primary sources</b>\nSEC Form D (official US round filings), Crunchbase News, TechCrunch, EU-Startups, press releases from PR Newswire, Business Wire and GlobeNewswire, Google News in Russian and English.</blockquote>\n\n<blockquote>🚀 <b>Launches and demand</b>\nY Combinator, Product Hunt, Hacker News, GitHub, X; what people search — Google Trends; tasks from Kazakhstan companies — Astana Hub; hiring and hackathons.</blockquote>\n\n<blockquote>🧷 <b>Why you can trust the numbers</b>\nEvery number links to its source. Answers are checked against the facts: a line with a number or company not found in the sources is removed. We never mistake a valuation for a round; new findings are verified on the source page.</blockquote>\n\n<blockquote>🛠 <b>What you can do</b>\nAsk about any company or niche · /check — test an idea · idea map and competitors in one tap · follow a niche and get its new rounds · /radar — niches for your profile · daily brief.</blockquote>\n\n💳 Free — 300 LS a month (~30 questions). Plans — /balance.", small_talk: "👋 I answer questions about the startup market — with numbers and links. Ask about a company, niche or idea, or tap a question below.", kb_about: "ℹ️ What it can do",
     rq_market: "🎯 I'll pick niches for you — two quick questions.\n\n<b>1/2. Where are you launching?</b>", rq_model: "<b>2/2. What are you building?</b>", rq_kz: "🇰🇿 Kazakhstan", rq_cis: "🌍 CIS", rq_global: "🌐 Worldwide", rq_unsure: "🤷 Not sure yet", pf_title: "👤 <b>Your profile</b> — the radar picks niches and the chat tailors advice from it.", pf_chat: "<b>From the conversation the bot understood:</b>", pf_hint: "The profile updates itself from the chat. Fix it with the buttons below.", pf_edit_m: "✏️ Market", pf_edit_t: "✏️ What I build", pf_full: "⚙️ More", pf_reset: "🧹 Reset",
     ex_title: "Where to start? Tap a question or ask your own — by text or voice.", ex_1: "💰 Where is the money going now?", ex_2: "🇰🇿 Which niches are free in Kazakhstan?", ex_3: "🧪 How do I check my idea?",
@@ -1031,15 +1034,15 @@ async function settingsAction(env, chatId, msgId, data, prefs, lang) {
  * Меню команд в Telegram — один раз на версию (помечается в kv). Раньше
  * команд в меню не было вовсе: /trends, /lang знали только те, кому сказали.
  */
-const COMMANDS_VERSION = "2026-10-02b";
+const COMMANDS_VERSION = "2026-10-02c";
 async function setupCommands(env) {
   if ((await meta(env, "commands_version")) === COMMANDS_VERSION) return;
   const list = {
-    ru: [["market", "🧭 Куда движется рынок"], ["radar", "🎯 Возможности под меня"], ["profile", "✏️ Мой профиль"],  ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"], ["about", "ℹ️ Что умеет бот"], ["balance", "💳 Баланс LS и тарифы"], ["terms", "📄 Условия"], ["paysupport", "🆘 Помощь с оплатой"], ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
+    ru: [["market", "🧭 Куда движется рынок"], ["radar", "🎯 Возможности под меня"], ["profile", "✏️ Мой профиль"],  ["niches", "💡 Ниши, куда пошли деньги"], ["check", "🧪 Проверь мою идею"], ["about", "ℹ️ Что умеет бот"], ["balance", "💳 Баланс LS и тарифы"], ["invite", "🤝 Пригласить друга"], ["feedback", "🐞 Сообщить о проблеме или идее"], ["terms", "📄 Условия"], ["paysupport", "🆘 Помощь с оплатой"], ["top", "🔥 Лучшие находки"], ["new", "🆕 За сутки"],
       ["sectors", "🗂 Секторы"], ["settings", "⚙️ Настройки уведомлений"], ["lang", "🌐 Язык"]],
-    en: [["market", "🧭 Where the market is heading"], ["radar", "🎯 Opportunities for me"], ["profile", "✏️ My profile"],  ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"], ["about", "ℹ️ What it can do"], ["balance", "💳 LS balance and plans"], ["terms", "📄 Terms"], ["paysupport", "🆘 Payment support"], ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
+    en: [["market", "🧭 Where the market is heading"], ["radar", "🎯 Opportunities for me"], ["profile", "✏️ My profile"],  ["niches", "💡 Niches the money went into"], ["check", "🧪 Check my idea"], ["about", "ℹ️ What it can do"], ["balance", "💳 LS balance and plans"], ["invite", "🤝 Invite a friend"], ["feedback", "🐞 Report a bug or idea"], ["terms", "📄 Terms"], ["paysupport", "🆘 Payment support"], ["top", "🔥 Top findings"], ["new", "🆕 Last 24h"],
       ["sectors", "🗂 Sectors"], ["settings", "⚙️ Notification settings"], ["lang", "🌐 Language"]],
-    kk: [["market", "🧭 Нарық қайда бет алды"], ["radar", "🎯 Маған арналған мүмкіндіктер"], ["profile", "✏️ Профилім"],  ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"], ["about", "ℹ️ Не істей алады"], ["balance", "💳 LS балансы мен тарифтер"], ["terms", "📄 Шарттар"], ["paysupport", "🆘 Төлем бойынша көмек"], ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
+    kk: [["market", "🧭 Нарық қайда бет алды"], ["radar", "🎯 Маған арналған мүмкіндіктер"], ["profile", "✏️ Профилім"],  ["niches", "💡 Ақша келген тауашалар"], ["check", "🧪 Идеямды тексер"], ["about", "ℹ️ Не істей алады"], ["balance", "💳 LS балансы мен тарифтер"], ["invite", "🤝 Досты шақыру"], ["feedback", "🐞 Қате не ұсыныс"], ["terms", "📄 Шарттар"], ["paysupport", "🆘 Төлем бойынша көмек"], ["top", "🔥 Үздік табылымдар"], ["new", "🆕 Тәулік ішінде"],
       ["sectors", "🗂 Салалар"], ["settings", "⚙️ Хабарлама баптаулары"], ["lang", "🌐 Тіл"]],
   };
   const cmd = (arr) => arr.map(([command, description]) => ({ command, description }));
@@ -1201,28 +1204,10 @@ async function handleUpdate(env, update) {
   }
 
   await ensureTables(env);
+  if (msg && raw.startsWith("/start")) await refCapture(env, chatId, raw);
   if (!(await hasAccess(env, chatId))) {
-    const from = msg && msg.from ? msg.from : cb && cb.from ? cb.from : {};
-    const who = from.username ? "@" + from.username : from.first_name || "";
-    // Любое сообщение незнакомца — попытка ввести код. Язык он ещё не
-    // выбрал, поэтому отвечаем сразу на трёх.
-    if (raw && !raw.startsWith("/start") && !raw.startsWith("/help")) {
-      const err = await tryCode(env, chatId, raw, who);
-      if (err) {
-        await tg(env, "sendMessage", { chat_id: chatId, text: err });
-        return;
-      }
-      await tg(env, "sendMessage", {
-        chat_id: chatId,
-        text: "✅ Доступ открыт · Қолжетімділік ашылды · Access granted\n\nВыберите язык · Тілді таңдаңыз · Choose your language",
-        reply_markup: LANG_PICKER,
-      });
-      return;
-    }
-    await tg(env, "sendMessage", {
-      chat_id: chatId,
-      text: "🔒 Бот закрытый — пришлите код доступа одним сообщением.\n🔒 Бот жабық — қолжетімділік кодын бір хабарламамен жіберіңіз.\n🔒 Private bot — send your access code in one message.",
-    });
+    // Закрытый доступ: выдаёт админ по ID (решение владельца 2026-10-02), кодов нет.
+    await accessGate(env, chatId, msg, cb, data);
     return;
   }
 
@@ -1377,12 +1362,24 @@ async function handleUpdate(env, update) {
   }
   if (data === "about" || text.startsWith("/about")) {
     await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).about, parse_mode: "HTML", disable_web_page_preview: true,
-      reply_markup: { inline_keyboard: [[{ text: L(lang).ex_1, callback_data: "ex:1" }], [{ text: L(lang).kb_app, web_app: { url: APP_URL } }]] } });
+      reply_markup: { inline_keyboard: [[{ text: L(lang).ex_1, callback_data: "ex:1" }],
+        [{ text: L(lang).kb_feedback, callback_data: "fb" }, { text: L(lang).kb_invite, callback_data: "invite" }],
+        [{ text: L(lang).kb_app, web_app: { url: APP_URL } }]] } });
+    return;
+  }
+  if (data === "fb" || text.startsWith("/feedback")) {
+    await feedbackStart(env, chatId, lang);
+    return;
+  }
+  if (data === "invite" || text.startsWith("/invite")) {
+    await inviteMsg(env, chatId, lang);
     return;
   }
   if (data.startsWith("ex:")) {
+    // Вопросы-примеры со стартового экрана бесплатны — это знакомство с ботом.
+    if (data === "ex:3") { await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).ex_3_answer, parse_mode: "HTML" }); return; }
     const q = L(lang)["ex_" + data.slice(3)];
-    if (q) await chatReply(env, chatId, q, lang, "chat");
+    if (q) await chatReply(env, chatId, q, lang, "chat", { free: true });
     return;
   }
   if (data.startsWith("ca:") || data.startsWith("cn:")) {
@@ -1489,7 +1486,7 @@ async function handleUpdate(env, update) {
       await tg(env, "sendMessage", { chat_id: chatId, text: s.voice_fail });
     } else {
       // Расшифровку не показываем — сразу ответ (просьба владельца 2026-09-29).
-      await chatReply(env, chatId, heard, lang);
+      if (!(await feedbackTake(env, chatId, heard, msg.from || {}, lang))) await chatReply(env, chatId, heard, lang);
     }
   } else if (text.startsWith("/check")) {
     // «Проверь мою идею»: сначала пытаемся её опровергнуть фактами.
@@ -1497,7 +1494,7 @@ async function handleUpdate(env, update) {
     if (idea.length < 10) await tg(env, "sendMessage", { chat_id: chatId, text: s.check_help });
     else await chatReply(env, chatId, idea, lang, "check");
   } else if (raw && !raw.startsWith("/")) {
-    await chatReply(env, chatId, raw, lang);
+    if (!(await feedbackTake(env, chatId, raw, msg.from || {}, lang))) await chatReply(env, chatId, raw, lang);
   } else if (text) {
     await tg(env, "sendMessage", { chat_id: chatId, text: s.commands, reply_markup: keyboardFor(lang) });
   }
@@ -1978,7 +1975,7 @@ async function chatReply(env, chatId, question, lang, mode = "chat", opts = {}) 
     return tg(env, "sendMessage", { chat_id: chatId, text: s.small_talk, reply_markup: startKb(lang) });
   }
   const act = opts.upgrade ? "live_up" : opts.live ? "live" : (LS_PRICE[mode] ? mode : "chat");
-  if (!(await lsCanAfford(env, chatId, act))) return lsShortMsg(env, chatId, lang, act);
+  if (!opts.free && !(await lsCanAfford(env, chatId, act))) return lsShortMsg(env, chatId, lang, act);
   await tg(env, "sendChatAction", { chat_id: chatId, action: "typing" });
 
   const prof = await env.DB.prepare("SELECT about FROM chat_profile WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
@@ -1987,7 +1984,7 @@ async function chatReply(env, chatId, question, lang, mode = "chat", opts = {}) 
   // Быстрый путь: матрица ниш + один вызов модели с потоком (секунды).
   // Запасные ниже — цепочка инструментов и срез через Groq — только если он
   // недоступен (нет матрицы, индекса или OpenRouter не ответил).
-  if (await fastAnswer(env, chatId, question, lang, mode, { niche: opts.niche || null, profile, hist, live: !!opts.live, research: !!opts.research, upgrade: !!opts.upgrade })) {
+  if (await fastAnswer(env, chatId, question, lang, mode, { niche: opts.niche || null, profile, hist, live: !!opts.live, research: !!opts.research, upgrade: !!opts.upgrade, free: !!opts.free })) {
     await setMeta(env, "chat_calls_" + today, total + 1);
     await setMeta(env, `chat_user_${chatId}_${today}`, mine + 1);
     return;
@@ -2964,6 +2961,7 @@ async function starsLink(env, uid, item, lang) {
 
 function starsButtons(s) {
   return { inline_keyboard: [
+    [{ text: s.kb_invite, callback_data: "invite" }],
     [{ text: `⭐ Pro — ${STAR_ITEMS.pro.stars}`, callback_data: "buy:pro" }, { text: `⭐ Max — ${STAR_ITEMS.max.stars}`, callback_data: "buy:max" }],
     [{ text: `⭐ Pro Max — ${STAR_ITEMS.promax.stars}`, callback_data: "buy:promax" }, { text: fmt(s.st_pack_btn, STAR_ITEMS.pack.stars), callback_data: "buy:pack" }],
   ] };
@@ -3004,6 +3002,7 @@ async function starsPaid(env, chatId, msg, lang) {
         await tg(env, "editUserStarSubscription", { user_id: Number(chatId), telegram_payment_charge_id: old.charge_id, is_canceled: true });
       }
     }
+    if (!p.is_recurring || p.is_first_recurring) await refReward(env, chatId);
     await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.st_ok_sub, s["ls_name_" + it.plan], PLANS[it.plan].ls,
       new Date(r.period_end * 1000).toISOString().slice(0, 10)) });
   } else {
@@ -3117,7 +3116,7 @@ const owners = (env) => (env.LS_BOT_ALLOW || "").split(",").map((x) => x.trim())
 
 /** Служебное сообщение владельцу — в служебного бота, если он есть. */
 async function ownerNotify(env, payload) {
-  for (const o of owners(env)) await tg(adminEnv(env), "sendMessage", { chat_id: o, disable_web_page_preview: true, ...payload });
+  for (const o of await adminIds(env)) await tg(adminEnv(env), "sendMessage", { chat_id: o, disable_web_page_preview: true, ...payload });
 }
 
 function adminReport(d) {
@@ -3167,18 +3166,52 @@ async function handleAdminUpdate(env, update) {
   const chatId = msg ? msg.chat.id : cb ? cb.message.chat.id : null;
   if (!chatId) return;
   if (cb) await tg(aenv, "answerCallbackQuery", { callback_query_id: cb.id });
-  if (!isOwner(env, chatId)) {
+  await ensureTables(env);
+  if (!(await isAdmin(env, chatId))) {
     if (msg) await tg(aenv, "sendMessage", { chat_id: chatId, text: "Это служебный бот Launch Scout." });
     return;
   }
-  await ensureTables(env);
   const raw = msg ? (msg.text || "").trim() : "";
   const text = raw.toLowerCase();
   const data = cb ? cb.data || "" : "";
   if (text.startsWith("/start") || text.startsWith("/help")) {
     await tg(aenv, "sendMessage", { chat_id: chatId, parse_mode: "HTML", reply_markup: adminKb(),
       text: "🛠 <b>Dashboard Launch Scout</b>\n\nСюда приходят служебные уведомления: сбор молчит, токены, баланс OpenRouter, оплаты, новые пользователи, /paysupport.\n\n" +
-        "/report — сводка · /costs — себестоимость действий за неделю\n/grant &lt;id&gt; &lt;free|pro|max|promax&gt; · /credit &lt;id&gt; &lt;LS&gt; · /refund &lt;id&gt; &lt;charge_id&gt;\n\nИли спросите текстом/голосом: «как дела за неделю?», «сколько новых пользователей?»." });
+        "/report — сводка · /costs — себестоимость действий за неделю\n/users — у кого доступ · /allow &lt;id&gt; · /deny &lt;id&gt;\n/grant &lt;id&gt; &lt;free|pro|max|promax&gt; · /credit &lt;id&gt; &lt;LS&gt; · /refund &lt;id&gt; &lt;charge_id&gt;\n\nИли спросите текстом/голосом: «как дела за неделю?», «сколько новых пользователей?»." });
+    return;
+  }
+  // Доступ к публичному боту: кнопки на запрос и команды.
+  if (data.startsWith("allow:") || data.startsWith("deny:")) {
+    const [act, id] = data.split(":");
+    if (act === "allow") await grantAccess(env, id, chatId);
+    await tg(aenv, "editMessageText", { chat_id: chatId, message_id: cb.message.message_id,
+      text: `${cb.message.text || ""}\n\n${act === "allow" ? "✅ Доступ выдан" : "✖️ Отклонено"}` });
+    return;
+  }
+  if (/^\/allow\b/.test(text)) {
+    const id = (raw.split(/\s+/)[1] || "").replace(/\D/g, "");
+    if (!id) { await tg(aenv, "sendMessage", { chat_id: chatId, text: "Формат: /allow <telegram id>" }); return; }
+    await grantAccess(env, id, chatId);
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: `✅ Доступ выдан: ${id}` });
+    return;
+  }
+  if (/^\/deny\b/.test(text)) {
+    const id = (raw.split(/\s+/)[1] || "").replace(/\D/g, "");
+    await env.DB.prepare("DELETE FROM access WHERE chat_id = ?1").bind(id).run().catch(() => null);
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: `✖️ Доступ закрыт: ${id}` });
+    return;
+  }
+  if (/^\/users\b/.test(text)) {
+    const { results } = await env.DB.prepare("SELECT a.chat_id, a.who, a.granted_at, u.ts seen FROM access a LEFT JOIN users_seen u ON u.user_id = a.chat_id ORDER BY a.granted_at DESC LIMIT 60").all().catch(() => ({ results: [] }));
+    const rows = (results || []).map((r) => `• <code>${r.chat_id}</code> ${esc(r.who || "")}${r.seen ? "" : " · ещё не заходил"}`);
+    await tg(aenv, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: `👥 С доступом: ${rows.length}\n\n${rows.join("\n") || "пока никого"}\n\n/allow &lt;id&gt; · /deny &lt;id&gt;` });
+    return;
+  }
+  if (/^\/admin_(add|del)\b/.test(text) && isOwner(env, chatId)) {
+    const id = (raw.split(/\s+/)[1] || "").replace(/\D/g, "");
+    if (text.startsWith("/admin_add")) await env.DB.prepare("INSERT OR IGNORE INTO admins (user_id, ts) VALUES (?1, ?2)").bind(id, Math.floor(Date.now() / 1000)).run();
+    else await env.DB.prepare("DELETE FROM admins WHERE user_id = ?1").bind(id).run();
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: `Админы: ${(await adminIds(env)).join(", ")}` });
     return;
   }
   if (data === "a:report" || text.startsWith("/report")) {
@@ -3216,7 +3249,9 @@ async function setupBot(env, which, avatar) {
   out.menu = await tg(benv, "setChatMenuButton", { menu_button: { type: "web_app", text: isAdmin ? "Дашборд" : "Приложение", web_app: { url: APP_URL + (isAdmin ? "#admin" : "") } } });
   if (isAdmin) {
     out.commands = await tg(benv, "setMyCommands", { commands: [
-      { command: "report", description: "📋 Сводка" }, { command: "costs", description: "🧾 Себестоимость за неделю" },
+      { command: "report", description: "📋 Сводка" }, { command: "users", description: "👥 У кого доступ" },
+      { command: "allow", description: "Дать доступ: /allow id" }, { command: "deny", description: "Закрыть доступ: /deny id" },
+      { command: "costs", description: "🧾 Себестоимость за неделю" },
       { command: "grant", description: "Выдать тариф: /grant id pro" }, { command: "credit", description: "Начислить LS: /credit id 1000" },
       { command: "refund", description: "Возврат: /refund id charge_id" }] });
     for (const l of ["en", "kk"]) await tg(benv, "deleteMyCommands", { language_code: l });
@@ -3230,6 +3265,137 @@ async function setupBot(env, which, avatar) {
   const me = await tg(benv, "getMe", {});
   out.me = me && me.result ? { username: me.result.username, name: me.result.first_name } : me;
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// 🔐 Доступ, админы, обратная связь, рефералы (решения владельца 2026-10-02)
+//
+// Публичный бот закрыт: доступ выдаёт админ по Telegram ID (кнопкой на
+// запрос или /allow в служебном боте) — кодов больше нет. Служебный бот:
+// владелец + админы из таблицы admins. Обратная связь бесплатна: ИИ коротко
+// пересказывает суть и передаёт админам. Рефералы: бонус обоим — когда
+// приглашённый впервые оформит подписку.
+// ---------------------------------------------------------------------------
+const REF_BONUS = 500;
+
+async function isAdmin(env, id) {
+  if (isOwner(env, id)) return true;
+  const r = await env.DB.prepare("SELECT 1 FROM admins WHERE user_id = ?1").bind(String(id)).first().catch(() => null);
+  return !!r;
+}
+async function adminIds(env) {
+  const { results } = await env.DB.prepare("SELECT user_id FROM admins").all().catch(() => ({ results: [] }));
+  return [...new Set([...owners(env), ...(results || []).map((r) => String(r.user_id))])];
+}
+
+const CLOSED_TEXT = "🔒 Launch Scout пока в закрытом доступе.\nБот ашық емес · Private beta.\n\nВаш ID / Сіздің ID / Your ID: <code>%s</code>\n\nНажмите кнопку — владелец получит запрос.\nБатырманы басыңыз · Tap the button to request access.";
+const REQ_SENT = "✅ Запрос отправлен — напишем здесь, когда доступ откроется.\nСұрау жіберілді · Request sent.";
+
+/** Закрытый бот: экран с ID и кнопкой запроса; запрос — админам с кнопкой «Дать доступ». */
+async function accessGate(env, chatId, msg, cb, data) {
+  const from = (msg && msg.from) || (cb && cb.from) || {};
+  const who = [from.first_name, from.last_name].filter(Boolean).join(" ") + (from.username ? " @" + from.username : "");
+  if (data === "reqaccess") {
+    const key = "accreq_" + chatId;
+    if (!(await meta(env, key))) {
+      await setMeta(env, key, String(Math.floor(Date.now() / 1000)));
+      for (const a of await adminIds(env)) {
+        await tg(adminEnv(env), "sendMessage", { chat_id: a, text: `🔑 Запрос доступа: ${who || "без имени"} (${chatId})`,
+          reply_markup: { inline_keyboard: [[{ text: "✅ Дать доступ", callback_data: "allow:" + chatId }, { text: "✖️ Нет", callback_data: "deny:" + chatId }]] } });
+      }
+    }
+    await tg(env, "sendMessage", { chat_id: chatId, text: REQ_SENT });
+    return;
+  }
+  await tg(env, "sendMessage", { chat_id: chatId, text: fmt(CLOSED_TEXT, chatId), parse_mode: "HTML",
+    reply_markup: { inline_keyboard: [[{ text: "🔑 Запросить доступ · Request access", callback_data: "reqaccess" }]] } });
+}
+
+async function grantAccess(env, id, by) {
+  await env.DB.prepare("INSERT OR REPLACE INTO access (chat_id, who, granted_at) VALUES (?1, ?2, ?3)")
+    .bind(String(id), "by " + by, Math.floor(Date.now() / 1000)).run();
+  // Человек уже писал боту — можно сообщить ему.
+  await tg(env, "sendMessage", { chat_id: id, text: "✅ Доступ открыт · Қолжетімділік ашылды · Access granted\n\nВыберите язык · Тілді таңдаңыз · Choose your language", reply_markup: LANG_PICKER });
+}
+
+// --- 🐞 Обратная связь ---------------------------------------------------------
+const FB_SYSTEM = `A user of a Telegram bot sends feedback (bug report, wish, complaint or praise). Reply JSON only:
+{"type": "bug|idea|complaint|praise|other", "summary": "the core point in one short Russian sentence", "severity": "low|medium|high"}`;
+
+async function feedbackStart(env, chatId, lang) {
+  await setMeta(env, "fb_" + chatId, String(Math.floor(Date.now() / 1000)));
+  await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).fb_ask });
+}
+
+/** Ждём отзыв 15 минут после /feedback: true — сообщение было отзывом. */
+async function feedbackTake(env, chatId, text, from, lang) {
+  const t = Number((await meta(env, "fb_" + chatId)) || 0);
+  if (!t || Date.now() / 1000 - t > 900 || !text) return false;
+  await setMeta(env, "fb_" + chatId, "");
+  let d = {};
+  try {
+    const r = await groqFetch(env, { temperature: 0, max_completion_tokens: 300, reasoning_effort: "low", response_format: { type: "json_object" },
+      messages: [{ role: "system", content: FB_SYSTEM }, { role: "user", content: text.slice(0, 3000) }] }, ["openai/gpt-oss-20b"], 8000);
+    if (r && r.ok) d = JSON.parse((await r.json()).choices[0].message.content || "{}");
+  } catch { /* без пересказа — передадим как есть */ }
+  const icon = { bug: "🐞", idea: "💡", complaint: "😤", praise: "🙌" }[d.type] || "💬";
+  const who = [from.first_name, from.last_name].filter(Boolean).join(" ") + (from.username ? " @" + from.username : "");
+  for (const a of await adminIds(env)) {
+    await tg(adminEnv(env), "sendMessage", { chat_id: a, parse_mode: "HTML", disable_web_page_preview: true,
+      text: `${icon} <b>Отзыв</b> от ${esc(who || "без имени")} (<code>${chatId}</code>)${d.severity === "high" ? " · ⚠️ важно" : ""}\n\n<b>Суть:</b> ${esc(d.summary || "—")}\n\n<i>${esc(text.slice(0, 1500))}</i>` });
+  }
+  await tg(env, "sendMessage", { chat_id: chatId, text: L(lang).fb_thanks });
+  return true;
+}
+
+// --- 🤝 Рефералы ----------------------------------------------------------------
+async function botUsername(env) {
+  let u = await meta(env, "bot_username");
+  if (!u) {
+    const me = await tg(env, "getMe", {});
+    u = me && me.result && me.result.username ? me.result.username : "";
+    if (u) await setMeta(env, "bot_username", u);
+  }
+  return u || "Launch_Scout_bot";
+}
+
+/** /start ref_<id> от нового человека — запомнить пригласившего (один раз). */
+async function refCapture(env, chatId, raw) {
+  const m = /^\/start(?:@\w+)?\s+ref_(\d{3,15})/i.exec(raw || "");
+  if (!m || m[1] === String(chatId)) return;
+  const known = await env.DB.prepare("SELECT 1 FROM users_seen WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
+  if (known) return;   // уже был в боте — не новый пользователь
+  await env.DB.prepare("INSERT OR IGNORE INTO referrals (user_id, inviter, ts, rewarded) VALUES (?1, ?2, ?3, 0)")
+    .bind(String(chatId), m[1], Math.floor(Date.now() / 1000)).run().catch(() => null);
+}
+
+/** Первая подписка приглашённого — бонус обоим, один раз. */
+async function refReward(env, chatId) {
+  const r = await env.DB.prepare("SELECT inviter FROM referrals WHERE user_id = ?1 AND rewarded = 0").bind(String(chatId)).first().catch(() => null);
+  if (!r) return;
+  const upd = await env.DB.prepare("UPDATE referrals SET rewarded = 1, rewarded_at = ?2 WHERE user_id = ?1 AND rewarded = 0")
+    .bind(String(chatId), Math.floor(Date.now() / 1000)).run().catch(() => null);
+  if (!(upd && upd.meta && upd.meta.changes)) return;
+  for (const id of [String(chatId), String(r.inviter)]) {
+    const b = await lsGet(env, id);
+    b.credits += REF_BONUS;
+    await lsSave(env, b);
+  }
+  const lang = (await getPrefs(env, r.inviter)).lang || "ru";
+  await tg(env, "sendMessage", { chat_id: r.inviter, text: fmt(L(lang).ref_paid_inviter, REF_BONUS) });
+  const lang2 = (await getPrefs(env, chatId)).lang || "ru";
+  await tg(env, "sendMessage", { chat_id: chatId, text: fmt(L(lang2).ref_paid_friend, REF_BONUS) });
+  await ownerNotify(env, { text: `🤝 Реферал оплатил: ${chatId} (пригласил ${r.inviter}) — обоим +${REF_BONUS} LS` });
+}
+
+async function inviteMsg(env, chatId, lang) {
+  const s = L(lang);
+  const u = await botUsername(env);
+  const link = `https://t.me/${u}?start=ref_${chatId}`;
+  const st = (await env.DB.prepare("SELECT COUNT(*) n, SUM(rewarded) paid FROM referrals WHERE inviter = ?1").bind(String(chatId)).first().catch(() => null)) || {};
+  await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", disable_web_page_preview: true,
+    text: fmt(s.ref_text, REF_BONUS, link, st.n || 0, st.paid || 0),
+    reply_markup: { inline_keyboard: [[{ text: s.ref_share, url: `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(s.ref_share_text)}` }]] } });
 }
 
 let lastUnsupported = null;   // для /debug-chat
@@ -3620,7 +3786,7 @@ async function answerAction(env, chatId, lang, data, prefs, cb, msgId) {
  * Быстрый ответ по матрице. mode: chat | deep (niche задана) | check.
  * Возвращает true, если ответ отправлен; false — пусть отвечает запасной путь.
  */
-async function fastAnswer(env, chatId, question, lang, mode, { niche = null, profile = "", hist = [], live = false, research = false, upgrade = false } = {}) {
+async function fastAnswer(env, chatId, question, lang, mode, { niche = null, profile = "", hist = [], live = false, research = false, upgrade = false, free = false } = {}) {
   const s = L(lang);
   if (!env.AI || !env.VEC || !env.LS_OPENROUTER_KEY) return false;
   const snap = await loadSnapshot(env);   // кэш на минуту — обычно мгновенно
@@ -3709,7 +3875,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   const { html, unsupported } = groundAnswer(body, fx.facts, question + " " + profile);
   lastUnsupported = { unsupported, raw: body, facts: fx.facts.length };
   // Списание: живой поиск — по цене поиска, иначе по режиму ответа.
-  const charge = await lsSpend(env, chatId, liveRes ? (upgrade ? "live_up" : "live") : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
+  const charge = free ? { spent: 0, left: null } : await lsSpend(env, chatId, liveRes ? (upgrade ? "live_up" : "live") : (LS_PRICE[mode] ? mode : "chat"), meter.usd);
   // Плашки-«посты» — после одобрения владельцем (переменная LS_CARDS=1).
   let finalText = (html ? (env.LS_CARDS === "0" ? html : cardify(html)) : esc(body));
   // Обрезка не должна разрывать плашку: выкидываем последние блоки целиком.
@@ -3944,6 +4110,8 @@ async function ensureTables(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS niche_matrix (niche TEXT PRIMARY KEY, name_ru TEXT, sector TEXT, data TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_balance (user_id TEXT PRIMARY KEY, plan TEXT, paid_until INTEGER, period_end INTEGER, sub_ls INTEGER, credits INTEGER, warned INTEGER, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS users_seen (user_id TEXT PRIMARY KEY, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS admins (user_id TEXT PRIMARY KEY, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS referrals (user_id TEXT PRIMARY KEY, inviter TEXT, ts INTEGER, rewarded INTEGER, rewarded_at INTEGER)"),
     // Первое появление — для «новых за неделю»; прошлых пользователей берём из настроек.
     env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) SELECT user_id, ts FROM prefs"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS payments (charge_id TEXT PRIMARY KEY, user_id TEXT, ts INTEGER, item TEXT, stars INTEGER, sub_exp INTEGER, recurring INTEGER)"),
@@ -4217,7 +4385,7 @@ async function appUser(env, request) {
     return null;
   }
   if (!user || !user.id) return null;
-  if (viaAdmin) return isOwner(env, user.id) ? user : null;
+  if (viaAdmin) return (await isAdmin(env, user.id)) ? user : null;
   return (await hasAccess(env, user.id)) ? user : null;
 }
 
@@ -4277,7 +4445,7 @@ export default {
       }
       if (url.pathname === "/api/fav") return favorites(env, request, user, url);
       if (url.pathname === "/api/admin") {
-        if (!isOwner(env, user.id)) return json({ error: "forbidden" }, 403);
+        if (!(await isAdmin(env, user.id))) return json({ error: "forbidden" }, 403);
         await ensureTables(env);
         return json(await adminStats(env));
       }
@@ -4285,7 +4453,7 @@ export default {
         await ensureTables(env);
         const r = await lsGet(env, user.id);
         return json({ plan: r.plan, sub_ls: r.sub_ls, credits: r.credits, plan_ls: (PLANS[r.plan] || PLANS.free).ls, period_end: r.period_end,
-          owner: isOwner(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE, pack: CREDIT_PACK });
+          owner: isOwner(env, user.id), admin: await isAdmin(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE, pack: CREDIT_PACK });
       }
       if (url.pathname === "/api/buy") {
         const lang = (await getPrefs(env, user.id)).lang || "ru";
@@ -4467,6 +4635,12 @@ export default {
       // Прогнать апдейт Telegram без отправки: вызовы ботa пишутся в ответ.
       globalThis.__tgCap = [];
       await handleUpdate(env, await request.json());
+      const cap = globalThis.__tgCap; globalThis.__tgCap = null;
+      return json(cap);
+    }
+    if (env.LS_DEBUG === "1" && request.method === "POST" && url.pathname === "/debug-admin-update") {
+      globalThis.__tgCap = [];
+      await handleAdminUpdate(env, await request.json());
       const cap = globalThis.__tgCap; globalThis.__tgCap = null;
       return json(cap);
     }
