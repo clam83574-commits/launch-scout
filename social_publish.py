@@ -119,19 +119,33 @@ def post_threads(page, job, files, dry):
     dismiss(page)
     # Окно нового поста: кнопка «Создать» в боковой панели.
     page.locator("[aria-label='Create'], [aria-label='Создать'], [aria-label='New thread'], [aria-label='Новая ветка']").first.click()
-    dlg = page.get_by_role("dialog").last
-    box = dlg.locator("[contenteditable=true]").first
-    box.wait_for(timeout=20000)
+    pause(1.5, 2.5)
+    # Окно «Новая публикация» всплывает сбоку и не всегда помечено как dialog:
+    # ищем по заголовку, поле ввода — последнее видимое (в ленте сверху своё «Что нового?»).
+    head = page.get_by_text(re.compile("^(Новая публикация|New thread|Новая ветка)$")).last
+    box = page.locator("[contenteditable=true]:visible, [role=textbox]:visible, textarea:visible").last
+    try:
+        box.wait_for(timeout=10000)
+    except PwTimeout:
+        page.get_by_text(re.compile("^(Что нового\\?|What's new\\?)$")).last.click()
+        box.wait_for(timeout=10000)
     box.click()
     pause()
     page.keyboard.insert_text(text)
     pause()
+    # Контейнер окна — ближайший предок заголовка, где есть кнопка «Опубликовать».
+    dlg = head.locator("xpath=ancestor::div[.//*[normalize-space(text())='Опубликовать' or normalize-space(text())='Post']][1]")
+    if not dlg.count():
+        dlg = page
     if files:
-        dlg.locator("input[type=file]").first.set_input_files(files)
+        inp = dlg.locator("input[type=file]")
+        (inp.last if inp.count() else page.locator("input[type=file]").last).set_input_files(files)
         # Превью всех картинок.
-        dlg.locator("img[src^='blob:']").nth(len(files) - 1).wait_for(timeout=60000)
+        page.locator("img[src^='blob:']").nth(len(files) - 1).wait_for(timeout=60000)
         pause(1, 2)
-    post = btn(dlg, "Post", "Опубликовать")
+    post = page.locator("div[role=button], button").filter(has_text=re.compile("^(Post|Опубликовать)$")).last
+    if dlg is not page:
+        post = dlg.locator("div[role=button], button").filter(has_text=re.compile("^(Post|Опубликовать)$")).last
     if dry:
         return None
     post.click()
