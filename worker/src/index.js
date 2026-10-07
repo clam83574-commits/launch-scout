@@ -6297,6 +6297,16 @@ ${link || "(ссылку не нашёл — проверьте профиль)"
       await env.DB.prepare("DELETE FROM th_media WHERE ts < ?1").bind(Math.floor(Date.now() / 1000) - 7 * 86400).run().catch(() => null);
       return json({ ok: true, got: got.n });
     }
+    if (url.pathname === "/th/factsfor" && request.method === "POST") {
+      // Факты из нашей базы под чужой пост — тем же поиском по нишам, что в чате:
+      // ниши по смыслу, их раунды, инвесторы, конкуренты, жалобы, Казахстан.
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) return new Response("нет", { status: 403 });
+      const body = await request.json().catch(() => ({}));
+      const text = String(body.text || "").slice(0, 1200);
+      if (text.length < 20) return json({ facts: [], niches: [] });
+      const r = await matrixFacts(env, text).catch((e) => ({ facts: [], niches: [], err: String(e) }));
+      return json({ facts: (r.facts || []).slice(0, 16).map((f) => f.text), niches: (r.niches || []).map((d) => d.niche), err: r.err });
+    }
     if (url.pathname === "/th/engage" || url.pathname === "/th/engaged") {
       // Автокомментарии Скаута (social_engage.py в Actions): GET — настройки, факты
       // и кому уже отвечали; POST — отчёт о том, что опубликовано.

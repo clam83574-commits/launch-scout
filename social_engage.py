@@ -5,11 +5,15 @@
 начинает показывать посты Скаута той же аудитории.
 
 Один заход (engage.yml, 5 раз в день) — по одному ответу в каждой сети:
-1. поиск свежих постов по стартап-запросам (веб-версия с куки, как в social_publish.py);
-2. модель выбирает пост, где Скаут может сказать что-то по делу, и пишет ответ;
-3. отдельный проверяющий вызов ставит оценку релевантности; ниже 8 из 10 — не публикуем
-   (лучше пропустить заход, чем ответить невпопад);
-4. ответ, подписка на автора, отчёт Worker'у (POST /th/engaged → владельцу).
+1. кандидаты: Threads — поиск в веб-версии с куки Скаута; X — через парсер
+   (sources/x.py, аккаунт X_AUTH_TOKEN / X_CT0): поиск и ленты стартап-аккаунтов
+   из x_account_ids.json (веб-поиск X из Actions упирается в проверку «вы не бот»);
+2. модель выбирает 1–3 поста, где Скауту есть что сказать по сути;
+3. под выбранный пост Worker достаёт факты из нашей базы (POST /th/factsfor —
+   тот же поиск по нишам, что в чате бота: раунды, инвесторы, конкуренты, жалобы);
+4. модель пишет ответ только с этими фактами; отдельный проверяющий вызов ставит
+   оценку релевантности, ниже 8 из 10 — не публикуем (лучше пропустить заход);
+5. ответ от аккаунта Скаута, подписка на автора, отчёт Worker'у (POST /th/engaged).
 Лимит в сутки, пауза и кому уже отвечали — у Worker'а (GET /th/engage).
 
 Тексты постов и ответов в лог не пишутся — логи публичного репозитория видны всем.
@@ -21,6 +25,7 @@ import argparse
 import calendar
 import json
 import os
+import pathlib
 import random
 import re
 import sys
@@ -37,42 +42,53 @@ MODEL = os.environ.get("LS_TH_MODEL", "anthropic/claude-sonnet-5.5")
 MIN_PICK = 7      # пост подходит
 MIN_SCORE = 8     # ответ точно про этот пост (проверяющий вызов)
 
-# Запросы поиска: живые разговоры фаундеров, а не новости. Каждый заход — 3 случайных.
+# Запросы поиска: живые разговоры фаундеров, а не новости. Каждый заход — несколько случайных.
 QUERIES = {
-    "th": ["стартап", "фаундер", "MVP", "запустил продукт", "ищу инвестора", "бизнес идея", "Astana Hub", "венчур",
-           "SaaS", "первые клиенты", "pre-seed", "стартап Казахстан", "питч", "акселератор", "свой продукт"],
-    "x": ["стартап lang:ru", "фаундер lang:ru", "MVP lang:ru", "инвестиции стартап lang:ru", "Astana Hub",
-          "startup Kazakhstan", "стартап Казахстан", "бизнес идея lang:ru", "SaaS lang:ru", "венчур lang:ru"],
+    # Фразы, которые пишут только те, кто сам строит бизнес: «стартап» в поиске ловит что угодно.
+    "th": ["мой стартап", "наш стартап", "мы запустили", "ищу кофаундера", "первые платящие клиенты", "MRR",
+           "юнит-экономика", "привлекли инвестиции", "кастдев", "product market fit", "pre-seed раунд",
+           "резидент Astana Hub", "пилю SaaS", "запустил MVP", "фаундер стартапа", "build in public"],
+    "x": ["\"мой стартап\" -filter:replies", "\"мы запустили\" lang:ru -filter:replies", "\"ищу кофаундера\"",
+          "MRR lang:ru -filter:replies", "\"привлекли инвестиции\" -filter:replies", "Astana Hub", "startup Kazakhstan",
+          "\"first paying customers\" -filter:replies min_faves:5", "\"pre-seed\" raised -filter:replies min_faves:10",
+          "\"building in public\" MRR -filter:replies min_faves:10"],
 }
 
-PICK_RULES = """Ты выбираешь, под каким постом оставить ответ, и пишешь ответ от имени Скаута.
+SELECT_RULES = """Ты выбираешь, под какими постами Скауту стоит оставить ответ.
 
-КАКОЙ ПОСТ ПОДХОДИТ (score 0–10)
-+ автор сам делает стартап, продукт, бизнес или выбирает идею; спрашивает совета; делится цифрами, болью, запуском;
+Строго: Скауту нужны фаундеры, а не все подряд. 8–10 — только если АВТОР САМ строит стартап/продукт/бизнес
+(«мы запустили», «наш MRR», «ищу кофаундера», «привлекли раунд», кастдев, первые клиенты) или инвестирует в стартапы.
+Посты «вообще» про ИИ, деньги, работу, мотивацию, карьеру, учёбу, новости — не выше 4, даже если там есть слово «стартап».
+
+ПОДХОДИТ (score 0–10)
++ автор сам делает стартап, продукт, бизнес или выбирает идею для своего стартапа; спрашивает совета; делится цифрами, болью, запуском;
 + тема: стартапы, инвестиции, рынок, ниши, ИИ-продукты, SaaS, e-commerce, бизнес в Казахстане и СНГ;
-+ Скауту есть что сказать ПО СУТИ ЭТОГО ПОСТА: цифра из FACTS, наблюдение о рынке, конкретный вопрос;
++ на пост можно ответить по сути с данными о рынке (раунды, ниши, конкуренты, спрос);
 + свежий (часы, не дни), живое обсуждение, но не тысячи ответов, где ответ утонет.
 − новости и перепосты без мнения автора, реклама, курсы, розыгрыши, крипто-сигналы, вакансии;
 − политика, религия, трагедии, личные драмы, споры с переходом на личности;
-− сам Скаут (launch_scout, Launc_Scout) и авторы из списка «уже отвечали»;
-− пост, на который можно ответить только общими словами — ставь ниже 6.
+− сам Скаут (launch_scout, Launc_Scout);
+− пост, на который можно ответить только общими словами, — ниже 6.
 
-КАК ОТВЕЧАТЬ
-- Отвечай на мысль ЭТОГО поста: человек должен понять, что ты прочитал именно его, а не тему вообще.
-- 1–3 предложения, до 260 знаков. На языке поста.
-- Цифры можно и нужно, но ТОЛЬКО из FACTS и только если они правда про тему поста. Нет подходящей — без цифр: наблюдение, опыт рынка, точный вопрос.
-- Без рекламы: не называй бота, без ссылок, без «подписывайся», без «у нас есть сервис». Максимум — очень аккуратно, не чаще чем в одном ответе из пяти: «смотрю раунды каждый день — в этой нише за месяц …».
+Ответь только JSON: {"picks": [{"i": номер поста, "score": 0-10, "why": "одна фраза"}]} — 1–3 лучших, по убыванию score."""
+
+REPLY_RULES = """Ты пишешь ответ от имени Скаута под чужим постом.
+
+- Отвечай на мысль ЭТОГО поста: автор должен понять, что ты прочитал именно его, а не тему вообще.
+- Опирайся на FACTS — это данные из нашей базы по теме поста (раунды, ниши, инвесторы, конкуренты, жалобы клиентов). Возьми 1–2 факта, которые правда отвечают на мысль поста, и скажи, что из них следует для автора. Числа и названия — ровно как в FACTS, ничего не выдумывай и не округляй по-своему. Если в FACTS нет ничего про тему поста — ответь без цифр: точное наблюдение или вопрос.
+- 1–3 предложения, до 260 знаков. На языке поста (английский пост — по-английски).
+- Без рекламы: не называй бота и сервис, без ссылок, без «подписывайся». Максимум — очень аккуратно и не всегда: «смотрю раунды каждый день — в этой нише за полгода …».
 - Без лести и пустоты: никаких «отличный пост», «полностью согласен», «интересная мысль».
-- Без хэштегов и эмодзи (максимум одно). Не притворяйся человеком, но и не объявляй, что ты ИИ.
+- Без хэштегов, эмодзи максимум одно. Не притворяйся человеком, но и не объявляй, что ты ИИ.
 
-Ответь только JSON: {"picks": [{"i": номер поста, "score": 0-10, "why": "почему подходит, 1 фраза", "reply": "текст ответа"}]} — 1–3 лучших, по убыванию score."""
+Ответь только JSON: {"reply": "текст ответа"}"""
 
-CHECK_RULES = """Ты строгий редактор. Тебе дают чужой пост и ответ на него от аккаунта Скаута.
+CHECK_RULES = """Ты строгий редактор. Тебе дают чужой пост, данные FACTS и ответ на пост от аккаунта Скаута.
 Оцени ответ по шкале 0–10:
-- 10: отвечает именно на мысль этого поста, добавляет пользу (факт, наблюдение, точный вопрос), звучит как живой умный собеседник;
+- 10: отвечает именно на мысль этого поста, добавляет пользу (факт из FACTS, наблюдение, точный вопрос), звучит как живой умный собеседник;
 - 5: по теме, но мог бы стоять под любым похожим постом;
-- 0: мимо поста, реклама, лесть, вода, выдуманные цифры, неуместно (трагедия, политика).
-Если в ответе есть число, которого нет в FACTS, — не больше 3.
+- 0: мимо поста, реклама, лесть, вода, неуместно (трагедия, политика).
+Если в ответе есть число или название компании, которых нет в FACTS, — не больше 3.
 Ответь только JSON: {"score": 0-10, "why": "одна фраза"}"""
 
 
@@ -93,7 +109,7 @@ def llm(system, user):
         return json.loads(re.sub(r",\s*([}\]])", r"\1", m.group(0)))
 
 
-# ---- Поиск постов --------------------------------------------------------------
+# ---- Кандидаты: Threads (веб) --------------------------------------------------
 
 COLLECT_TH = """() => {
   const out = [], seen = new Set();
@@ -106,53 +122,67 @@ COLLECT_TH = """() => {
     let box = a;
     for (let k = 0; k < 8 && box.parentElement; k++) { box = box.parentElement; if (box.getAttribute('data-pressable-container')) break; }
     const m = href.match(/\\/@([^/]+)\\/post\\//);
-    out.push({ url: href, author: m ? m[1] : '', time: t.getAttribute('datetime'), text: (box.innerText || '').slice(0, 900) });
+    const ts = Date.parse(t.getAttribute('datetime')) / 1000;
+    out.push({ url: href, author: m ? m[1] : '', ts, text: (box.innerText || '').slice(0, 900) });
   }
   return out;
 }"""
 
-COLLECT_X = """() => [...document.querySelectorAll('article[data-testid="tweet"]')].map((ar) => {
-  const t = ar.querySelector('time');
-  const a = t && t.closest('a[href*="/status/"]');
-  if (!a) return null;
-  const href = a.getAttribute('href').split('?')[0];
-  return { url: href, author: href.split('/')[1] || '', time: t.getAttribute('datetime'),
-    text: ((ar.querySelector('[data-testid="tweetText"]') || {}).innerText || '').slice(0, 700),
-    stats: ar.querySelector('[role="group"]') ? ar.querySelector('[role="group"]').getAttribute('aria-label') || '' : '' };
-}).filter(Boolean)"""
 
-
-def search(page, net, queries):
+def threads_candidates(page, n):
     found = {}
-    for q in queries:
-        if net == "th":
-            page.goto(f"https://www.threads.com/search?q={requests.utils.quote(q)}&serp_type=default&filter=recent", wait_until="domcontentloaded")
-        else:
-            page.goto(f"https://x.com/search?q={requests.utils.quote(q)}&src=typed_query&f=live", wait_until="domcontentloaded")
+    for k, q in enumerate(random.sample(QUERIES["th"], n), 1):
+        page.goto(f"https://www.threads.com/search?q={requests.utils.quote(q)}&serp_type=default&filter=recent", wait_until="domcontentloaded")
         pause(3, 5)
         if need_login(page):
-            raise Fail(f"куки протухли — обновите секрет {SITES[net]['env']}")
+            raise Fail("куки протухли — обновите секрет TH_COOKIES")
         dismiss(page)
         for _ in range(2):
             page.mouse.wheel(0, 2500)
             pause(1.5, 2.5)
-        if net == "x":
-            try:
-                page.locator("article[data-testid='tweet']").first.wait_for(timeout=15000)
-            except PwTimeout:
-                print("X: лент нет, на странице:", re.sub(r"\s+", " ", page.locator("body").inner_text()[:200]))
-        got = page.evaluate(COLLECT_TH if net == "th" else COLLECT_X)
-        print(SITES[net]["name"], "запрос", queries.index(q) + 1, "→ постов на странице:", len(got), "· адрес:", page.url.split("?")[0])
+        got = page.evaluate(COLLECT_TH)
+        print("Threads запрос", k, "→ постов:", len(got))
         for p in got:
-            p["url"] = absolute("https://www.threads.com" if net == "th" else "https://x.com", p["url"])
+            p["url"] = absolute("https://www.threads.com", p["url"])
             found.setdefault(p["url"], p)
         pause(2, 4)
     return list(found.values())
 
 
+# ---- Кандидаты: X (через парсер) -----------------------------------------------
+
+def x_candidates(n):
+    sys.path.insert(0, str(pathlib.Path(__file__).parent))
+    from sources import x as xs
+    sess, err = xs.session_from_env()
+    if not sess:
+        raise Fail("нет куки парсера X (X_AUTH_TOKEN / X_CT0)")
+    raw = []
+    for k, q in enumerate(random.sample(QUERIES["x"], n), 1):
+        got, err = sess.search(q, limit=30, product="Latest")
+        print("X запрос", k, "→ постов:", len(got or []), "· ошибка" if err else "")
+        raw += got or []
+    ids = json.loads((pathlib.Path(__file__).parent / "x_account_ids.json").read_text(encoding="utf-8"))
+    for name in random.sample(list(ids), 3):
+        got, err = sess.user_tweets(ids[name], limit=15)
+        print("X лента", "→ постов:", len(got or []), "· ошибка" if err else "")
+        raw += got or []
+    out = {}
+    for t in raw:
+        if t.get("is_retweet") or not t.get("screen_name"):
+            continue
+        txt = t.get("text") or ""
+        if txt.startswith("@"):   # ответ кому-то, а не свой пост
+            continue
+        url = f"https://x.com/{t['screen_name']}/status/{t['id']}"
+        stats = f"{t.get('likes') or 0} лайков, {t.get('replies') or 0} ответов, {t.get('views') or '?'} просмотров, {t.get('followers') or '?'} подписчиков"
+        out[url] = {"url": url, "author": t["screen_name"], "ts": xs._parse_twitter_time(t.get("created_at")) or 0,
+                    "text": txt[:700], "stats": stats, "replies": t.get("replies") or 0}
+    return list(out.values())
+
+
 def fresh(posts, recent, me):
-    """Только свежие (до 36 ч), не свои и не те, кому уже отвечали."""
-    print("всего найдено:", len(posts))
+    """Только свежие (до 36 ч), не свои, не те, кому уже отвечали, не утонувшие в ответах."""
     done_urls = {r["url"] for r in recent}
     done_auth = {(r.get("author") or "").lower() for r in recent}
     now = time.time()
@@ -161,42 +191,65 @@ def fresh(posts, recent, me):
         a = (p.get("author") or "").lower()
         if not a or a == me.lower() or a in done_auth or p["url"] in done_urls or len(p.get("text") or "") < 40:
             continue
-        try:
-            ts = calendar.timegm(time.strptime(p["time"][:19], "%Y-%m-%dT%H:%M:%S"))   # время сайта — UTC
-        except Exception:
-            ts = now
-        if now - ts > 36 * 3600:
+        if not p.get("ts") or now - p["ts"] > 36 * 3600 or (p.get("replies") or 0) > 300:
             continue
-        p["age_h"] = round((now - ts) / 3600, 1)
+        p["age_h"] = round((now - p["ts"]) / 3600, 1)
         out.append(p)
+    random.shuffle(out)
     return out[:25]
 
 
-def choose(net, cands, cfg):
-    """Лучший пост и ответ, прошедший проверку на релевантность; или None."""
-    facts = "\n".join(cfg.get("facts") or []) or "(фактов нет — без цифр)"
+def choose(net, cands, cfg, page=None):
+    """Лучший пост и ответ на основе нашей базы, прошедший проверку; или None."""
     listing = "\n\n".join(f"[{i}] @{p['author']} · {p['age_h']} ч назад{(' · ' + p['stats']) if p.get('stats') else ''}\n{p['text']}" for i, p in enumerate(cands))
-    res = llm(cfg["persona"] + "\n\n" + PICK_RULES,
-              f"СЕТЬ: {'Threads' if net == 'th' else 'X'}\n\nFACTS (свежие данные Скаута):\n{facts}\n\nПОСТЫ:\n{listing}")
-    print(net, "оценки выбора:", [pk.get("score") for pk in res.get("picks") or []])
-    for pk in sorted(res.get("picks") or [], key=lambda x: -(x.get("score") or 0)):
-        i, reply = pk.get("i"), (pk.get("reply") or "").strip()
-        if not isinstance(i, int) or not (0 <= i < len(cands)) or (pk.get("score") or 0) < MIN_PICK or not reply:
-            continue
-        reply = re.sub(r"https?://\S+", "", reply).strip()
-        if len(reply) > 280:
+    sel = llm(SELECT_RULES, f"СЕТЬ: {'Threads' if net == 'th' else 'X'}\n\nПОСТЫ:\n{listing}")
+    picks = sorted(sel.get("picks") or [], key=lambda x: -(x.get("score") or 0))
+    print(net, "оценки выбора:", [pk.get("score") for pk in picks])
+    for pk in picks:
+        i = pk.get("i")
+        if not isinstance(i, int) or not (0 <= i < len(cands)) or (pk.get("score") or 0) < MIN_PICK:
             continue
         post = cands[i]
-        chk = llm(CHECK_RULES, f"FACTS:\n{facts}\n\nПОСТ (@{post['author']}):\n{post['text']}\n\nОТВЕТ СКАУТА:\n{reply}")
+        if net == "th" and page is not None and not builder(page, post):
+            continue
+        fr = requests.post(f"{WORKER}/th/factsfor", headers=H, json={"text": post["text"]}, timeout=90).json()
+        facts = fr.get("facts") or []
+        print(net, "фактов из базы:", len(facts), "· ниш:", len(fr.get("niches") or []))
+        ftxt = "\n".join(facts) or "(в базе ничего по теме поста — отвечай без цифр)"
+        rep = llm(cfg["persona"] + "\n\n" + REPLY_RULES, f"FACTS (наша база по теме поста):\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}")
+        reply = re.sub(r"https?://\S+", "", (rep.get("reply") or "")).strip()
+        if not reply or len(reply) > 280:
+            continue
+        chk = llm(CHECK_RULES, f"FACTS:\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}\n\nОТВЕТ СКАУТА:\n{reply}")
         if (chk.get("score") or 0) >= MIN_SCORE:
-            return {**post, "reply": reply, "score": chk.get("score")}
+            return {**post, "reply": reply, "score": chk.get("score"), "n_facts": len(facts)}
         print(net, "ответ не прошёл проверку:", chk.get("score"))
     return None
 
 
+BIO_RULES = """По описанию профиля в Threads реши: автор строит стартап, продукт или бизнес (фаундер, CEO, со-основатель,
+продакт, разработчик своего продукта, инди-хакер) или инвестирует в стартапы (VC, бизнес-ангел, акселератор)?
+Блогеры «про деньги», коучи, курсы, HR, вакансии, личные блоги — нет.
+Ответь только JSON: {"builder": true|false, "why": "одна фраза"}"""
+
+
+def builder(page, post):
+    """Автор — фаундер или инвестор? Смотрим шапку его профиля."""
+    try:
+        page.goto(f"https://www.threads.com/@{post['author']}", wait_until="domcontentloaded")
+        pause(2, 3.5)
+        head = re.sub(r"\s+", " ", page.locator("main, body").first.inner_text()[:700])
+        v = llm(BIO_RULES, f"ПРОФИЛЬ @{post['author']}:\n{head}\n\nЕГО ПОСТ:\n{post['text'][:400]}")
+        print("th автор подходит:", bool(v.get("builder")))
+        return bool(v.get("builder"))
+    except Exception as e:
+        print("th профиль не прочитан:", type(e).__name__)
+        return False
+
+
 # ---- Ответ и подписка ----------------------------------------------------------
 
-def reply_threads(page, post):
+def reply_threads(page, post, dry):
     page.goto(post["url"], wait_until="domcontentloaded")
     pause(2.5, 4)
     dismiss(page)
@@ -204,25 +257,31 @@ def reply_threads(page, post):
     pause(1.5, 2.5)
     box = page.locator("[contenteditable=true]:visible").last
     box.wait_for(timeout=15000)
+    if dry:
+        return
     box.click()
     page.keyboard.insert_text(post["reply"])
     pause(1, 2)
     page.locator("div[role=button], button").filter(has_text=re.compile("^(Post|Опубликовать)$")).last.click()
     pause(4, 6)
-    return post["url"]
 
 
-def reply_x(page, post):
+def reply_x(page, post, dry):
     page.goto(post["url"], wait_until="domcontentloaded")
     pause(2.5, 4)
     box = page.locator("[data-testid='tweetTextarea_0']").first
-    box.wait_for(timeout=20000)
+    try:
+        box.wait_for(timeout=20000)
+    except PwTimeout:
+        body = re.sub(r"\s+", " ", page.locator("body").inner_text()[:160])
+        raise Fail("страница поста X не открылась: " + body)
+    if dry:
+        return
     box.click()
     page.keyboard.insert_text(post["reply"])
     pause(1, 2)
     page.locator("[data-testid='tweetButtonInline']").first.click()
     pause(4, 6)
-    return post["url"]
 
 
 def follow(page, net, author):
@@ -272,18 +331,19 @@ def main():
             try:
                 ctx.add_cookies(cookies_for(net))
                 me = os.environ.get(SITES[net]["user"], "")
-                cands = fresh(search(page, net, random.sample(QUERIES[net], 4)), cfg.get("recent") or [], me)
-                print(SITES[net]["name"], "кандидатов:", len(cands))
-                pick = choose(net, cands, cfg) if cands else None
+                raw = threads_candidates(page, 4) if net == "th" else x_candidates(4)
+                cands = fresh(raw, cfg.get("recent") or [], me)
+                print(SITES[net]["name"], "найдено:", len(raw), "· свежих кандидатов:", len(cands))
+                pick = choose(net, cands, cfg, page) if cands else None
                 if not pick:
                     print(SITES[net]["name"], "подходящего поста нет — пропуск")
                     continue
+                (reply_threads if net == "th" else reply_x)(page, pick, a.dry)
                 if not a.dry:
-                    (reply_threads if net == "th" else reply_x)(page, pick)
                     pick["followed"] = follow(page, net, pick["author"])
                 items.append({"net": net, "url": pick["url"], "author": pick["author"], "post_text": pick["text"][:600],
                               "reply": pick["reply"], "score": pick["score"], "followed": pick.get("followed", False)})
-                print(SITES[net]["name"], "ответ", "подобран" if a.dry else "опубликован", "· оценка", pick["score"])
+                print(SITES[net]["name"], "ответ", "подобран" if a.dry else "опубликован", "· оценка", pick["score"], "· фактов", pick["n_facts"])
             except Exception as e:
                 why = str(e) if isinstance(e, Fail) else f"{type(e).__name__}: {str(e).splitlines()[0][:150]}"
                 errors.append(f"{SITES[net]['name']}: {why}")
