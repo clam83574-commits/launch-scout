@@ -432,7 +432,7 @@ def main():
             except Exception as e:
                 why = str(e) if isinstance(e, Fail) else f"{type(e).__name__}: {str(e).splitlines()[0][:150]}"
                 errors.append(f"{SITES[net]['name']}: {why}")
-                print(SITES[net]["name"], "ошибка:", type(e).__name__)
+                print(SITES[net]["name"], "ошибка:", type(e).__name__, str(e).splitlines()[0][:160] if not isinstance(e, Fail) else "")
             finally:
                 ctx.close()
             pause(20, 60)
