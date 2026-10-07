@@ -34,7 +34,8 @@ from social_publish import H, SECRET, SITES, UA, WORKER, Fail, absolute, cookies
 
 OR_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 MODEL = os.environ.get("LS_TH_MODEL", "anthropic/claude-sonnet-5.5")
-MIN_SCORE = 8
+MIN_PICK = 7      # пост подходит
+MIN_SCORE = 8     # ответ точно про этот пост (проверяющий вызов)
 
 # Запросы поиска: живые разговоры фаундеров, а не новости. Каждый заход — 3 случайных.
 QUERIES = {
@@ -135,6 +136,11 @@ def search(page, net, queries):
         for _ in range(2):
             page.mouse.wheel(0, 2500)
             pause(1.5, 2.5)
+        if net == "x":
+            try:
+                page.locator("article[data-testid='tweet']").first.wait_for(timeout=15000)
+            except PwTimeout:
+                print("X: лент нет, на странице:", re.sub(r"\s+", " ", page.locator("body").inner_text()[:200]))
         got = page.evaluate(COLLECT_TH if net == "th" else COLLECT_X)
         print(SITES[net]["name"], "запрос", queries.index(q) + 1, "→ постов на странице:", len(got), "· адрес:", page.url.split("?")[0])
         for p in got:
@@ -175,7 +181,7 @@ def choose(net, cands, cfg):
     print(net, "оценки выбора:", [pk.get("score") for pk in res.get("picks") or []])
     for pk in sorted(res.get("picks") or [], key=lambda x: -(x.get("score") or 0)):
         i, reply = pk.get("i"), (pk.get("reply") or "").strip()
-        if not isinstance(i, int) or not (0 <= i < len(cands)) or (pk.get("score") or 0) < MIN_SCORE or not reply:
+        if not isinstance(i, int) or not (0 <= i < len(cands)) or (pk.get("score") or 0) < MIN_PICK or not reply:
             continue
         reply = re.sub(r"https?://\S+", "", reply).strip()
         if len(reply) > 280:
@@ -266,7 +272,7 @@ def main():
             try:
                 ctx.add_cookies(cookies_for(net))
                 me = os.environ.get(SITES[net]["user"], "")
-                cands = fresh(search(page, net, random.sample(QUERIES[net], 3)), cfg.get("recent") or [], me)
+                cands = fresh(search(page, net, random.sample(QUERIES[net], 4)), cfg.get("recent") or [], me)
                 print(SITES[net]["name"], "кандидатов:", len(cands))
                 pick = choose(net, cands, cfg) if cands else None
                 if not pick:
