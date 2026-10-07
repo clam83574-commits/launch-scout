@@ -352,7 +352,7 @@ def reply_threads(page, post, dry):
         pause(1.5, 2)
     if not clicked:
         names = page.evaluate("() => [...new Set([...document.querySelectorAll('svg title, svg[aria-label]')].map((x) => x.textContent || x.getAttribute('aria-label')))].slice(0, 20)")
-        raise Fail("Threads: нет кнопки ответа, иконки на странице: " + ", ".join(names))
+        raise Fail("Threads: нет кнопки ответа, иконки: " + ", ".join(str(n) for n in names) + " · адрес " + page.url.split("?")[0][-60:])
     pause(1.5, 2.5)
     box = page.locator("[contenteditable=true]:visible").last
     box.wait_for(timeout=15000)
