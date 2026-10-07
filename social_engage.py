@@ -170,7 +170,7 @@ def hubs():
 def threads_candidates(page, n, hub_list):
     found = {}
     # Сначала площадки: свежие посты с их профилей — там и аудитория, и ранний ответ заметен.
-    for h in random.sample(hub_list, min(5, len(hub_list))):
+    for h in random.sample(hub_list, min(8, len(hub_list))):
         page.goto(f"https://www.threads.com/@{h}", wait_until="domcontentloaded")
         pause(3, 5)
         if need_login(page):
@@ -217,7 +217,7 @@ def x_candidates(n, hub_list):
     ids = json.loads((pathlib.Path(__file__).parent / "x_account_ids.json").read_text(encoding="utf-8"))
     names = list(dict.fromkeys([*hub_list, *ids]))
     hub_set = {x.lower() for x in names}
-    for name in random.sample(names, min(5, len(names))):
+    for name in random.sample(names, min(7, len(names))):
         uid = ids.get(name)
         if not uid:
             uid, err = sess.user_id(name)
