@@ -337,10 +337,22 @@ def reply_threads(page, post, dry):
     dismiss(page)
     # Иконка ответа без aria-label — подпись во вложенном <title> («Комментировать»); первая — у самого поста.
     # Клик принимает обёртка role=button, а не сама иконка.
-    icon = page.locator("xpath=//*[local-name()='svg'][./*[local-name()='title' and (text()='Комментировать' or text()='Ответить' or text()='Reply' or text()='Comment')]]").first
-    icon.wait_for(state="attached", timeout=15000)
-    wrap = icon.locator("xpath=ancestor::*[@role='button'][1]")
-    (wrap if wrap.count() else icon).click(timeout=15000, force=True)
+    clicked = False
+    for _ in range(8):
+        clicked = page.evaluate("""() => {
+          const t = [...document.querySelectorAll('svg title, svg[aria-label]')].find((x) =>
+            /комментир|ответить|reply|comment/i.test(x.textContent || x.getAttribute('aria-label') || ''));
+          if (!t) return false;
+          const svg = t.tagName.toLowerCase() === 'svg' ? t : t.closest('svg');
+          (svg.closest('[role=button]') || svg.parentElement).click();
+          return true;
+        }""")
+        if clicked:
+            break
+        pause(1.5, 2)
+    if not clicked:
+        names = page.evaluate("() => [...new Set([...document.querySelectorAll('svg title, svg[aria-label]')].map((x) => x.textContent || x.getAttribute('aria-label')))].slice(0, 20)")
+        raise Fail("Threads: нет кнопки ответа, иконки на странице: " + ", ".join(names))
     pause(1.5, 2.5)
     box = page.locator("[contenteditable=true]:visible").last
     box.wait_for(timeout=15000)
@@ -436,7 +448,7 @@ def main():
             except Exception as e:
                 why = str(e) if isinstance(e, Fail) else f"{type(e).__name__}: {str(e).splitlines()[0][:150]}"
                 errors.append(f"{SITES[net]['name']}: {why}")
-                print(SITES[net]["name"], "ошибка:", type(e).__name__, str(e).splitlines()[0][:160] if not isinstance(e, Fail) else "")
+                print(SITES[net]["name"], "ошибка:", type(e).__name__, (str(e).splitlines() or [""])[0][:200])
             finally:
                 ctx.close()
             pause(20, 60)
