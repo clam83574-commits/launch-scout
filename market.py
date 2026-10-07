@@ -48,6 +48,7 @@ import os
 import re
 import sys
 import time
+import urllib.parse
 from pathlib import Path
 
 import requests
@@ -402,6 +403,19 @@ WIRE_SITES = "(site:prnewswire.com OR site:businesswire.com OR site:globenewswir
 WIRE_OUTLETS = ("PR Newswire", "GlobeNewswire")
 BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/128.0 Safari/537.36")
+# GlobeNewswire, наоборот, молча держит соединение до таймаута на браузерный
+# и любой незнакомый UA, а штатный UA requests (и curl) пропускает сразу —
+# видимо, антибот сверяет UA с TLS-отпечатком (проверено 2026-10-07).
+TOOL_UA_HOSTS = ("globenewswire.com",)
+
+
+def ua_for(url):
+    host = (urllib.parse.urlsplit(url or "").hostname or "").lower()
+    if any(host == h or host.endswith("." + h) for h in TOOL_UA_HOSTS):
+        return requests.utils.default_user_agent()
+    return BROWSER_UA
+
+
 # Раунды любых секторов за последние дни — чтобы в поток денег попадало и
 # то, что не легло ни в один секторный запрос.
 GENERAL_QUERIES = (
@@ -426,7 +440,7 @@ def fetch_feed(url, timeout=20, full=False):
     [(title, url, ts, текст статьи, рубрики)]. Вторым — ошибка.
     """
     try:
-        r = requests.get(url, headers={"User-Agent": BROWSER_UA}, timeout=timeout)
+        r = requests.get(url, headers={"User-Agent": ua_for(url)}, timeout=timeout)
     except requests.RequestException as e:
         return [], str(e)[:120]
     if r.status_code != 200:
@@ -2557,7 +2571,7 @@ def verify_found_round(row, timeout=20):
     if usd <= 0:
         return "no_amount"
     try:
-        r = requests.get(row["url"], headers={"User-Agent": BROWSER_UA}, timeout=timeout)
+        r = requests.get(row["url"], headers={"User-Agent": ua_for(row["url"])}, timeout=timeout)
         page = "http_%d" % r.status_code if r.status_code != 200 else _names_and_amount(_strip_html(r.text)[:200000], row["company"], usd)
     except requests.RequestException:
         page = "page_error"
