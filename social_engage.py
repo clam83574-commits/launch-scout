@@ -135,7 +135,9 @@ def search(page, net, queries):
         for _ in range(2):
             page.mouse.wheel(0, 2500)
             pause(1.5, 2.5)
-        for p in page.evaluate(COLLECT_TH if net == "th" else COLLECT_X):
+        got = page.evaluate(COLLECT_TH if net == "th" else COLLECT_X)
+        print(SITES[net]["name"], "запрос", queries.index(q) + 1, "→ постов на странице:", len(got), "· адрес:", page.url.split("?")[0])
+        for p in got:
             p["url"] = absolute("https://www.threads.com" if net == "th" else "https://x.com", p["url"])
             found.setdefault(p["url"], p)
         pause(2, 4)
@@ -144,6 +146,7 @@ def search(page, net, queries):
 
 def fresh(posts, recent, me):
     """Только свежие (до 36 ч), не свои и не те, кому уже отвечали."""
+    print("всего найдено:", len(posts))
     done_urls = {r["url"] for r in recent}
     done_auth = {(r.get("author") or "").lower() for r in recent}
     now = time.time()
@@ -169,6 +172,7 @@ def choose(net, cands, cfg):
     listing = "\n\n".join(f"[{i}] @{p['author']} · {p['age_h']} ч назад{(' · ' + p['stats']) if p.get('stats') else ''}\n{p['text']}" for i, p in enumerate(cands))
     res = llm(cfg["persona"] + "\n\n" + PICK_RULES,
               f"СЕТЬ: {'Threads' if net == 'th' else 'X'}\n\nFACTS (свежие данные Скаута):\n{facts}\n\nПОСТЫ:\n{listing}")
+    print(net, "оценки выбора:", [pk.get("score") for pk in res.get("picks") or []])
     for pk in sorted(res.get("picks") or [], key=lambda x: -(x.get("score") or 0)):
         i, reply = pk.get("i"), (pk.get("reply") or "").strip()
         if not isinstance(i, int) or not (0 <= i < len(cands)) or (pk.get("score") or 0) < MIN_SCORE or not reply:
