@@ -3747,6 +3747,7 @@ const TH_STAGE = { pre: "pre-seed", preseed: "pre-seed", seed: "seed", a: "ра�
 // Тема поста в Threads («Сообщество или тема»): по ней Threads показывает пост
 // тем, кто читает эту тему, а не случайной ленте.
 const TH_REPLY_DAY = 10;                 // автокомментариев в сутки (Threads + X)
+const TH_ENGAGE_H = [10, 12, 15, 17, 20];  // заходы автокомментариев: в :30 этих часов по Астане
 const TH_TOPIC = { week: "Венчур", round: "Стартапы", niche: "Стартапы", pain: "Бизнес", cis: "Казахстан", bot: "Стартапы", none: "Стартапы" };
 const TH_CIS = ["KZ", "UZ", "KG", "TJ", "AM", "GE", "AZ", "BY", "RU", "UA"];
 
@@ -4336,6 +4337,17 @@ async function thTick(env, now) {
       if (err) await ownerNotify(env, { text: `⚠️ Пост #${post.id} «${post.rubric}» не ушёл в ${viaWeb.join(", ")}: ${err}` });
     }
     await q("UPDATE th_posts SET status = 'out' WHERE id = ?1", post.id).run();
+  }
+
+  // 2б. Автокомментарии: заход в Actions запускает этот тик — расписание GitHub
+  // для новых workflow опаздывает на часы или пропускает запуски (2026-10-07).
+  if (TH_ENGAGE_H.includes(clk.hour) && (now + TH_TZ) % 3600 >= 1800 && (await meta(env, "th_engage_off")) !== "1" && web.some((p) => p === "th" || p === "x")) {
+    const slotKey = `${clk.day}:${clk.hour}`;
+    if ((await meta(env, "th_engage_slot")) !== slotKey) {
+      await setMeta(env, "th_engage_slot", slotKey);
+      const err = await dispatchRun(env, { dry: "false" }, "engage.yml");
+      if (err) await logError(env, "threads", "автокомментарии: " + err);
+    }
   }
 
   // 3. План: старт, пост к ближайшему слоту, конец месяца.
