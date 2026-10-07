@@ -85,7 +85,7 @@ REPLY_RULES = """Ты пишешь ответ от имени Скаута по�
 - Без лести и пустоты: никаких «отличный пост», «полностью согласен», «интересная мысль».
 - Без хэштегов, эмодзи максимум одно. Не притворяйся человеком, но и не объявляй, что ты ИИ.
 
-Ответь только JSON: {"reply": "текст ответа"}"""
+Ответь только текстом ответа — без кавычек, пояснений, вариантов и JSON."""
 
 CHECK_RULES = """Ты строгий редактор. Тебе дают чужой пост, данные FACTS и ответ на пост от аккаунта Скаута.
 Оцени ответ по шкале 0–10:
@@ -104,6 +104,23 @@ def llm(system, user, tries=2):
         except (ValueError, json.JSONDecodeError):
             if k == tries - 1:
                 raise
+
+
+def llm_text(system, user):
+    """Ответ модели обычным текстом (сам комментарий): без обёрток, кавычек и подписи."""
+    r = requests.post("https://openrouter.ai/api/v1/chat/completions", timeout=120, headers={
+        "authorization": f"Bearer {OR_KEY}", "content-type": "application/json",
+        "HTTP-Referer": WORKER, "X-Title": "launch-scout-engage"},
+        json={"model": MODEL, "max_tokens": 1500, "temperature": 0.6,
+              "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
+    r.raise_for_status()
+    t = (r.json()["choices"][0]["message"]["content"] or "").strip()
+    try:   # всё же прислала JSON — достаём поле
+        j = json.loads(re.search(r"\{[\s\S]*\}", t).group(0))
+        t = j.get("reply") or j.get("text") or t
+    except Exception:
+        pass
+    return t.strip().strip('"«»').strip()
 
 
 def _llm(system, user):
@@ -259,9 +276,10 @@ def choose(net, cands, cfg, page=None):
         facts = fr.get("facts") or []
         print(net, "фактов из базы:", len(facts), "· ниш:", len(fr.get("niches") or []))
         ftxt = "\n".join(facts) or "(в базе ничего по теме поста — отвечай без цифр)"
-        rep = llm(cfg["persona"] + "\n\n" + REPLY_RULES, f"FACTS (наша база по теме поста):\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}")
-        reply = re.sub(r"https?://\S+", "", (rep.get("reply") or "")).strip()
+        reply = llm_text(cfg["persona"] + "\n\n" + REPLY_RULES, f"FACTS (наша база по теме поста):\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}")
+        reply = re.sub(r"https?://\S+", "", reply).strip()
         if not reply or len(reply) > 280:
+            print(net, "ответ пустой или длиннее 280 знаков:", len(reply))
             continue
         chk = llm(CHECK_RULES, f"FACTS:\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}\n\nОТВЕТ СКАУТА:\n{reply}")
         if (chk.get("score") or 0) >= MIN_SCORE:
