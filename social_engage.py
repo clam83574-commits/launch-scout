@@ -281,10 +281,20 @@ def choose(net, cands, cfg, page=None):
         if not reply or len(reply) > 280:
             print(net, "ответ пустой или длиннее 280 знаков:", len(reply))
             continue
-        chk = llm(CHECK_RULES, f"FACTS:\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}\n\nОТВЕТ СКАУТА:\n{reply}")
-        if (chk.get("score") or 0) >= MIN_SCORE:
-            return {**post, "reply": reply, "score": chk.get("score"), "n_facts": len(facts)}
-        print(net, "ответ не прошёл проверку:", chk.get("score"))
+        # Проверка; не прошёл — одна доработка по замечанию редактора и повторная проверка.
+        for attempt in range(2):
+            chk = llm(CHECK_RULES, f"FACTS:\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}\n\nОТВЕТ СКАУТА:\n{reply}")
+            if (chk.get("score") or 0) >= MIN_SCORE:
+                return {**post, "reply": reply, "score": chk.get("score"), "n_facts": len(facts)}
+            print(net, "ответ не прошёл проверку:", chk.get("score"), "·", str(chk.get("why") or "")[:140])
+            if attempt == 1:
+                break
+            reply = llm_text(cfg["persona"] + "\n\n" + REPLY_RULES,
+                             f"FACTS (наша база по теме поста):\n{ftxt}\n\nПОСТ (@{post['author']}):\n{post['text']}\n\n"
+                             f"ТВОЙ ПРОШЛЫЙ ОТВЕТ:\n{reply}\n\nЗАМЕЧАНИЕ РЕДАКТОРА: {chk.get('why')}\nПерепиши ответ с учётом замечания.")
+            reply = re.sub(r"https?://\S+", "", reply).strip()
+            if not reply or len(reply) > 280:
+                break
     return None
 
 
