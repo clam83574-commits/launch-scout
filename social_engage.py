@@ -336,7 +336,11 @@ def reply_threads(page, post, dry):
     pause(2.5, 4)
     dismiss(page)
     # Иконка ответа без aria-label — подпись во вложенном <title> («Комментировать»); первая — у самого поста.
-    page.locator("xpath=//*[local-name()='svg'][./*[local-name()='title' and (text()='Комментировать' or text()='Ответить' or text()='Reply' or text()='Comment')]]").first.click(timeout=15000)
+    # Клик принимает обёртка role=button, а не сама иконка.
+    icon = page.locator("xpath=//*[local-name()='svg'][./*[local-name()='title' and (text()='Комментировать' or text()='Ответить' or text()='Reply' or text()='Comment')]]").first
+    icon.wait_for(state="attached", timeout=15000)
+    wrap = icon.locator("xpath=ancestor::*[@role='button'][1]")
+    (wrap if wrap.count() else icon).click(timeout=15000, force=True)
     pause(1.5, 2.5)
     box = page.locator("[contenteditable=true]:visible").last
     box.wait_for(timeout=15000)
