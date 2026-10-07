@@ -341,7 +341,7 @@ def reply_threads(page, post, dry):
     for _ in range(8):
         clicked = page.evaluate("""() => {
           const t = [...document.querySelectorAll('svg title, svg[aria-label]')].find((x) =>
-            /комментир|ответить|reply|comment/i.test(x.textContent || x.getAttribute('aria-label') || ''));
+            /коммент|ответ|reply|comment/i.test(x.textContent || x.getAttribute('aria-label') || ''));
           if (!t) return false;
           const svg = t.tagName.toLowerCase() === 'svg' ? t : t.closest('svg');
           (svg.closest('[role=button]') || svg.parentElement).click();
@@ -448,7 +448,7 @@ def main():
             except Exception as e:
                 why = str(e) if isinstance(e, Fail) else f"{type(e).__name__}: {str(e).splitlines()[0][:150]}"
                 errors.append(f"{SITES[net]['name']}: {why}")
-                print(SITES[net]["name"], "ошибка:", type(e).__name__, (str(e).splitlines() or [""])[0][:200])
+                print(SITES[net]["name"], "ошибка:", type(e).__name__, (str(e).splitlines() or [""])[0][:700])
             finally:
                 ctx.close()
             pause(20, 60)
