@@ -4106,15 +4106,20 @@ async function thLlm(env, system, user, meter) {
         method: "POST",
         headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
           "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-threads" },
-        body: JSON.stringify({ model, max_tokens: 3000, temperature: 0.85, usage: { include: true },
+        body: JSON.stringify({ model, max_tokens: 6000, temperature: 0.85, usage: { include: true },
           messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
       });
       if (!r.ok) { await noteAiError(env, "threads " + model, r.status, await r.text().catch(() => "")); continue; }
       const j = await r.json();
       if (j.usage && j.usage.cost) meter.usd += Number(j.usage.cost) || 0;
-      const t = (((j.choices || [])[0] || {}).message || {}).content || "";
+      const ch = (j.choices || [])[0] || {};
+      const t = String((ch.message || {}).content || "").replace(/```(?:json)?/g, "");
       const m = t.match(/\{[\s\S]*\}/);
-      if (m) return JSON.parse(m[0]);
+      if (!m) { await noteAiError(env, "threads " + model, 0, `нет JSON (finish ${ch.finish_reason}): ${t.slice(0, 200)}`); continue; }
+      try { return JSON.parse(m[0]); } catch {
+        // Частая поломка — запятая перед } или ]; не вышло — следующая модель.
+        try { return JSON.parse(m[0].replace(/,\s*([}\]])/g, "$1")); } catch (e) { await noteAiError(env, "threads " + model, 0, String(e)); }
+      }
     } catch (e) { await noteAiError(env, "threads " + model, 0, String(e)); }
   }
   return null;
@@ -4168,6 +4173,11 @@ ${TH_SHAPE[fmtKind]}`;
   for (let attempt = 0; attempt < 2; attempt++) {
     const draft = await thLlm(env, TH_PERSONA, ask + (bad.length ? `\n\nВ прошлом варианте было не так: ${bad.join(", ")}. Исправь.` : ""), meter);
     if (!draft) break;
+    if (!draft.caption) {   // ответ в обёртке или без подписи — ещё попытка
+      await noteAiError(env, "threads", 0, `нет caption, поля: ${Object.keys(draft).join(", ").slice(0, 150)}`);
+      bad = ["нет поля caption — верни JSON ровно заданной формы"];
+      continue;
+    }
     const edited = await thLlm(env, TH_EDITOR + TH_PERSONA, `FACTS:\n${f.lines.join("\n")}\n\nЧЕРНОВИК (${fmtKind}):\n${JSON.stringify(draft)}\n\nВерни улучшенный JSON той же формы.`, meter);
     post = edited && edited.caption ? edited : draft;
     bad = thBadNumbers(post, f.lines).map((n) => "число не из FACTS: " + n);
@@ -4196,6 +4206,13 @@ async function thPrepare(env, item, day, slot, now) {
   const id = ins.meta.last_row_id;
   const p = await thCompose(env, item, now);
   if (p.skip) {
+    // Сбой модели — не повод терять слот: строку убираем, следующий тик (через 10 мин) пишет заново, до 3 попыток.
+    const tries = Number((await meta(env, "th_try:" + key)) || 0) + 1;
+    if (p.skip === "модель не ответила" && tries < 3 && slot >= 0) {
+      await setMeta(env, "th_try:" + key, String(tries));
+      await env.DB.prepare("DELETE FROM th_posts WHERE id = ?1").bind(id).run();
+      return { id, skip: p.skip, retry: true };
+    }
     await env.DB.prepare("UPDATE th_posts SET status = 'skip', err = ?2, cost = ?3 WHERE id = ?1").bind(id, p.skip, p.cost || 0).run();
     await ownerNotify(env, { text: `🧵 Скаут: пост «${item.rubric}» (${day}${slot >= 0 ? `, ${TH_SLOTS[slot]}:00` : ""}) пропущен — ${p.skip}` });
     return { id, skip: p.skip };

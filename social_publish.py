@@ -101,6 +101,12 @@ def dismiss(page):
             pass
 
 
+def absolute(base, href):
+    """Ссылка из href: сайт отдаёт то относительную, то полную."""
+    href = (href or "").split("?")[0]
+    return href if href.startswith("http") else base + href
+
+
 def need_login(page):
     u = page.url
     return "/login" in u or "accounts/login" in u or "/i/flow/login" in u
@@ -153,7 +159,7 @@ def post_threads(page, job, files, dry):
     try:
         a = page.locator("a[href*='/post/']").filter(has_text=re.compile("View|Посмотреть|Смотреть", re.I)).first
         a.wait_for(timeout=90000)
-        return "https://www.threads.com" + a.get_attribute("href").split("?")[0]
+        return absolute("https://www.threads.com", a.get_attribute("href"))
     except PwTimeout:
         return profile_last(page, "th")
 
@@ -201,7 +207,7 @@ def post_instagram(page, job, files, dry):
         return None
     share.click()
     try:
-        page.get_by_text(re.compile("(post has been shared|публикация опубликована|reel has been shared)", re.I)).first.wait_for(timeout=180000)
+        page.get_by_text(re.compile("(post has been shared|reel has been shared|публикация опубликована|публикация размещена|вы поделились публикацией)", re.I)).first.wait_for(timeout=180000)
     except PwTimeout:
         raise Fail("Instagram не подтвердил публикацию за 3 минуты")
     pause(2, 3)
@@ -232,7 +238,7 @@ def post_x(page, job, files, dry):
     try:
         a = page.locator("[data-testid='toast'] a[href*='/status/']").first
         a.wait_for(timeout=60000)
-        return "https://x.com" + a.get_attribute("href")
+        return absolute("https://x.com", a.get_attribute("href"))
     except PwTimeout:
         return profile_last(page, "x")
 
