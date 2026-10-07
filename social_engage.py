@@ -38,7 +38,10 @@ from playwright.sync_api import sync_playwright
 from social_publish import H, SECRET, SITES, UA, WORKER, Fail, absolute, cookies_for, dismiss, need_login, pause
 
 OR_KEY = os.environ.get("OPENROUTER_API_KEY", "")
-MODEL = os.environ.get("LS_TH_MODEL", "anthropic/claude-sonnet-5.5")
+# Дорогая модель на каждый вызов — ~$1 в день; теперь пишет ответ Gemini (OpenRouter),
+# а выбор поста и все проверки — Groq (бесплатно).
+MODEL = os.environ.get("LS_ENGAGE_MODEL", "google/gemini-3.7-flash")
+GROQ_MODEL = os.environ.get("LS_ENGAGE_GROQ_MODEL", "openai/gpt-oss-120b")
 MIN_PICK = 7      # пост подходит
 MIN_SCORE = 7     # ответ по сути этого поста (проверяющий вызов; выдуманные числа — не выше 3)
 
@@ -107,15 +110,39 @@ def llm(system, user, tries=2):
                 raise
 
 
-def llm_text(system, user):
-    """Ответ модели обычным текстом (сам комментарий): без обёрток, кавычек и подписи."""
+def openrouter(system, user, max_tokens=1500):
     r = requests.post("https://openrouter.ai/api/v1/chat/completions", timeout=120, headers={
         "authorization": f"Bearer {OR_KEY}", "content-type": "application/json",
         "HTTP-Referer": WORKER, "X-Title": "launch-scout-engage"},
-        json={"model": MODEL, "max_tokens": 1500, "temperature": 0.6,
+        json={"model": MODEL, "max_tokens": max_tokens, "temperature": 0.6,
               "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
     r.raise_for_status()
-    t = (r.json()["choices"][0]["message"]["content"] or "").strip()
+    return r.json()["choices"][0]["message"]["content"] or ""
+
+
+def groq(system, user):
+    """Выбор, проверка автора и проверка ответа — Groq (бесплатный тариф), ключи по очереди;
+    лимит или сбой у всех ключей — тот же вызов в OpenRouter."""
+    keys = [k for k in (os.environ.get(n, "").strip() for n in ("GROQ_API_KEY", "GROQ_API_KEY_2", "GROQ_API_KEY_3")) if k]
+    random.shuffle(keys)
+    for key in keys:
+        try:
+            r = requests.post("https://api.groq.com/openai/v1/chat/completions", timeout=90,
+                              headers={"authorization": f"Bearer {key}", "content-type": "application/json"},
+                              json={"model": GROQ_MODEL, "temperature": 0.3, "max_completion_tokens": 2000, "reasoning_effort": "low",
+                                    "response_format": {"type": "json_object"},
+                                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
+            if r.status_code == 200:
+                return r.json()["choices"][0]["message"]["content"] or ""
+            print("Groq:", r.status_code)
+        except requests.RequestException as e:
+            print("Groq:", type(e).__name__)
+    return openrouter(system, user, 2000)
+
+
+def llm_text(system, user):
+    """Сам комментарий — OpenRouter, обычным текстом: без обёрток, кавычек и подписи."""
+    t = openrouter(system, user).strip()
     try:   # всё же прислала JSON — достаём поле
         j = json.loads(re.search(r"\{[\s\S]*\}", t).group(0))
         t = j.get("reply") or j.get("text") or t
@@ -125,13 +152,7 @@ def llm_text(system, user):
 
 
 def _llm(system, user):
-    r = requests.post("https://openrouter.ai/api/v1/chat/completions", timeout=120, headers={
-        "authorization": f"Bearer {OR_KEY}", "content-type": "application/json",
-        "HTTP-Referer": WORKER, "X-Title": "launch-scout-engage"},
-        json={"model": MODEL, "max_tokens": 2000, "temperature": 0.6,
-              "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
-    r.raise_for_status()
-    t = (r.json()["choices"][0]["message"]["content"] or "").replace("```json", "").replace("```", "")
+    t = groq(system, user).replace("```json", "").replace("```", "")
     m = re.search(r"\{[\s\S]*\}", t)
     if not m:
         raise ValueError("модель ответила не JSON")
@@ -262,7 +283,7 @@ def fresh(posts, recent, me):
 
 def choose(net, cands, cfg, page=None):
     """Лучший пост и ответ на основе нашей базы, прошедший проверку; или None."""
-    listing = "\n\n".join(f"[{i}] {'★ ПЛОЩАДКА · ' if p.get('hub') else ''}@{p['author']} · {p['age_h']} ч назад{(' · ' + p['stats']) if p.get('stats') else ''}\n{p['text']}" for i, p in enumerate(cands))
+    listing = "\n\n".join(f"[{i}] {'★ ПЛОЩАДКА · ' if p.get('hub') else ''}@{p['author']} · {p['age_h']} ч назад{(' · ' + p['stats']) if p.get('stats') else ''}\n{p['text'][:450]}" for i, p in enumerate(cands))   # короче — влезает в лимит Groq
     sel = llm(SELECT_RULES, f"СЕТЬ: {'Threads' if net == 'th' else 'X'}\n\nПОСТЫ:\n{listing}")
     picks = sorted(sel.get("picks") or [], key=lambda x: -(x.get("score") or 0))
     print(net, "оценки выбора:", [pk.get("score") for pk in picks])
