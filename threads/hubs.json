@@ -1,0 +1,13 @@
+{
+  "_": "Площадки для автокомментариев Скаута (social_engage.py): аккаунты, где собирается стартап-аудитория. Ники проверены по профилям 2026-10-07. Добавить без коммита — /threads hub add th <ник> в служебном боте.",
+  "th": [
+    "astana.hub", "almaty_hub", "digitalbusinesskazakhstan", "bluescreen.kz", "kursiv.media", "kapital.kz", "forbes_kz",
+    "timurturlov", "arsentomsky", "alimkhamitov", "alexnomad", "rrm777", "iliyas007", "yana_shoi", "mikheil.lomtadze",
+    "tsay.dm", "m_shaken", "aaaaalibi", "higgsfield.ai", "oskar_hartmann", "thebell_io",
+    "ycombinator", "garrytan", "gregisenberg", "producthunt", "arvidkahl", "andrewchen", "rrhoover", "noahkagan", "jason"
+  ],
+  "x": [
+    "astanahub", "itpark_uz", "Forbes_kz", "Kapitalkz", "KursivMedia", "vcru", "rusbase", "thebell_io",
+    "alexmashrabov", "AndreyAzimov", "AlexBelogubov", "DmytroKrasun"
+  ]
+}

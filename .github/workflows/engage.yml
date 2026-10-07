@@ -44,6 +44,9 @@ jobs:
           TH_COOKIES: ${{ secrets.TH_COOKIES }}
           X_SCOUT_COOKIES: ${{ secrets.X_SCOUT_COOKIES }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # Аккаунт парсера X — только читать ленты и поиск; отвечает аккаунт Скаута.
+          X_AUTH_TOKEN: ${{ secrets.X_AUTH_TOKEN }}
+          X_CT0: ${{ secrets.X_CT0 }}
           TH_USER: ${{ vars.TH_USER }}
           X_USER: ${{ vars.X_USER }}
           DRY: ${{ github.event.inputs.dry }}

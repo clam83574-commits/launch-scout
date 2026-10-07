@@ -4509,6 +4509,20 @@ async function thAdmin(env, aenv, chatId, raw, msg) {
     const err = await dispatchRun(env, { job: String(post.id), mode: "dry", nets: (want.length ? want : ["th", "ig", "x"]).join(",") }, "threads.yml");
     return send(err ? `Не запустил: ${err}` : `🧪 Проверяю пост #${post.id} «${post.rubric}» без публикации — скриншоты придут через 2–4 минуты.`);
   }
+  if (arg.startsWith("hub")) {
+    // Площадки для автокомментариев: базовые — threads/hubs.json в репозитории, здесь — добавленные.
+    const m = /^hubs?\s+(add|del)\s+(th|x)\s+@?([\w.]+)/.exec(arg);
+    const hb = await thJson(env, "th_hubs", { th: [], x: [] });
+    if (m) {
+      const [, op, net, h] = m;
+      hb[net] = (hb[net] || []).filter((x) => x.toLowerCase() !== h.toLowerCase());
+      if (op === "add") hb[net].unshift(h);
+      await setMeta(env, "th_hubs", JSON.stringify(hb));
+    }
+    return send([`📍 Площадки, добавленные сверх списка в репозитории (threads/hubs.json):`,
+      `🧵 Threads: ${(hb.th || []).map((x) => "@" + x).join(", ") || "—"}`, `𝕏 X: ${(hb.x || []).map((x) => "@" + x).join(", ") || "—"}`, "",
+      "/threads hub add th <ник> · /threads hub del x <ник>"].join("\n"));
+  }
   if (arg.startsWith("engage")) {
     // Автокомментарии: on | off | test (подбор и тексты без публикации).
     const a = arg.slice(6).trim();
@@ -6320,9 +6334,18 @@ ${link || "(ссылку не нашёл — проверьте профиль)"
         const today = await env.DB.prepare("SELECT COUNT(*) n FROM th_replies WHERE ts >= ?1").bind(thClock(now).mid).first();
         const f = await thFacts(env, "week", now).catch(() => null);
         return json({ off, nets: web.filter((p) => p === "th" || p === "x"), today: today.n, limit: TH_REPLY_DAY,
-          persona: TH_PERSONA, facts: f ? f.lines.slice(0, 25) : [], recent });
+          persona: TH_PERSONA, facts: f ? f.lines.slice(0, 25) : [], recent, hubs: await thJson(env, "th_hubs", { th: [], x: [] }) });
       }
       const body = await request.json().catch(() => ({}));
+      // Фаундеры с большой аудиторией, найденные в поиске, — в площадки (до 60 на сеть).
+      if (!body.dry && Array.isArray(body.discovered) && body.discovered.length) {
+        const hb = await thJson(env, "th_hubs", { th: [], x: [] });
+        for (const d of body.discovered.slice(0, 5)) {
+          const h = String(d.handle || "").replace(/[^\w.]/g, "");
+          if (h && (d.net === "th" || d.net === "x") && !(hb[d.net] || []).includes(h)) hb[d.net] = [h, ...(hb[d.net] || [])].slice(0, 60);
+        }
+        await setMeta(env, "th_hubs", JSON.stringify(hb));
+      }
       const items = Array.isArray(body.items) ? body.items.slice(0, 10) : [];
       for (const it of body.dry ? [] : items) {
         await env.DB.prepare("INSERT INTO th_replies (net, url, author, post_text, reply, reply_url, score, followed, ts) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)")

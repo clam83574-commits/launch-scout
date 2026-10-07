@@ -60,6 +60,10 @@ SELECT_RULES = """Ты выбираешь, под какими постами С
 («мы запустили», «наш MRR», «ищу кофаундера», «привлекли раунд», кастдев, первые клиенты) или инвестирует в стартапы.
 Посты «вообще» про ИИ, деньги, работу, мотивацию, карьеру, учёбу, новости — не выше 4, даже если там есть слово «стартап».
 
+★ ПЛОЩАДКА — пост медийного фаундера, акселератора, фонда или стартап-медиа: под ним собирается аудитория фаундеров,
+поэтому такие посты в приоритете (мнение о рынке, разбор, анонс, вопрос подписчикам — подходит), если на него можно
+ответить по существу с данными о рынке. Анонсы мероприятий и чистая реклама площадки — не выше 5.
+
 ПОДХОДИТ (score 0–10)
 + автор сам делает стартап, продукт, бизнес или выбирает идею для своего стартапа; спрашивает совета; делится цифрами, болью, запуском;
 + тема: стартапы, инвестиции, рынок, ниши, ИИ-продукты, SaaS, e-commerce, бизнес в Казахстане и СНГ;
@@ -92,7 +96,17 @@ CHECK_RULES = """Ты строгий редактор. Тебе дают чуж�
 Ответь только JSON: {"score": 0-10, "why": "одна фраза"}"""
 
 
-def llm(system, user):
+def llm(system, user, tries=2):
+    """JSON-ответ модели; не JSON — ещё одна попытка."""
+    for k in range(tries):
+        try:
+            return _llm(system, user)
+        except (ValueError, json.JSONDecodeError):
+            if k == tries - 1:
+                raise
+
+
+def _llm(system, user):
     r = requests.post("https://openrouter.ai/api/v1/chat/completions", timeout=120, headers={
         "authorization": f"Bearer {OR_KEY}", "content-type": "application/json",
         "HTTP-Referer": WORKER, "X-Title": "launch-scout-engage"},
@@ -129,8 +143,28 @@ COLLECT_TH = """() => {
 }"""
 
 
-def threads_candidates(page, n):
+def hubs():
+    """Площадки — аккаунты, где собирается стартап-аудитория: threads/hubs.json + найденные сами (у Worker'а)."""
+    base = json.loads((pathlib.Path(__file__).parent / "threads" / "hubs.json").read_text(encoding="utf-8"))
+    return base
+
+
+def threads_candidates(page, n, hub_list):
     found = {}
+    # Сначала площадки: свежие посты с их профилей — там и аудитория, и ранний ответ заметен.
+    for h in random.sample(hub_list, min(5, len(hub_list))):
+        page.goto(f"https://www.threads.com/@{h}", wait_until="domcontentloaded")
+        pause(3, 5)
+        if need_login(page):
+            raise Fail("куки протухли — обновите секрет TH_COOKIES")
+        dismiss(page)
+        got = [x for x in page.evaluate(COLLECT_TH) if x["url"].startswith(f"/@{h}/") or f"/@{h}/" in x["url"]]
+        print("Threads площадка → постов:", len(got))
+        for p in got:
+            p["url"] = absolute("https://www.threads.com", p["url"])
+            p["hub"] = True
+            found.setdefault(p["url"], p)
+        pause(2, 4)
     for k, q in enumerate(random.sample(QUERIES["th"], n), 1):
         page.goto(f"https://www.threads.com/search?q={requests.utils.quote(q)}&serp_type=default&filter=recent", wait_until="domcontentloaded")
         pause(3, 5)
@@ -151,7 +185,7 @@ def threads_candidates(page, n):
 
 # ---- Кандидаты: X (через парсер) -----------------------------------------------
 
-def x_candidates(n):
+def x_candidates(n, hub_list):
     sys.path.insert(0, str(pathlib.Path(__file__).parent))
     from sources import x as xs
     sess, err = xs.session_from_env()
@@ -163,9 +197,17 @@ def x_candidates(n):
         print("X запрос", k, "→ постов:", len(got or []), "· ошибка" if err else "")
         raw += got or []
     ids = json.loads((pathlib.Path(__file__).parent / "x_account_ids.json").read_text(encoding="utf-8"))
-    for name in random.sample(list(ids), 3):
-        got, err = sess.user_tweets(ids[name], limit=15)
-        print("X лента", "→ постов:", len(got or []), "· ошибка" if err else "")
+    names = list(dict.fromkeys([*hub_list, *ids]))
+    hub_set = {x.lower() for x in names}
+    for name in random.sample(names, min(5, len(names))):
+        uid = ids.get(name)
+        if not uid:
+            uid, err = sess.user_id(name)
+            if not uid:
+                print("X площадка не найдена")
+                continue
+        got, err = sess.user_tweets(uid, limit=15)
+        print("X площадка → постов:", len(got or []), "· ошибка" if err else "")
         raw += got or []
     out = {}
     for t in raw:
@@ -177,7 +219,7 @@ def x_candidates(n):
         url = f"https://x.com/{t['screen_name']}/status/{t['id']}"
         stats = f"{t.get('likes') or 0} лайков, {t.get('replies') or 0} ответов, {t.get('views') or '?'} просмотров, {t.get('followers') or '?'} подписчиков"
         out[url] = {"url": url, "author": t["screen_name"], "ts": xs._parse_twitter_time(t.get("created_at")) or 0,
-                    "text": txt[:700], "stats": stats, "replies": t.get("replies") or 0}
+                    "text": txt[:700], "stats": stats, "replies": t.get("replies") or 0, "hub": t["screen_name"].lower() in hub_set}
     return list(out.values())
 
 
@@ -191,17 +233,18 @@ def fresh(posts, recent, me):
         a = (p.get("author") or "").lower()
         if not a or a == me.lower() or a in done_auth or p["url"] in done_urls or len(p.get("text") or "") < 40:
             continue
-        if not p.get("ts") or now - p["ts"] > 36 * 3600 or (p.get("replies") or 0) > 300:
+        if not p.get("ts") or now - p["ts"] > (24 if p.get("hub") else 36) * 3600 or (p.get("replies") or 0) > 400:
             continue
         p["age_h"] = round((now - p["ts"]) / 3600, 1)
         out.append(p)
     random.shuffle(out)
+    out.sort(key=lambda p: not p.get("hub"))   # площадки первыми
     return out[:25]
 
 
 def choose(net, cands, cfg, page=None):
     """Лучший пост и ответ на основе нашей базы, прошедший проверку; или None."""
-    listing = "\n\n".join(f"[{i}] @{p['author']} · {p['age_h']} ч назад{(' · ' + p['stats']) if p.get('stats') else ''}\n{p['text']}" for i, p in enumerate(cands))
+    listing = "\n\n".join(f"[{i}] {'★ ПЛОЩАДКА · ' if p.get('hub') else ''}@{p['author']} · {p['age_h']} ч назад{(' · ' + p['stats']) if p.get('stats') else ''}\n{p['text']}" for i, p in enumerate(cands))
     sel = llm(SELECT_RULES, f"СЕТЬ: {'Threads' if net == 'th' else 'X'}\n\nПОСТЫ:\n{listing}")
     picks = sorted(sel.get("picks") or [], key=lambda x: -(x.get("score") or 0))
     print(net, "оценки выбора:", [pk.get("score") for pk in picks])
@@ -210,7 +253,7 @@ def choose(net, cands, cfg, page=None):
         if not isinstance(i, int) or not (0 <= i < len(cands)) or (pk.get("score") or 0) < MIN_PICK:
             continue
         post = cands[i]
-        if net == "th" and page is not None and not builder(page, post):
+        if net == "th" and page is not None and not post.get("hub") and not builder(page, post):
             continue
         fr = requests.post(f"{WORKER}/th/factsfor", headers=H, json={"text": post["text"]}, timeout=90).json()
         facts = fr.get("facts") or []
@@ -227,6 +270,8 @@ def choose(net, cands, cfg, page=None):
     return None
 
 
+DISCOVERED = []
+
 BIO_RULES = """По описанию профиля в Threads реши: автор строит стартап, продукт или бизнес (фаундер, CEO, со-основатель,
 продакт, разработчик своего продукта, инди-хакер) или инвестирует в стартапы (VC, бизнес-ангел, акселератор)?
 Блогеры «про деньги», коучи, курсы, HR, вакансии, личные блоги — нет.
@@ -240,8 +285,16 @@ def builder(page, post):
         pause(2, 3.5)
         head = re.sub(r"\s+", " ", page.locator("main, body").first.inner_text()[:700])
         v = llm(BIO_RULES, f"ПРОФИЛЬ @{post['author']}:\n{head}\n\nЕГО ПОСТ:\n{post['text'][:400]}")
-        print("th автор подходит:", bool(v.get("builder")))
-        return bool(v.get("builder"))
+        ok = bool(v.get("builder"))
+        print("th автор подходит:", ok)
+        # Фаундер с большой аудиторией — в площадки: под ним стоит отвечать и дальше.
+        m = re.search(r"([\d.,]+)\s*(тыс\.?|K|M|млн)?\s*(подписчик|followers)", head, re.I)
+        if ok and m:
+            n = float(m.group(1).replace(",", "."))
+            n *= {"тыс": 1e3, "тыс.": 1e3, "k": 1e3, "m": 1e6, "млн": 1e6}.get((m.group(2) or "").lower(), 1)
+            if n >= 3000:
+                DISCOVERED.append({"net": "th", "handle": post["author"]})
+        return ok
     except Exception as e:
         print("th профиль не прочитан:", type(e).__name__)
         return False
@@ -323,6 +376,7 @@ def main():
     if not a.dry:
         time.sleep(random.uniform(0, 600))   # не ровно по расписанию
     items, errors = [], []
+    hub_base = hubs()
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for net in nets[:max(left, 1) if not a.dry else 2]:
@@ -331,7 +385,8 @@ def main():
             try:
                 ctx.add_cookies(cookies_for(net))
                 me = os.environ.get(SITES[net]["user"], "")
-                raw = threads_candidates(page, 4) if net == "th" else x_candidates(4)
+                hl = list(dict.fromkeys([*hub_base.get(net, []), *((cfg.get("hubs") or {}).get(net) or [])]))
+                raw = threads_candidates(page, 2, hl) if net == "th" else x_candidates(2, hl)
                 cands = fresh(raw, cfg.get("recent") or [], me)
                 print(SITES[net]["name"], "найдено:", len(raw), "· свежих кандидатов:", len(cands))
                 pick = choose(net, cands, cfg, page) if cands else None
@@ -352,7 +407,7 @@ def main():
                 ctx.close()
             pause(20, 60)
         browser.close()
-    requests.post(f"{WORKER}/th/engaged", headers=H, json={"items": items, "errors": errors, "dry": a.dry}, timeout=60)
+    requests.post(f"{WORKER}/th/engaged", headers=H, json={"items": items, "errors": errors, "dry": a.dry, "discovered": DISCOVERED}, timeout=60)
 
 
 if __name__ == "__main__":
