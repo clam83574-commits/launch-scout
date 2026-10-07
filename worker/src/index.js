@@ -28,6 +28,7 @@
  */
 
 import APP_HTML from "./app.html";
+import TH_PLAN0 from "./th_plan.json";
 
 const PAGE = 10;
 
@@ -338,8 +339,8 @@ const EXTRA = {
     rq_market: "🎯 Подберу ниши под вас — два коротких вопроса.\n\n<b>1/2. Где запускаете?</b>", rq_model: "<b>2/2. Что строите?</b>", rq_kz: "🇰🇿 Казахстан", rq_cis: "🌍 СНГ", rq_global: "🌐 Весь мир", rq_unsure: "🤷 Пока не знаю", pf_title: "👤 <b>Ваш профиль</b> — по нему радар подбирает ниши, а чат — советы.", pf_chat: "<b>Из разговора бот понял:</b>", pf_hint: "Профиль сам пополняется из чата. Поправить — кнопками ниже.", pf_edit_m: "✏️ Рынок", pf_edit_t: "✏️ Что строю", pf_full: "⚙️ Подробнее", pf_reset: "🧹 Сбросить",
     ex_title: "С чего начать? Нажмите вопрос или задайте свой — текстом или голосом.", ex_1: "💰 Куда сейчас идут деньги?", ex_2: "🇰🇿 Какие ниши свободны в Казахстане?", ex_3: "🧪 Как проверить мою идею?",
     ab_live_p: "📡 Искать везде · +%d LS", ab_xtrends: "📡 X и Google Trends · %d LS",
-    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS в месяц на вопросы, поиск и разборы. Продление каждые 30 дней, отмена в любой момент.", st_descr_pack: "Докупленные LS не сгорают и тратятся после подписочных.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Счёт готов — оплата в один клик звёздами Telegram.", st_pay_btn: "Оплатить %d ⭐", st_ok_sub: "✅ Тариф <b>%s</b> подключён: %d LS до %s.", st_ok_pack: "✅ +%d LS. Докупленных теперь %d — они не сгорают.", st_support_hint: "Опишите проблему одним сообщением: /paysupport <текст>. Передам владельцу.", st_support_ok: "Передал — ответим здесь же.", ls_pay_soon: "Оплата — звёздами Telegram, кнопки ниже. Условия — /terms.", st_terms: "<b>Условия Launch Scout</b>\n\n1. Сервис даёт аналитику рынка и ответы ИИ по открытым данным. Это не инвестиционная рекомендация; решения вы принимаете сами.\n2. Действия оплачиваются внутренними единицами LS по фиксированному прайсу (/balance): вопрос — 10 LS; если для ответа нужен живой поиск в интернете (вопрос о конкретной компании, продукте или новостях) — 40 LS, и бот сообщает об этом в начале поиска. Подписочные LS действуют один расчётный месяц и не переносятся; докупленные LS не сгорают.\n3. Подписка оплачивается Telegram Stars и продлевается каждые 30 дней, пока вы её не отмените в настройках Telegram. Сервис не начисляет проценты, штрафы и скрытые платежи.\n4. Оплата за оказанный период не возвращается. Исключение — технический сбой: звёзды списаны, а тариф или LS не начислены, или списание прошло дважды. Напишите /paysupport, исправим или вернём звёзды.\n5. Вопросы об оплате — /paysupport.",
-    ls_footer: "−%d LS · осталось %d LS", ls_low: "⚠️ Осталось %d LS — меньше 10% месячного лимита.", ls_short: "💳 На это нужно %d LS, а у вас %d.", ls_balance: "💳 <b>Тариф: %s</b>\nПодписочные LS: <b>%d</b> · докупленные: <b>%d</b>\nПодписочные обновятся %s; докупленные не сгорают.", ls_tariffs_title: "<b>Тарифы</b>", ls_plan_free: "Free — $%s · %s LS в месяц", ls_plan_pro: "Pro — $%s · %s LS в месяц", ls_plan_max: "Max — $%s · %s LS в месяц", ls_plan_promax: "Pro Max — $%s · %s LS в месяц", ls_pack: "Докупить: %s LS за $%s — не сгорают", ls_prices: "Цена действий: вопрос 10 · глубже / карта идеи / конкуренты 20 · проверка идеи 30 · живой поиск 40 · X и Google Trends 15 · карточка идеи 10 LS. Сводка, лента и радар — бесплатно.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS в месяц на вопросы, поиск и разборы. Продление каждые 30 дней, отмена в любой момент.", st_descr_pack: "Докупленные LS не сгорают и тратятся после подписочных.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Счёт готов — оплата в один клик звёздами Telegram.", st_pay_btn: "Оплатить %d ⭐", st_ok_sub: "✅ Тариф <b>%s</b> подключён: %d LS до %s.", st_ok_pack: "✅ +%d LS. Докупленных теперь %d — они не сгорают.", st_support_hint: "Опишите проблему одним сообщением: /paysupport <текст>. Передам владельцу.", st_support_ok: "Передал — ответим здесь же.", ls_pay_soon: "Оплата картой — подписка с автопродлением, отмена в любой момент. Или криптой: за 3, 6 или 12 месяцев до −30%. Условия — /terms.", cp_btn: "💎 Криптой · USDT / TON — до −30%", st_terms: "<b>Условия Launch Scout</b>\n\n1. Сервис даёт аналитику рынка и ответы ИИ по открытым данным. Это не инвестиционная рекомендация; решения вы принимаете сами.\n2. Действия оплачиваются внутренними единицами LS по фиксированному прайсу (/balance): вопрос — 10 LS; если для ответа нужен живой поиск в интернете (вопрос о конкретной компании, продукте или новостях) — 40 LS, и бот сообщает об этом в начале поиска. Подписочные LS действуют один расчётный месяц и не переносятся; докупленные LS не сгорают.\n3. Тариф оплачивается банковской картой через Tribute и продлевается автоматически каждые 30 дней с той же карты, пока вы не отмените автопродление (кнопка в /balance); после отмены тариф действует до конца оплаченного срока. Подписки, оформленные ранее через Telegram Stars, продлеваются, пока вы их не отмените в настройках Telegram. При оплате криптой через @CryptoBot тариф действует оплаченный срок (1, 3, 6 или 12 месяцев) без автопродления, LS начисляются каждые 30 дней. Бесплатные 300 LS даются один раз и не сгорают. Сервис не начисляет проценты, штрафы и скрытые платежи.\n4. Оплата за оказанный период не возвращается. Исключение — технический сбой: деньги списаны, а тариф или LS не начислены, или списание прошло дважды. Напишите /paysupport, исправим или вернём оплату.\n5. Вопросы об оплате — /paysupport.",
+    ls_footer: "−%d LS · осталось %d LS", ls_low: "⚠️ Осталось %d LS — скоро закончатся.", ls_short: "💳 На это нужно %d LS, а у вас %d.", ls_balance: "💳 <b>Тариф: %s</b>\nПодписочные LS: <b>%d</b> · докупленные: <b>%d</b>\nПодписочные обновятся %s; докупленные не сгорают.", ls_tariffs_title: "<b>Тарифы</b>", ls_plan_free: "Free — %s LS на старте, один раз", ls_plan_pro: "Pro — $%s · %s LS в месяц", ls_plan_max: "Max — $%s · %s LS в месяц", ls_plan_promax: "Pro Max — $%s · %s LS в месяц", ls_pack: "Докупить: %s LS за $%s — не сгорают", ls_prices: "Цена действий: вопрос 10 · глубже / карта идеи / конкуренты 20 · проверка идеи 30 · живой поиск 40 · X и Google Trends 15 · карточка идеи 10 LS. Сводка, лента и радар — бесплатно.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "База раундов", src_web: "Веб и новости", live_head: "🔎 Живой поиск в интернете (40 LS): %s", research_started: "📡 Запустил глубокий поиск по X и Google Trends — дополнение придёт отдельным сообщением через 1–2 минуты.", research_limit: "📡 Глубокий поиск — до %d раз в сутки, лимит на сегодня исчерпан.", research_err: "📡 Глубокий поиск сейчас не запустился — попробуйте позже.", research_head: "📡 <b>Дополнение: X и Google Trends</b>", research_empty: "📡 В X и Google Trends по этому запросу ничего заметного.", ab_deep: "🔬 Глубже", ab_map: "🗺 Карта идеи", ab_wide: "🧭 Смежные ниши", ab_comp: "⚔️ Конкуренты", ab_follow: "🔔 Следить", ab_unfollow: "✅ Слежу", ab_live: "📡 Искать везде", ctx_gone: "Контекст устарел — задайте вопрос заново", adj_title: "🧭 <b>Рядом с «%s»</b>", adj_line: "компаний за 6 мес: %d, ранних %d, %s", onboard: "👋 Пять быстрых вопросов — и я буду подбирать ниши и инсайты под вас. Отметьте, что подходит, и нажмите «Показать радар».",
     opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
     opp_overheated: "⚠️ Перегрев: вход только с сильным отличием", opp_local_gap: "🕳 Пусто у нас: доказано деньгами, в КЗ свободно",
@@ -398,8 +399,8 @@ const EXTRA = {
     rq_market: "🎯 Сізге тауашаларды таңдаймын — екі қысқа сұрақ.\n\n<b>1/2. Қай жерде іске қосасыз?</b>", rq_model: "<b>2/2. Не жасап жатырсыз?</b>", rq_kz: "🇰🇿 Қазақстан", rq_cis: "🌍 ТМД", rq_global: "🌐 Бүкіл әлем", rq_unsure: "🤷 Әзірге білмеймін", pf_title: "👤 <b>Сіздің профиліңіз</b> — радар тауашаларды, чат кеңестерді осы бойынша таңдайды.", pf_chat: "<b>Әңгімеден бот түсінгені:</b>", pf_hint: "Профиль чаттан өзі толығады. Түзету — төмендегі батырмалармен.", pf_edit_m: "✏️ Нарық", pf_edit_t: "✏️ Не жасаймын", pf_full: "⚙️ Толығырақ", pf_reset: "🧹 Тазарту",
     ex_title: "Неден бастаймыз? Сұрақты басыңыз немесе өзіңіздікін қойыңыз — мәтінмен не дауыспен.", ex_1: "💰 Қазір ақша қайда барады?", ex_2: "🇰🇿 Қазақстанда қай тауашалар бос?", ex_3: "🧪 Идеямды қалай тексеремін?",
     ab_live_p: "📡 Барлық жерден іздеу · +%d LS", ab_xtrends: "📡 X және Google Trends · %d LS",
-    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "Айына %d LS: сұрақтар, іздеу және талдаулар. 30 күн сайын ұзартылады, кез келген уақытта тоқтатуға болады.", st_descr_pack: "Сатып алынған LS күймейді және жазылым LS-тен кейін жұмсалады.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Шот дайын — Telegram жұлдыздарымен бір рет басып төлеңіз.", st_pay_btn: "%d ⭐ төлеу", st_ok_sub: "✅ <b>%s</b> тарифі қосылды: %d LS, %s дейін.", st_ok_pack: "✅ +%d LS. Сатып алынғандары енді %d — күймейді.", st_support_hint: "Мәселені бір хабарламамен жазыңыз: /paysupport <мәтін>.", st_support_ok: "Жіберілді — осында жауап береміз.", ls_pay_soon: "Төлем — Telegram жұлдыздарымен, батырмалар төменде. Шарттар — /terms.", st_terms: "<b>Launch Scout шарттары</b>\n\n1. Сервис ашық деректер бойынша нарық аналитикасын және ЖИ жауаптарын береді. Бұл инвестициялық кеңес емес.\n2. Әрекеттер LS бірліктерімен тұрақты баға бойынша төленеді (/balance): сұрақ — 10 LS; жауапқа интернеттен тікелей іздеу керек болса (нақты компания, өнім не жаңалық туралы сұрақ) — 40 LS, бот бұл туралы іздеу басында хабарлайды. Жазылым LS бір есеп айы жарамды және келесі айға ауыспайды; сатып алынған LS күймейді.\n3. Жазылым Telegram Stars арқылы төленеді және 30 күн сайын ұзартылады. Сервис пайыз, айыппұл және жасырын төлем алмайды.\n4. Көрсетілген кезең үшін төлем қайтарылмайды. Ерекшелік — техникалық ақау: жұлдыздар алынды, бірақ тариф не LS берілмеді, не екі рет алынды. /paysupport жазыңыз.\n5. Төлем сұрақтары — /paysupport.",
-    ls_footer: "−%d LS · қалды %d LS", ls_low: "⚠️ %d LS қалды — айлық лимиттің 10%-нан аз.", ls_short: "💳 Бұған %d LS керек, сізде %d.", ls_balance: "💳 <b>Тариф: %s</b>\nЖазылым LS: <b>%d</b> · сатып алынған: <b>%d</b>\nЖазылым LS %s жаңарады; сатып алынғандары күймейді.", ls_tariffs_title: "<b>Тарифтер</b>", ls_plan_free: "Free — $%s · айына %s LS", ls_plan_pro: "Pro — $%s · айына %s LS", ls_plan_max: "Max — $%s · айына %s LS", ls_plan_promax: "Pro Max — $%s · айына %s LS", ls_pack: "Қосымша: %s LS — $%s, күймейді", ls_prices: "Әрекет бағасы: сұрақ 10 · тереңірек / идея картасы / бәсекелестер 20 · идеяны тексеру 30 · тікелей іздеу 40 · X және Google Trends 15 · идея картасы 10 LS. Шолу, лента және радар — тегін.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "Айына %d LS: сұрақтар, іздеу және талдаулар. 30 күн сайын ұзартылады, кез келген уақытта тоқтатуға болады.", st_descr_pack: "Сатып алынған LS күймейді және жазылым LS-тен кейін жұмсалады.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Шот дайын — Telegram жұлдыздарымен бір рет басып төлеңіз.", st_pay_btn: "%d ⭐ төлеу", st_ok_sub: "✅ <b>%s</b> тарифі қосылды: %d LS, %s дейін.", st_ok_pack: "✅ +%d LS. Сатып алынғандары енді %d — күймейді.", st_support_hint: "Мәселені бір хабарламамен жазыңыз: /paysupport <мәтін>.", st_support_ok: "Жіберілді — осында жауап береміз.", ls_pay_soon: "Картамен төлеу — автоұзартылатын жазылым, кез келген уақытта тоқтатуға болады. Не криптомен: 3, 6 не 12 айға −30%-ға дейін. Шарттар — /terms.", cp_btn: "💎 Криптомен · USDT / TON — −30%-ға дейін", st_terms: "<b>Launch Scout шарттары</b>\n\n1. Сервис ашық деректер бойынша нарық аналитикасын және ЖИ жауаптарын береді. Бұл инвестициялық кеңес емес.\n2. Әрекеттер LS бірліктерімен тұрақты баға бойынша төленеді (/balance): сұрақ — 10 LS; жауапқа интернеттен тікелей іздеу керек болса (нақты компания, өнім не жаңалық туралы сұрақ) — 40 LS, бот бұл туралы іздеу басында хабарлайды. Жазылым LS бір есеп айы жарамды және келесі айға ауыспайды; сатып алынған LS күймейді.\n3. Тариф Tribute арқылы банк картасымен төленеді және автоұзартуды тоқтатқанша (/balance ішіндегі батырма) 30 күн сайын сол картадан автоматты түрде ұзартылады; тоқтатқаннан кейін тариф төленген мерзім соңына дейін жарамды. Бұрын Telegram Stars арқылы рәсімделген жазылымдар Telegram баптауларында тоқтатқанша ұзартылады. @CryptoBot арқылы криптомен төлегенде тариф төленген мерзімге (1, 3, 6 не 12 ай) автоұзартусыз жарамды, LS әр 30 күн сайын беріледі. Тегін 300 LS бір рет беріледі және күймейді. Сервис пайыз, айыппұл және жасырын төлем алмайды.\n4. Көрсетілген кезең үшін төлем қайтарылмайды. Ерекшелік — техникалық ақау: ақша алынды, бірақ тариф не LS берілмеді, не екі рет алынды. /paysupport жазыңыз.\n5. Төлем сұрақтары — /paysupport.",
+    ls_footer: "−%d LS · қалды %d LS", ls_low: "⚠️ %d LS қалды — жақында бітеді.", ls_short: "💳 Бұған %d LS керек, сізде %d.", ls_balance: "💳 <b>Тариф: %s</b>\nЖазылым LS: <b>%d</b> · сатып алынған: <b>%d</b>\nЖазылым LS %s жаңарады; сатып алынғандары күймейді.", ls_tariffs_title: "<b>Тарифтер</b>", ls_plan_free: "Free — бастағанда %s LS, бір рет", ls_plan_pro: "Pro — $%s · айына %s LS", ls_plan_max: "Max — $%s · айына %s LS", ls_plan_promax: "Pro Max — $%s · айына %s LS", ls_pack: "Қосымша: %s LS — $%s, күймейді", ls_prices: "Әрекет бағасы: сұрақ 10 · тереңірек / идея картасы / бәсекелестер 20 · идеяны тексеру 30 · тікелей іздеу 40 · X және Google Trends 15 · идея картасы 10 LS. Шолу, лента және радар — тегін.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Раундтар базасы", src_web: "Веб және жаңалықтар", live_head: "🔎 Интернеттен тікелей іздеу (40 LS): %s", research_started: "📡 X және Google Trends бойынша терең іздеу басталды — толықтыру 1–2 минуттан кейін бөлек хабарламамен келеді.", research_limit: "📡 Терең іздеу — тәулігіне %d рет, бүгінгі лимит бітті.", research_err: "📡 Терең іздеу қазір басталмады — кейінірек көріңіз.", research_head: "📡 <b>Толықтыру: X және Google Trends</b>", research_empty: "📡 Бұл сұрау бойынша X пен Google Trends-те елеулі ештеңе жоқ.", ab_deep: "🔬 Тереңірек", ab_map: "🗺 Идея картасы", ab_wide: "🧭 Көршілес тауашалар", ab_comp: "⚔️ Бәсекелестер", ab_follow: "🔔 Бақылау", ab_unfollow: "✅ Бақылаудамын", ab_live: "📡 Барлық жерден іздеу", ctx_gone: "Контекст ескірді — сұрақты қайта қойыңыз", adj_title: "🧭 <b>«%s» маңында</b>", adj_line: "6 айда компаниялар: %d, ерте %d, %s", onboard: "👋 Бес жылдам сұрақ — сонда тауашалар мен инсайттарды сізге қарай таңдаймын. Сәйкесін белгілеп, «Радарды көрсету» батырмасын басыңыз.",
     opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
     opp_overheated: "⚠️ Қызып кеткен: кіру тек күшті ерекшелікпен", opp_local_gap: "🕳 Бізде бос: ақшамен дәлелденген, ҚЗ-да бос",
@@ -458,8 +459,8 @@ const EXTRA = {
     rq_market: "🎯 I'll pick niches for you — two quick questions.\n\n<b>1/2. Where are you launching?</b>", rq_model: "<b>2/2. What are you building?</b>", rq_kz: "🇰🇿 Kazakhstan", rq_cis: "🌍 CIS", rq_global: "🌐 Worldwide", rq_unsure: "🤷 Not sure yet", pf_title: "👤 <b>Your profile</b> — the radar picks niches and the chat tailors advice from it.", pf_chat: "<b>From the conversation the bot understood:</b>", pf_hint: "The profile updates itself from the chat. Fix it with the buttons below.", pf_edit_m: "✏️ Market", pf_edit_t: "✏️ What I build", pf_full: "⚙️ More", pf_reset: "🧹 Reset",
     ex_title: "Where to start? Tap a question or ask your own — by text or voice.", ex_1: "💰 Where is the money going now?", ex_2: "🇰🇿 Which niches are free in Kazakhstan?", ex_3: "🧪 How do I check my idea?",
     ab_live_p: "📡 Search everywhere · +%d LS", ab_xtrends: "📡 X and Google Trends · %d LS",
-    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS a month for questions, search and deep dives. Renews every 30 days, cancel anytime.", st_descr_pack: "Purchased LS never expire and are spent after plan LS.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Invoice ready — one-tap payment with Telegram Stars.", st_pay_btn: "Pay %d ⭐", st_ok_sub: "✅ Plan <b>%s</b> is on: %d LS until %s.", st_ok_pack: "✅ +%d LS. Purchased LS now %d — they never expire.", st_support_hint: "Describe the problem in one message: /paysupport <text>.", st_support_ok: "Sent — we will reply here.", ls_pay_soon: "Pay with Telegram Stars — buttons below. Terms — /terms.", st_terms: "<b>Launch Scout terms</b>\n\n1. The service provides market analytics and AI answers based on public data. It is not investment advice.\n2. Actions are paid in internal LS units at a fixed price list (/balance): a question is 10 LS; if the answer needs a live web search (a question about a specific company, product or news) it is 40 LS, and the bot says so when the search starts. Plan LS are valid for one billing month and do not roll over; purchased LS never expire.\n3. Plans are paid in Telegram Stars and renew every 30 days until you cancel in Telegram settings. No interest, penalties or hidden fees.\n4. Payments for a period already provided are not refunded. Exception — a technical failure: Stars were charged but the plan or LS were not credited, or you were charged twice. Write /paysupport and we will fix it or return the Stars.\n5. Payment questions — /paysupport.",
-    ls_footer: "−%d LS · %d LS left", ls_low: "⚠️ %d LS left — under 10% of the monthly allowance.", ls_short: "💳 This needs %d LS, you have %d.", ls_balance: "💳 <b>Plan: %s</b>\nPlan LS: <b>%d</b> · purchased: <b>%d</b>\nPlan LS renew on %s; purchased LS never expire.", ls_tariffs_title: "<b>Plans</b>", ls_plan_free: "Free — $%s · %s LS a month", ls_plan_pro: "Pro — $%s · %s LS a month", ls_plan_max: "Max — $%s · %s LS a month", ls_plan_promax: "Pro Max — $%s · %s LS a month", ls_pack: "Top up: %s LS for $%s — never expire", ls_prices: "Prices: question 10 · deeper / idea map / competitors 20 · idea check 30 · live search 40 · X and Google Trends 15 · idea card 10 LS. Brief, feed and radar are free.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS a month for questions, search and deep dives. Renews every 30 days, cancel anytime.", st_descr_pack: "Purchased LS never expire and are spent after plan LS.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Invoice ready — one-tap payment with Telegram Stars.", st_pay_btn: "Pay %d ⭐", st_ok_sub: "✅ Plan <b>%s</b> is on: %d LS until %s.", st_ok_pack: "✅ +%d LS. Purchased LS now %d — they never expire.", st_support_hint: "Describe the problem in one message: /paysupport <text>.", st_support_ok: "Sent — we will reply here.", ls_pay_soon: "Pay by card — a subscription that renews automatically, cancel anytime. Or with crypto: 3, 6 or 12 months up to −30%. Terms — /terms.", cp_btn: "💎 Crypto · USDT / TON — up to −30%", st_terms: "<b>Launch Scout terms</b>\n\n1. The service provides market analytics and AI answers based on public data. It is not investment advice.\n2. Actions are paid in internal LS units at a fixed price list (/balance): a question is 10 LS; if the answer needs a live web search (a question about a specific company, product or news) it is 40 LS, and the bot says so when the search starts. Plan LS are valid for one billing month and do not roll over; purchased LS never expire.\n3. Plans are paid by bank card via Tribute and renew automatically every 30 days from the same card until you cancel auto-renewal (button in /balance); after cancelling, the plan runs until the end of the paid period. Subscriptions started earlier with Telegram Stars renew until you cancel them in Telegram settings. Crypto payments via @CryptoBot cover the paid term (1, 3, 6 or 12 months) without auto-renewal; LS are credited every 30 days. The free 300 LS are given once and never expire. No interest, penalties or hidden fees.\n4. Payments for a period already provided are not refunded. Exception — a technical failure: you were charged but the plan or LS were not credited, or you were charged twice. Write /paysupport and we will fix it or refund the payment.\n5. Payment questions — /paysupport.",
+    ls_footer: "−%d LS · %d LS left", ls_low: "⚠️ %d LS left — running low.", ls_short: "💳 This needs %d LS, you have %d.", ls_balance: "💳 <b>Plan: %s</b>\nPlan LS: <b>%d</b> · purchased: <b>%d</b>\nPlan LS renew on %s; purchased LS never expire.", ls_tariffs_title: "<b>Plans</b>", ls_plan_free: "Free — %s LS once, on sign-up", ls_plan_pro: "Pro — $%s · %s LS a month", ls_plan_max: "Max — $%s · %s LS a month", ls_plan_promax: "Pro Max — $%s · %s LS a month", ls_pack: "Top up: %s LS for $%s — never expire", ls_prices: "Prices: question 10 · deeper / idea map / competitors 20 · idea check 30 · live search 40 · X and Google Trends 15 · idea card 10 LS. Brief, feed and radar are free.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Rounds database", src_web: "Web and news", live_head: "🔎 Live web search (40 LS): %s", research_started: "📡 Started a deep search on X and Google Trends — the follow-up arrives as a separate message in 1–2 minutes.", research_limit: "📡 Deep search is limited to %d a day — today's limit is used up.", research_err: "📡 Deep search did not start — try again later.", research_head: "📡 <b>Follow-up: X and Google Trends</b>", research_empty: "📡 Nothing notable on X or Google Trends for this query.", ab_deep: "🔬 Deeper", ab_map: "🗺 Idea map", ab_wide: "🧭 Adjacent niches", ab_comp: "⚔️ Competitors", ab_follow: "🔔 Follow", ab_unfollow: "✅ Following", ab_live: "📡 Search everywhere", ctx_gone: "Context expired — ask again", adj_title: "🧭 <b>Next to “%s”</b>", adj_line: "companies in 6 months: %d, early %d, %s", onboard: "👋 Five quick questions — and I'll pick niches and insights for you. Tick what fits and tap “Show radar”.",
     opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
     opp_overheated: "⚠️ Overheated: enter only with strong differentiation", opp_local_gap: "🕳 Empty here: proven by money, free in KZ",
@@ -1299,6 +1300,9 @@ async function handleUpdate(env, update) {
   await ensureTables(env);
   if (msg && raw.startsWith("/start")) await refCapture(env, chatId, raw);
   if (msg && /^\/start\s+site\b/i.test(raw)) await setMeta(env, "from_site", String(Number((await meta(env, "from_site")) || 0) + 1));
+  // Откуда пришёл человек (сайт, Threads, Instagram, X) — до проверки доступа, чтобы считать и тех, кто упёрся в закрытый бот.
+  const srcStart = msg && /^\/start\s+(site|threads|instagram|x)\b/i.exec(raw);
+  if (srcStart) await env.DB.prepare("INSERT OR IGNORE INTO user_src (user_id, src, ts) VALUES (?1, ?2, ?3)").bind(String(chatId), srcStart[1].toLowerCase(), Math.floor(Date.now() / 1000)).run().catch(() => null);
   const promoStart = msg && /^\/start\s+([a-z0-9_]+)/i.exec(raw);
   if (promoStart && PROMOS[promoStart[1].toLowerCase()]) await promoActivate(env, chatId, promoStart[1].toLowerCase(), "ru", false);
   if (!(await hasAccess(env, chatId))) {
@@ -1382,6 +1386,19 @@ async function handleUpdate(env, update) {
   }
   if (msg && msg.successful_payment) {
     await starsPaid(env, chatId, msg, lang);
+    return;
+  }
+  if (env.CRYPTO_PAY_TOKEN && (data === "cp" || data.startsWith("cp:"))) {
+    await cpMenu(env, chatId, data, lang);
+    return;
+  }
+  if (env.TRIBUTE_API_KEY && (data.startsWith("card:") || data.startsWith("buy:"))) {
+    // buy: — кнопки звёзд в старых сообщениях: теперь ведут на оплату картой.
+    await cardMenu(env, chatId, data.split(":")[1], lang);
+    return;
+  }
+  if (env.TRIBUTE_API_KEY && data === "trbcancel") {
+    await cardCancel(env, chatId, lang);
     return;
   }
   if (data.startsWith("buy:")) {
@@ -2972,20 +2989,26 @@ At most 8 competitors and 5 complaints, only ones you actually found with real U
 // после подписочных, в том числе на Free. Фактическая стоимость каждого
 // действия (OpenRouter отдаёт cost) пишется в ls_log — по ней сверяем прайс.
 // ---------------------------------------------------------------------------
+// Цены 2026-10-02: клиент живёт 2–3 месяца, поэтому Free — 300 LS один раз
+// при старте (WELCOME_LS, в credits — не сгорают), а не каждый месяц. LS на
+// доллар растут к старшим тарифам; пакет дороже Pro за 1000 LS, иначе пакеты
+// выгоднее подписки.
 const PLANS = {
-  free: { ls: 300, usd: 0 },
-  pro: { ls: 1500, usd: 4.99 },
-  max: { ls: 3500, usd: 9.99 },
-  promax: { ls: 7000, usd: 19.99 },
+  free: { ls: 0, usd: 0 },
+  pro: { ls: 2000, usd: 9.99 },
+  max: { ls: 4000, usd: 14.99 },
+  promax: { ls: 10000, usd: 30 },
 };
+const WELCOME_LS = 300;
 const LS_PRICE = { chat: 10, live: 40, live_up: 30, deep: 20, map: 20, comp: 20, check: 30, research: 15, idea: 10 };
 const LS_PERIOD = 30 * 86400;
-const CREDIT_PACK = { ls: 1000, usd: 3.49 };
+const CREDIT_PACK = { ls: 1000, usd: 7.99 };
 
 async function lsGet(env, uid) {
   const now = Math.floor(Date.now() / 1000);
   let r = await env.DB.prepare("SELECT * FROM ls_balance WHERE user_id = ?1").bind(String(uid)).first().catch(() => null);
-  r = r ? { ...r } : { user_id: String(uid), plan: "free", paid_until: 0, period_end: 0, sub_ls: 0, credits: 0, warned: 0 };
+  // Новый человек — WELCOME_LS один раз, в докупленные: не сгорают.
+  r = r ? { ...r } : { user_id: String(uid), plan: "free", paid_until: 0, period_end: 0, sub_ls: 0, credits: WELCOME_LS, warned: 0 };
   if (now >= (r.period_end || 0)) {
     // Новый расчётный месяц: подписочные LS — заново, credits остаются.
     if (r.plan !== "free" && now >= (r.paid_until || 0)) r.plan = "free";
@@ -3023,7 +3046,7 @@ async function lsSpend(env, uid, action, costUsd = 0) {
   r.credits = Math.max(0, r.credits - (price - fromSub));
   const left = r.sub_ls + r.credits;
   const plan = PLANS[r.plan] || PLANS.free;
-  const warn = !r.warned && left < plan.ls * 0.1;
+  const warn = !r.warned && left < (plan.ls || WELCOME_LS) * 0.1;
   if (warn) r.warned = 1;
   await lsSave(env, r);
   return { spent: price, left, warn };
@@ -3036,9 +3059,11 @@ function lsFooter(s, res) {
 }
 
 function lsTariffs(s) {
-  const row = (k) => fmt(s["ls_plan_" + k], PLANS[k].usd.toFixed(2), PLANS[k].ls.toLocaleString("ru-RU").replace(/,/g, " ")) + (STAR_ITEMS[k] ? ` · ${STAR_ITEMS[k].stars} ⭐` : "");
+  const n = (v) => v.toLocaleString("ru-RU").replace(/ /g, " ");
+  const row = (k) => k === "free" ? fmt(s.ls_plan_free, n(WELCOME_LS))
+    : fmt(s["ls_plan_" + k], PLANS[k].usd.toFixed(2), n(PLANS[k].ls));
   return [s.ls_tariffs_title, row("free"), row("pro"), row("max"), row("promax"), "",
-    fmt(s.ls_pack, CREDIT_PACK.ls.toLocaleString("ru-RU").replace(/,/g, " "), CREDIT_PACK.usd.toFixed(2)) + ` · ${STAR_ITEMS.pack.stars} ⭐`, "",
+    fmt(s.ls_pack, n(CREDIT_PACK.ls), CREDIT_PACK.usd.toFixed(2)), "",
     s.ls_prices, s.ls_pay_soon].join("\n");
 }
 
@@ -3047,14 +3072,14 @@ async function lsBalanceMsg(env, chatId, lang) {
   const r = await lsGet(env, chatId);
   const text = [fmt(s.ls_balance, s["ls_name_" + r.plan] || r.plan, r.sub_ls, r.credits,
     new Date(r.period_end * 1000).toISOString().slice(0, 10)), "", lsTariffs(s)].join("\n");
-  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", reply_markup: starsButtons(s, await promoActive(env, chatId)) });
+  await tg(env, "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", reply_markup: await payButtons(env, s, chatId, lang) });
 }
 
 async function lsShortMsg(env, chatId, lang, action) {
   const s = L(lang);
   const r = await lsGet(env, chatId);
   await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML",
-    text: fmt(s.ls_short, LS_PRICE[action] || 10, r.sub_ls + r.credits) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s, await promoActive(env, chatId)) });
+    text: fmt(s.ls_short, LS_PRICE[action] || 10, r.sub_ls + r.credits) + "\n\n" + lsTariffs(s), reply_markup: await payButtons(env, s, chatId, lang) });
 }
 
 /** Владелец: /grant <id> <free|pro|max|promax>, /credit <id> <LS>, /costs — сверка прайса с фактом. */
@@ -3114,14 +3139,16 @@ async function lsAdmin(env, chatId, text, userEnv = null) {
 //
 // Подписки — createInvoiceLink с subscription_period 30 дней (Telegram сам
 // продлевает и присылает successful_payment каждый месяц), пакет LS — разовый
-// счёт. Цена в звёздах ≈ цене в $ при выплате ~$0,013 за звезду через Fragment;
-// покупатель с телефона платит за звёзды дороже из-за комиссии App Store / Google.
+// счёт. С 2026-10-02 звёзды считаются по ~$0,02 — столько покупатель платит за
+// них с телефона, так цена в $ совпадает с тем, что он видит в Telegram. Нам
+// при выводе через Fragment ~$0,013 за звезду, поэтому крипта дешевле.
+// Действующие подписки Telegram продлевает по старой цене (385 ⭐ за Pro).
 // ---------------------------------------------------------------------------
 const STAR_ITEMS = {
-  pro: { stars: 385, plan: "pro", sub: true },
+  pro: { stars: 500, plan: "pro", sub: true },
   max: { stars: 750, plan: "max", sub: true },
   promax: { stars: 1500, plan: "promax", sub: true },
-  pack: { stars: 270, ls: 1000, sub: false },
+  pack: { stars: 400, ls: 1000, sub: false },
 };
 
 // ---------------------------------------------------------------------------
@@ -3137,11 +3164,11 @@ const PROMOS = {
 };
 const promoStars = (stars, off) => Math.round(stars * (1 - off));
 const PROMO_TEXT = {
-  ru: { head: "🎟 <b>Промокод %s активирован</b>\n−%s%% на первую покупку · действует до %s", foot: "Тариф по скидке — на 30 дней, без автопродления.",
+  ru: { head: "🎟 <b>Промокод %s активирован</b>\n−%s%% на первую покупку · действует до %s", foot: "Тариф по скидке — на 30 дней, без автопродления.", foot_card: "Тарифы — подписка по карте: скидка на первый месяц, дальше обычная цена, отменить можно в любой момент.",
     used: "Промокод действует только на первую покупку — у вас она уже была.", late: "Срок промокода истёк.", paid: "🎟 Скидка по промокоду %s применена. Это месяц без автопродления: когда он закончится, продлить можно в /balance." },
-  kk: { head: "🎟 <b>%s промокоды қосылды</b>\nАлғашқы сатып алуға −%s%% · %s дейін", foot: "Жеңілдікпен тариф — 30 күнге, автоұзартусыз.",
+  kk: { head: "🎟 <b>%s промокоды қосылды</b>\nАлғашқы сатып алуға −%s%% · %s дейін", foot: "Жеңілдікпен тариф — 30 күнге, автоұзартусыз.", foot_card: "Тарифтер — картамен жазылым: жеңілдік бірінші айға, кейін әдеттегі баға, кез келген уақытта тоқтатуға болады.",
     used: "Промокод тек алғашқы сатып алуға жарамды — сізде ол болған.", late: "Промокод мерзімі бітті.", paid: "🎟 %s промокоды бойынша жеңілдік қолданылды. Бұл автоұзартусыз ай: біткен соң /balance арқылы ұзартуға болады." },
-  en: { head: "🎟 <b>Promo code %s is on</b>\n−%s%% off your first purchase · until %s", foot: "The discounted plan lasts 30 days and does not auto-renew.",
+  en: { head: "🎟 <b>Promo code %s is on</b>\n−%s%% off your first purchase · until %s", foot: "The discounted plan lasts 30 days and does not auto-renew.", foot_card: "Plans are a card subscription: the discount covers the first month, then the regular price; cancel anytime.",
     used: "The promo code works only for a first purchase — you already have one.", late: "This promo code has expired.", paid: "🎟 Promo %s applied. This month does not auto-renew: when it ends, renew in /balance." },
 };
 
@@ -3175,10 +3202,10 @@ async function promoActivate(env, uid, code, lang, show = true) {
   // Цена в долларах — та же, что в тарифах (PLANS / CREDIT_PACK), со скидкой; округление вниз до цента.
   const usdOf = (k, off) => (Math.floor((k === "pack" ? CREDIT_PACK.usd : PLANS[k].usd) * (1 - off) * 100 + 1e-6) / 100).toFixed(2);
   const rows = [["pro", "Pro"], ["max", "Max"], ["promax", "Pro Max"], ["pack", "+1 000 LS"]].map(([k, name]) =>
-    `${name} — <b>$${usdOf(k, P.off)}</b> · ${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐  <s>$${usdOf(k, 0)}</s>`);
-  const btn = (k, name) => ({ text: `${name} · $${usdOf(k, P.off)}`, callback_data: "buy:" + k });
+    `${name} — <b>$${usdOf(k, P.off)}</b>${env.TRIBUTE_API_KEY ? "" : ` · ${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐`}  <s>$${usdOf(k, 0)}</s>`);
+  const btn = (k, name) => ({ text: `${name} · $${usdOf(k, P.off)}`, callback_data: (env.TRIBUTE_API_KEY ? "card:" : "buy:") + k });
   await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML",
-    text: `${fmt(t.head, P.title, Math.round(P.off * 100), d)}\n\n<blockquote>${rows.join("\n")}</blockquote>\n\n<i>${t.foot}</i>`,
+    text: `${fmt(t.head, P.title, Math.round(P.off * 100), d)}\n\n<blockquote>${rows.join("\n")}</blockquote>\n\n<i>${env.TRIBUTE_API_KEY ? t.foot_card : t.foot}</i>`,
     reply_markup: { inline_keyboard: [[btn("pro", "Pro"), btn("max", "Max")], [btn("promax", "Pro Max"), btn("pack", "+1 000 LS")]] } });
 }
 
@@ -3211,12 +3238,13 @@ async function starsPrice(env, uid, item) {
   return it ? (promo ? promoStars(it.stars, promo.off) : it.stars) : 0;
 }
 
-function starsButtons(s, promo = null) {
+function starsButtons(s, promo = null, crypto = false) {
   const p = (k) => (promo ? `${promoStars(STAR_ITEMS[k].stars, promo.off)} (−${Math.round(promo.off * 100)}%)` : STAR_ITEMS[k].stars);
   return { inline_keyboard: [
     [{ text: s.kb_invite, callback_data: "invite" }],
     [{ text: `⭐ Pro — ${p("pro")}`, callback_data: "buy:pro" }, { text: `⭐ Max — ${p("max")}`, callback_data: "buy:max" }],
     [{ text: `⭐ Pro Max — ${p("promax")}`, callback_data: "buy:promax" }, { text: fmt(s.st_pack_btn, p("pack")).replace(/%d/, ""), callback_data: "buy:pack" }],
+    ...(crypto ? [[{ text: s.cp_btn, callback_data: "cp" }]] : []),
   ] };
 }
 
@@ -3267,6 +3295,1164 @@ async function starsPaid(env, chatId, msg, lang) {
     await lsSave(env, r);
     await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.st_ok_pack, it.ls, r.credits) });
   }
+}
+
+// ---------------------------------------------------------------------------
+// 💎 Оплата криптой через Crypto Pay (@CryptoBot), 2026-10-02
+//
+// Звёзды съедают ~22–35% (Apple/Google + Telegram), Crypto Pay — около 3%.
+// Счёт в долларах (currency_type fiat), платят USDT/TON/BTC/ETH/USDC.
+// Автопродления нет: тариф берут на 1/3/6/12 месяцев разовым счётом, за срок
+// скидка (CP_TERMS). LS тарифа приходят помесячно, как у подписки: lsGet
+// пополняет их каждые 30 дней, пока не истёк paid_until. Об оплате сообщает
+// вебхук POST /cryptopay, подписанный HMAC-SHA256 с ключом SHA256(токена).
+// Секрет CRYPTO_PAY_TOKEN; тестнет — переменная CRYPTO_PAY_NET=testnet
+// (бот @CryptoTestnetBot, у него свой токен). Без токена кнопки не видно.
+// ---------------------------------------------------------------------------
+const CP_TERMS = { 1: 0, 3: 0.1, 6: 0.2, 12: 0.3 };
+const CP_ASSETS = "USDT,TON,BTC,ETH,USDC";
+const cpBase = (env) => (env.CRYPTO_PAY_NET === "testnet" ? "https://testnet-pay.crypt.bot/api/" : "https://pay.crypt.bot/api/");
+/** Цена в $ за тариф на N месяцев (или пакет) со скидкой; округление вниз до цента. */
+const cpUsd = (item, months, off) => Math.floor((item === "pack" ? CREDIT_PACK.usd : PLANS[item].usd * months) * (1 - off) * 100 + 1e-6) / 100;
+const CP_TEXT = {
+  ru: { pick: "💎 <b>Оплата криптой</b> — USDT, TON, BTC, ETH или USDC через @CryptoBot.\nБез автопродления: тариф на выбранный срок, LS приходят каждые 30 дней.", term: "<b>%s</b> — на какой срок? Чем дольше, тем дешевле месяц.",
+    mon: "мес", from: "от", hint: "Счёт на <b>$%s</b> готов — оплата в @CryptoBot, действует 1 час.", btn: "💎 Оплатить $%s",
+    ok_sub: "✅ Тариф <b>%s</b> оплачен до %s: %s LS каждые 30 дней.", err: "Не получилось выставить счёт — попробуйте ещё раз или напишите /paysupport." },
+  kk: { pick: "💎 <b>Криптомен төлеу</b> — @CryptoBot арқылы USDT, TON, BTC, ETH не USDC.\nАвтоұзартусыз: тариф таңдалған мерзімге, LS әр 30 күн сайын келеді.", term: "<b>%s</b> — қанша мерзімге? Ұзағырақ болса, айы арзанырақ.",
+    mon: "ай", from: "бастап", hint: "<b>$%s</b> шот дайын — @CryptoBot арқылы төлеңіз, 1 сағат жарамды.", btn: "💎 $%s төлеу",
+    ok_sub: "✅ <b>%s</b> тарифі %s дейін төленді: әр 30 күн сайын %s LS.", err: "Шот шықпады — қайталап көріңіз не /paysupport жазыңыз." },
+  en: { pick: "💎 <b>Pay with crypto</b> — USDT, TON, BTC, ETH or USDC via @CryptoBot.\nNo auto-renewal: the plan runs for the chosen term, LS arrive every 30 days.", term: "<b>%s</b> — for how long? The longer, the cheaper each month.",
+    mon: "mo", from: "from", hint: "Your <b>$%s</b> invoice is ready — pay in @CryptoBot, valid for 1 hour.", btn: "💎 Pay $%s",
+    ok_sub: "✅ <b>%s</b> plan paid until %s: %s LS every 30 days.", err: "Could not create the invoice — try again or write /paysupport." },
+};
+
+async function cpCall(env, method, params) {
+  const r = await fetch(cpBase(env) + method, { method: "POST", body: JSON.stringify(params),
+    headers: { "Crypto-Pay-API-Token": env.CRYPTO_PAY_TOKEN, "content-type": "application/json" } }).catch(() => null);
+  const j = r ? await r.json().catch(() => null) : null;
+  if (!(j && j.ok)) await logError(env, "cryptopay", `${method}: ${JSON.stringify(j && j.error ? j.error : r && r.status)}`).catch(() => null);
+  return j && j.ok ? j.result : null;
+}
+
+/** Кнопки «cp» (выбор тарифа), «cp:<тариф>» (выбор срока), «cp:<тариф>:<мес>» (счёт). */
+async function cpMenu(env, chatId, data, lang) {
+  const t = CP_TEXT[lang] || CP_TEXT.ru;
+  const promo = await promoActive(env, chatId);
+  const off = (m) => Math.max(CP_TERMS[m] || 0, promo ? promo.off : 0);
+  const [, item, mStr] = data.split(":");
+  if (!item) {
+    const plan = (k) => ({ text: `${PLAN_TITLE[k]} · ${t.from} $${(cpUsd(k, 12, off(12)) / 12).toFixed(2)}/${t.mon}`, callback_data: "cp:" + k });
+    return tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: t.pick, reply_markup: { inline_keyboard: [
+      [plan("pro")], [plan("max")], [plan("promax")],
+      [{ text: `+${CREDIT_PACK.ls.toLocaleString("ru-RU").replace(/ /g, " ")} LS · $${cpUsd("pack", 1, off(1)).toFixed(2)}`, callback_data: "cp:pack:1" }]] } });
+  }
+  if (item !== "pack" && !PLANS[item]) return;
+  if (item !== "pack" && !mStr) {
+    const row = (m) => ({ text: `${m} ${t.mon} · $${cpUsd(item, m, off(m)).toFixed(2)}${off(m) ? ` (−${Math.round(off(m) * 100)}%)` : ""}`, callback_data: `cp:${item}:${m}` });
+    return tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(t.term, PLAN_TITLE[item]),
+      reply_markup: { inline_keyboard: [[row(1), row(3)], [row(6), row(12)]] } });
+  }
+  const months = item === "pack" ? 1 : Number(mStr);
+  if (!(months in CP_TERMS)) return;
+  const usd = cpUsd(item, months, off(months)).toFixed(2);
+  const inv = await cpCall(env, "createInvoice", {
+    currency_type: "fiat", fiat: "USD", amount: usd, accepted_assets: CP_ASSETS, expires_in: 3600,
+    description: (item === "pack" ? `Launch Scout +${CREDIT_PACK.ls} LS` : `Launch Scout ${PLAN_TITLE[item]} — ${months} ${t.mon}`).slice(0, 1024),
+    payload: `${item}:${months}:${chatId}${promo && off(months) === promo.off && promo.off > (CP_TERMS[months] || 0) ? ":" + promo.code : ""}`,
+  });
+  const link = inv && (inv.bot_invoice_url || inv.pay_url);
+  return tg(env, "sendMessage", link
+    ? { chat_id: chatId, parse_mode: "HTML", text: fmt(t.hint, usd), reply_markup: { inline_keyboard: [[{ text: fmt(t.btn, usd), url: link }]] } }
+    : { chat_id: chatId, text: t.err });
+}
+
+/** POST /cryptopay — вебхук Crypto Pay. Без верной подписи ничего не начисляем. */
+async function cpWebhook(request, env) {
+  if (!env.CRYPTO_PAY_TOKEN) return new Response("нет", { status: 404 });
+  const body = await request.text();
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", await crypto.subtle.digest("SHA-256", enc.encode(env.CRYPTO_PAY_TOKEN)),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = [...new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(body)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  if ((request.headers.get("crypto-pay-api-signature") || "").toLowerCase() !== mac) return new Response("подпись", { status: 401 });
+  let u = null;
+  try { u = JSON.parse(body); } catch { u = null; }
+  if (u && u.update_type === "invoice_paid" && u.payload) {
+    await ensureTables(env);
+    await cpPaid(env, u.payload);
+  }
+  return new Response("ok");
+}
+
+/** Счёт оплачен: продлить тариф на N месяцев или добавить пакет LS. */
+async function cpPaid(env, inv) {
+  const [item, mStr, uid, code] = String(inv.payload || "").split(":");
+  const months = Number(mStr) || 1;
+  if (inv.status !== "paid" || !uid || !(item === "pack" || PLANS[item]) || !(months in CP_TERMS)) return;
+  const now = Math.floor(Date.now() / 1000);
+  const r = await lsGet(env, uid);
+  if (item === "pack") r.credits += CREDIT_PACK.ls;
+  else {
+    // Тот же тариф ещё идёт — продлеваем с его конца; другой — новый тариф с сегодняшнего дня.
+    const same = r.plan === item && (r.paid_until || 0) > now;
+    const until = (same ? r.paid_until : now) + months * LS_PERIOD;
+    if (same) r.paid_until = until;
+    else Object.assign(r, { plan: item, paid_until: until, period_end: now + LS_PERIOD, sub_ls: PLANS[item].ls, warned: 0 });
+  }
+  // Повтор вебхука — тот же invoice_id, второй раз не начисляем. В stars —
+  // звёздный эквивалент выручки за вычетом ~3% комиссии Crypto Pay: дашборд
+  // считает выручку одной формулой stars × STAR_USD.
+  const ins = await env.DB.prepare("INSERT OR IGNORE INTO payments (charge_id, user_id, ts, item, stars, sub_exp, recurring) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0)")
+    .bind("cp:" + inv.invoice_id, String(uid), now, `cp_${item}_${months}`, Math.round(Number(inv.amount || 0) * 0.97 / STAR_USD), item === "pack" ? 0 : r.paid_until).run();
+  if (!(ins && ins.meta && ins.meta.changes)) return;
+  await lsSave(env, r);
+  await ownerNotify(env, { text: `💎 Оплата криптой: ${item === "pack" ? "+" + CREDIT_PACK.ls + " LS" : PLAN_TITLE[item] + " × " + months + " мес"} — $${inv.amount} (${inv.paid_amount || "?"} ${inv.paid_asset || ""})${code && PROMOS[code] ? ` (промокод ${PROMOS[code].title})` : ""} от ${uid}` });
+  const lang = ((await getPrefs(env, uid).catch(() => ({}))) || {}).lang || "ru";
+  if (item === "pack") {
+    await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(L(lang).st_ok_pack, CREDIT_PACK.ls, r.credits) });
+    return;
+  }
+  // Оплачено криптой — подписку звёздами не продлеваем, иначе она перепишет срок и человек заплатит дважды.
+  const { results } = await env.DB.prepare("SELECT charge_id FROM payments WHERE user_id = ?1 AND item IN ('pro','max','promax') AND sub_exp > ?2")
+    .bind(String(uid), now).all().catch(() => ({ results: [] }));
+  for (const old of results || []) {
+    await tg(env, "editUserStarSubscription", { user_id: Number(uid), telegram_payment_charge_id: old.charge_id, is_canceled: true });
+  }
+  await refReward(env, uid);
+  const t = CP_TEXT[lang] || CP_TEXT.ru;
+  await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.ok_sub, PLAN_TITLE[item],
+    new Date(r.paid_until * 1000).toISOString().slice(0, 10).split("-").reverse().join("."), PLANS[item].ls.toLocaleString("ru-RU").replace(/ /g, " ")) });
+}
+
+// ---------------------------------------------------------------------------
+// 💳 Оплата картой через Tribute (Shop API), 2026-10-07 — основной способ
+//
+// Тарифы Pro / Max / Pro Max — подписка: заказ с period=monthly, Tribute сам
+// списывает с карты каждый месяц, пока человек не отменит (кнопка в /balance →
+// POST /shop/orders/{uuid}/cancel). Промокод — скидка только на первый месяц
+// (firstPeriodAmount), дальше обычная цена. Пакет LS — разовый заказ.
+// Крипта (Crypto Pay) — второй способ; звёзды больше не продаём: их кнопки
+// показываются, только пока не задан ключ Tribute, а продления старых
+// звёздных подписок по-прежнему принимает starsPaid.
+//
+// Вебхук POST /tribute, подпись — HMAC-SHA256 тела с ключом API, hex в
+// заголовке trbt-signature. События:
+//   shop_order                 — первая оплата (подписки или пакета);
+//   shop_order_charge_success  — очередное автосписание: ещё месяц и LS заново;
+//   shop_order_charge_failed   — списание не прошло (Tribute повторит 3 раза за ~8 ч);
+//   shop_order_cancelled       — подписка отменена (человеком, банком, после неудачных списаний);
+//   shop_order_refunded        — возврат: пишем владельцу.
+// Своих полей вебхук не несёт: что куплено, лежит в kv trb_<uuid>
+// («тариф:uid[:промокод]»), действующая подписка — в kv trb_sub_<uid>
+// («uuid:тариф»). customerId — Telegram ID покупателя.
+// Секрет TRIBUTE_API_KEY; в кабинете Tribute → Настройки → API-ключи вебхук
+// https://<воркер>/tribute; в магазине должны быть включены рекуррентные платежи.
+// ---------------------------------------------------------------------------
+const TRB_API = "https://tribute.tg/api/v1/";
+const TRB_NET = 0.9;                     // доля выручки после комиссии Tribute, когда fee не пришёл
+const TRB_GRACE = 12 * 3600;             // тариф не гаснет, пока Tribute повторяет списание (~8 ч)
+const TRB_TEXT = {
+  ru: { hint_sub: "Подписка <b>%s</b> — $%s в месяц, автопродление, отменить можно в любой момент в /balance.", hint_promo: "Подписка <b>%s</b>: первый месяц <b>$%s</b> по промокоду, дальше $%s в месяц. Отменить можно в любой момент в /balance.",
+    hint_pack: "Счёт на <b>$%s</b> за %s LS готов.", btn: "💳 Оплатить картой $%s", err: "Не получилось выставить счёт — попробуйте ещё раз или напишите /paysupport.",
+    ok_sub: "✅ Тариф <b>%s</b> подключён: %s LS до %s. Продлится автоматически — отменить можно в /balance.", renew: "🔄 Тариф <b>%s</b> продлён до %s: %s LS заново.",
+    failed: "⚠️ Не получилось списать оплату за тариф <b>%s</b>. Проверьте карту — Tribute попробует ещё раз в ближайшие часы.",
+    ended: "Подписка <b>%s</b> отключена: %s. Тариф действует до %s, потом — Free. Подключить снова — /balance.",
+    why: { charge_failed: "оплата не прошла после нескольких попыток", payment_method_expired: "карта больше не действует", seller_unavailable: "приём оплат временно остановлен", last_charge_refunded: "последний платёж возвращён" },
+    cancel_btn: "✖️ Отменить автопродление %s", cancel_ok: "Автопродление отменено. Тариф <b>%s</b> действует до %s, дальше — Free.", cancel_err: "Не получилось отменить — напишите /paysupport, отменим вручную.",
+    mon: "мес" },
+  kk: { hint_sub: "<b>%s</b> жазылымы — айына $%s, автоұзарту, /balance арқылы кез келген уақытта тоқтатуға болады.", hint_promo: "<b>%s</b> жазылымы: промокодпен бірінші ай <b>$%s</b>, кейін айына $%s. /balance арқылы кез келген уақытта тоқтатуға болады.",
+    hint_pack: "<b>$%s</b> шот дайын: %s LS.", btn: "💳 Картамен $%s төлеу", err: "Шот шықпады — қайталап көріңіз не /paysupport жазыңыз.",
+    ok_sub: "✅ <b>%s</b> тарифі қосылды: %s LS, %s дейін. Өзі ұзартылады — /balance арқылы тоқтатуға болады.", renew: "🔄 <b>%s</b> тарифі %s дейін ұзартылды: %s LS қайта.",
+    failed: "⚠️ <b>%s</b> тарифі үшін төлем алынбады. Картаны тексеріңіз — Tribute жақын сағаттарда қайталайды.",
+    ended: "<b>%s</b> жазылымы тоқтатылды: %s. Тариф %s дейін жарамды, кейін — Free. Қайта қосу — /balance.",
+    why: { charge_failed: "бірнеше әрекеттен кейін төлем өтпеді", payment_method_expired: "карта енді жарамсыз", seller_unavailable: "төлем қабылдау уақытша тоқтады", last_charge_refunded: "соңғы төлем қайтарылды" },
+    cancel_btn: "✖️ %s автоұзартуын тоқтату", cancel_ok: "Автоұзарту тоқтатылды. <b>%s</b> тарифі %s дейін жарамды, кейін — Free.", cancel_err: "Тоқтату шықпады — /paysupport жазыңыз, қолмен тоқтатамыз.",
+    mon: "ай" },
+  en: { hint_sub: "<b>%s</b> subscription — $%s a month, auto-renews, cancel anytime in /balance.", hint_promo: "<b>%s</b> subscription: first month <b>$%s</b> with your promo code, then $%s a month. Cancel anytime in /balance.",
+    hint_pack: "Your <b>$%s</b> invoice for %s LS is ready.", btn: "💳 Pay $%s by card", err: "Could not create the invoice — try again or write /paysupport.",
+    ok_sub: "✅ Plan <b>%s</b> is on: %s LS until %s. It renews automatically — cancel in /balance.", renew: "🔄 Plan <b>%s</b> renewed until %s: %s LS again.",
+    failed: "⚠️ The payment for plan <b>%s</b> did not go through. Check your card — Tribute will retry within a few hours.",
+    ended: "Your <b>%s</b> subscription has stopped: %s. The plan runs until %s, then Free. To subscribe again — /balance.",
+    why: { charge_failed: "the payment failed after several attempts", payment_method_expired: "the card is no longer valid", seller_unavailable: "payments are paused", last_charge_refunded: "the last payment was refunded" },
+    cancel_btn: "✖️ Cancel %s auto-renewal", cancel_ok: "Auto-renewal cancelled. Plan <b>%s</b> runs until %s, then Free.", cancel_err: "Could not cancel — write /paysupport and we will do it manually.",
+    mon: "mo" },
+};
+const trbDate = (ts) => new Date(ts * 1000).toISOString().slice(0, 10).split("-").reverse().join(".");
+const trbN = (v) => Number(v).toLocaleString("ru-RU").replace(/\u00a0/g, " ");
+/** Цена первой оплаты в $ с промокодом (как в promoActivate: вниз до цента). */
+const trbUsd = (item, off = 0) => Math.floor((item === "pack" ? CREDIT_PACK.usd : PLANS[item].usd) * (1 - off) * 100 + 1e-6) / 100;
+
+async function trbCall(env, method, path, body) {
+  const r = await fetch(TRB_API + path, { method, headers: { "Api-Key": env.TRIBUTE_API_KEY, "content-type": "application/json" },
+    ...(body ? { body: JSON.stringify(body) } : {}) }).catch(() => null);
+  const j = r ? await r.json().catch(() => null) : null;
+  if (!r || !r.ok) await logError(env, "tribute", `${method} ${path}: ${JSON.stringify(j || (r && r.status))}`.slice(0, 500)).catch(() => null);
+  return r && r.ok ? j : null;
+}
+
+/** Действующая подписка по карте: { uuid, plan } или null. */
+async function trbSub(env, uid) {
+  const v = await meta(env, "trb_sub_" + uid);
+  if (!v) return null;
+  const [uuid, plan] = v.split(":");
+  return uuid ? { uuid, plan } : null;
+}
+
+/** Кнопки «card:<товар>» (и старые «buy:<товар>»): заказ в Tribute и ссылка на оплату. */
+async function cardLink(env, uid, item) {
+  if (item !== "pack" && !PLANS[item]) return null;
+  const promo = await promoActive(env, uid);
+  const full = trbUsd(item), first = trbUsd(item, promo ? promo.off : 0);
+  const title = item === "pack" ? `Launch Scout +${CREDIT_PACK.ls} LS` : `Launch Scout ${PLAN_TITLE[item]}`;
+  const descr = item === "pack" ? `${trbN(CREDIT_PACK.ls)} LS — не сгорают` : `${trbN(PLANS[item].ls)} LS в месяц, автопродление каждые 30 дней`;
+  const o = await trbCall(env, "POST", "shop/orders", {
+    currency: "usd", title, description: descr, customerId: String(uid),
+    ...(item === "pack" ? { amount: Math.round(first * 100) } : { amount: Math.round(full * 100), period: "monthly", ...(first < full ? { firstPeriodAmount: Math.round(first * 100) } : {}) }),
+  });
+  if (!(o && o.uuid)) return null;
+  await setMeta(env, "trb_" + o.uuid, `${item}:${uid}${promo ? ":" + promo.code : ""}`);
+  return { link: o.webappPaymentUrl || o.paymentUrl, full, first, promo };
+}
+
+async function cardMenu(env, chatId, item, lang) {
+  const t = TRB_TEXT[lang] || TRB_TEXT.ru;
+  const r = await cardLink(env, chatId, item);
+  if (!(r && r.link)) return tg(env, "sendMessage", { chat_id: chatId, text: t.err });
+  const usd = (v) => v.toFixed(2);
+  const text = item === "pack" ? fmt(t.hint_pack, usd(r.first), trbN(CREDIT_PACK.ls))
+    : r.first < r.full ? fmt(t.hint_promo, PLAN_TITLE[item], usd(r.first), usd(r.full)) : fmt(t.hint_sub, PLAN_TITLE[item], usd(r.full));
+  return tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text, reply_markup: { inline_keyboard: [[{ text: fmt(t.btn, usd(r.first)), url: r.link }]] } });
+}
+
+/** Кнопка «trbcancel»: отменить автопродление. Тариф доживает оплаченный срок. */
+async function cardCancel(env, chatId, lang) {
+  const t = TRB_TEXT[lang] || TRB_TEXT.ru;
+  const sub = await trbSub(env, chatId);
+  if (!sub) return;
+  const ok = await trbCall(env, "POST", `shop/orders/${sub.uuid}/cancel`);
+  if (!ok) return tg(env, "sendMessage", { chat_id: chatId, text: t.cancel_err });
+  await setMeta(env, "trb_sub_" + chatId, "");
+  const r = await lsGet(env, chatId);
+  await ownerNotify(env, { text: `💳 ${chatId} отменил автопродление ${PLAN_TITLE[sub.plan] || sub.plan}` });
+  return tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(t.cancel_ok, PLAN_TITLE[sub.plan] || sub.plan, trbDate(r.paid_until || r.period_end)) });
+}
+
+/** Месяц подписки оплачен (первый или продление): тариф до memberExpiresAt и LS заново. */
+async function cardMonth(env, uid, plan, exp, first, code, lang, t) {
+  const now = Math.floor(Date.now() / 1000);
+  const end = exp > now ? exp : now + LS_PERIOD;
+  const r = await lsGet(env, uid);
+  Object.assign(r, { plan, paid_until: end + TRB_GRACE, period_end: end, sub_ls: PLANS[plan].ls, warned: 0 });
+  await lsSave(env, r);
+  if (!first) {
+    await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.renew, PLAN_TITLE[plan], trbDate(end), trbN(PLANS[plan].ls)) });
+    return;
+  }
+  // Новая подписка: старые — звёздную и прежнюю по карте — не продлеваем, чтобы не платил дважды.
+  const { results } = await env.DB.prepare("SELECT charge_id FROM payments WHERE user_id = ?1 AND item IN ('pro','max','promax') AND sub_exp > ?2")
+    .bind(String(uid), now).all().catch(() => ({ results: [] }));
+  for (const old of results || []) {
+    await tg(env, "editUserStarSubscription", { user_id: Number(uid), telegram_payment_charge_id: old.charge_id, is_canceled: true });
+  }
+  await refReward(env, uid);
+  await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.ok_sub, PLAN_TITLE[plan], trbN(PLANS[plan].ls), trbDate(end)) +
+    (code && PROMOS[code] ? "\n\n" + fmt((PROMO_TEXT[lang] || PROMO_TEXT.ru).paid, PROMOS[code].title) : "") });
+}
+
+/** POST /tribute — вебхук Tribute. Без верной подписи ничего не начисляем. */
+async function trbWebhook(request, env) {
+  if (!env.TRIBUTE_API_KEY) return new Response("нет", { status: 404 });
+  const body = await request.text();
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(env.TRIBUTE_API_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = [...new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(body)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  if ((request.headers.get("trbt-signature") || "").toLowerCase() !== mac) return new Response("подпись", { status: 401 });
+  let u = null;
+  try { u = JSON.parse(body); } catch { u = null; }
+  if (u && u.payload && u.payload.uuid) {
+    await ensureTables(env);
+    await trbEvent(env, u.name, u.payload);
+  }
+  return new Response(JSON.stringify({ status: "ok" }), { headers: { "content-type": "application/json" } });
+}
+
+async function trbEvent(env, name, o) {
+  const stored = await meta(env, "trb_" + o.uuid);
+  const [item, uid, code] = String(stored || "").split(":");
+  const sum = `$${((name === "shop_order" && o.firstPeriodAmount ? o.firstPeriodAmount : o.amount || 0) / 100).toFixed(2)}`;
+  // Заказ не наш (создан в кабинете руками) или оплачен не тем, кому выставлен, — не начисляем, зовём владельца.
+  if (!stored || String(uid) !== String(o.customerId)) {
+    if (name === "shop_order" || name === "shop_order_charge_success") {
+      await ownerNotify(env, { text: `💳 Tribute: ${name} по заказу ${o.uuid} (${sum}, покупатель ${o.customerId || "?"}), но бот не выставлял его этому человеку — проверьте и начислите вручную.` });
+    }
+    return;
+  }
+  const lang = ((await getPrefs(env, uid).catch(() => ({}))) || {}).lang || "ru";
+  const t = TRB_TEXT[lang] || TRB_TEXT.ru;
+  const now = Math.floor(Date.now() / 1000);
+  const exp = o.memberExpiresAt ? Math.floor(Date.parse(o.memberExpiresAt) / 1000) || 0 : 0;
+  const isPack = item === "pack";
+
+  if (name === "shop_order" || name === "shop_order_charge_success") {
+    if (name === "shop_order" && o.status !== "paid") return;
+    if (!isPack && !PLANS[item]) return;
+    const first = name === "shop_order";
+    // Повтор вебхука — тот же ключ, второй раз не начисляем. Продление — по сроку, до которого оплачено.
+    const charge = first ? "trb:" + o.uuid : `trb:${o.uuid}:${exp}`;
+    const paidCents = first && o.firstPeriodAmount ? o.firstPeriodAmount : o.amount || 0;
+    const net = first && o.fee != null ? (paidCents - o.fee) / 100 : (paidCents / 100) * TRB_NET;
+    const ins = await env.DB.prepare("INSERT OR IGNORE INTO payments (charge_id, user_id, ts, item, stars, sub_exp, recurring) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")
+      .bind(charge, String(uid), now, `trb_${item}`, Math.round(net / STAR_USD), isPack ? 0 : exp, isPack ? 0 : 1).run();
+    if (!(ins && ins.meta && ins.meta.changes)) return;
+    await ownerNotify(env, { text: `💳 Оплата картой: ${isPack ? "+" + CREDIT_PACK.ls + " LS" : PLAN_TITLE[item]} — ${sum}${first ? "" : " (продление)"}${first && code && PROMOS[code] ? ` (промокод ${PROMOS[code].title})` : ""} от ${uid}` });
+    if (isPack) {
+      const r = await lsGet(env, uid);
+      r.credits += CREDIT_PACK.ls;
+      await lsSave(env, r);
+      await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(L(lang).st_ok_pack, CREDIT_PACK.ls, r.credits) });
+      return;
+    }
+    if (first) {
+      // Была другая подписка по карте — отменяем её, иначе спишутся обе.
+      const old = await trbSub(env, uid);
+      if (old && old.uuid !== o.uuid) await trbCall(env, "POST", `shop/orders/${old.uuid}/cancel`);
+      await setMeta(env, "trb_sub_" + uid, `${o.uuid}:${item}`);
+    }
+    await cardMonth(env, uid, item, exp, first, code, lang, t);
+    return;
+  }
+
+  if (name === "shop_order_charge_failed") {
+    // Сообщаем один раз — на первой неудачной попытке.
+    if (Number(o.chargeRetries || 1) === 1) await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.failed, PLAN_TITLE[item] || item) });
+    await ownerNotify(env, { text: `💳 Не прошло автосписание ${PLAN_TITLE[item] || item} у ${uid} (попытка ${o.chargeRetries || "?"})` });
+    return;
+  }
+
+  if (name === "shop_order_cancelled") {
+    const sub = await trbSub(env, uid);
+    if (sub && sub.uuid === o.uuid) await setMeta(env, "trb_sub_" + uid, "");
+    await ownerNotify(env, { text: `💳 Подписка ${PLAN_TITLE[item] || item} у ${uid} отменена: ${o.cancelReason || "?"}` });
+    // Отменил сам человек кнопкой — ему уже ответили; отмену из-за новой подписки не показываем.
+    if (o.cancelReason === "cancelled_by_seller" || !sub || sub.uuid !== o.uuid) return;
+    const r = await lsGet(env, uid);
+    if (r.plan === item) {
+      // Списание так и не прошло — тариф гаснет в оплаченный срок, без запаса на повторы.
+      if (exp && (o.cancelReason === "charge_failed" || o.cancelReason === "payment_method_expired")) { r.paid_until = Math.min(r.paid_until || exp, exp); await lsSave(env, r); }
+      if (o.cancelReason === "last_charge_refunded") { r.paid_until = now; await lsSave(env, r); }
+    }
+    await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.ended, PLAN_TITLE[item] || item, t.why[o.cancelReason] || o.cancelReason || "—",
+      trbDate(Math.max(now, r.paid_until || now))) });
+    return;
+  }
+
+  if (name === "shop_order_refunded") {
+    await ownerNotify(env, { text: `💳 Возврат по карте: ${isPack ? "+" + CREDIT_PACK.ls + " LS" : PLAN_TITLE[item] || item} — $${((o.amount || 0) / 100).toFixed(2)} у ${uid}. LS не списаны — при необходимости поправьте вручную (/grant, /credit).` });
+  }
+}
+
+/** Кнопки оплаты под тарифами. Есть ключ Tribute — карта (основной способ) и
+ *  крипта; нет — по-старому звёзды, чтобы бот не остался без оплаты. */
+async function payButtons(env, s, uid, lang) {
+  const promo = await promoActive(env, uid);
+  const crypto = env.CRYPTO_PAY_TOKEN ? [[{ text: s.cp_btn, callback_data: "cp" }]] : [];
+  if (!env.TRIBUTE_API_KEY) {
+    const kb = starsButtons(s, promo, false);
+    kb.inline_keyboard.push(...crypto);
+    return kb;
+  }
+  const t = TRB_TEXT[lang] || TRB_TEXT.ru;
+  const off = promo ? promo.off : 0;
+  const p = (k) => (off ? `$${trbUsd(k, off).toFixed(2)} (−${Math.round(off * 100)}%)` : `$${trbUsd(k).toFixed(2)}`);
+  const sub = await trbSub(env, uid);
+  return { inline_keyboard: [
+    [{ text: s.kb_invite, callback_data: "invite" }],
+    [{ text: `💳 Pro — ${p("pro")}/${t.mon}`, callback_data: "card:pro" }, { text: `💳 Max — ${p("max")}/${t.mon}`, callback_data: "card:max" }],
+    [{ text: `💳 Pro Max — ${p("promax")}/${t.mon}`, callback_data: "card:promax" }, { text: `💳 +${trbN(CREDIT_PACK.ls)} LS — ${p("pack")}`, callback_data: "card:pack" }],
+    ...crypto,
+    ...(sub ? [[{ text: fmt(t.cancel_btn, PLAN_TITLE[sub.plan] || sub.plan), callback_data: "trbcancel" }]] : []),
+  ] };
+}
+
+// ---------------------------------------------------------------------------
+// 🧵 Threads + 📸 Instagram: Скаут — открытый ИИ-персонаж, ведёт аккаунт сам (2026-10-02)
+//
+// Скаут не притворяется человеком: никаких «я был на ивенте» и фото людей —
+// правила Meta о реалистичном ИИ-контенте, а главное, доверие к цифрам бота.
+// План на 30 дней (th_plan.json: день, слот, рубрика, формат, источник,
+// задание) — три поста в день по времени Астаны (TH_SLOTS). За 2 часа до
+// слота пост пишется (автор → редактор, Claude через OpenRouter), числа
+// сверяются с фактами из своей базы; не сошлось — пост пропускается.
+// Карусели и картинки рисует Actions (threads.yml + threads_render.py:
+// у Worker'а на бесплатном тарифе нет процессора на рендер), PNG лежат в D1
+// и отдаются по /th/m/<пост>/<номер>.png — Threads забирает их по ссылке.
+// Публикация в два шага, как требует Threads: контейнер, на следующем тике
+// проверка статуса и публикация. Когда план кончился — отчёт владельцу и
+// новый план, который Скаут составляет сам по тому, что зашло.
+// В X (Twitter) выходит всё: текст — твитом, карусель — до 4 слайдов в твите
+// и остальные ответом (см. блок X ниже). Ключи X_API_KEY, X_API_SECRET,
+// X_ACCESS_TOKEN, X_ACCESS_SECRET.
+// Карусели и картинки выходят и в Instagram (тот же аккаунт Скаута, своя
+// подпись с хэштегами; Instagram принимает только JPEG — слайды рисуются в
+// JPEG для обеих сетей), текстовые посты — только в Threads.
+// Секреты THREADS_TOKEN и IG_TOKEN (60 дней; Worker продлевает их раз в 30
+// дней и держит свежие в kv). Нет ни одного — модуль молчит. Команды —
+// /threads в служебном боте.
+// ---------------------------------------------------------------------------
+const TH_API = "https://graph.threads.net/v1.0/";
+const IG_API = "https://graph.instagram.com/v23.0/";
+const TH_SLOTS = [9, 13, 19];            // часы по Астане (UTC+5)
+const TH_PREP_H = 2;                     // за сколько часов до слота писать пост
+const TH_TZ = 5 * 3600;
+const TH_LINK = "https://t.me/Launch_Scout_bot?start=threads";
+const TH_MODEL = "anthropic/claude-sonnet-5.5";
+const TH_SECTOR = { hardware: "железо", defense_space: "оборона и космос", energy: "энергетика", mobility: "транспорт", ai_agents: "ИИ-агенты",
+  ai_infra: "ИИ-инфраструктура", devtools: "инструменты разработчиков", security: "кибербезопасность", fintech: "финтех", health: "медицина",
+  consumer: "потребительские продукты", commerce: "e-commerce", b2b_saas: "B2B SaaS", edu: "образование", proptech: "недвижимость", crypto: "крипта" };
+const TH_STAGE = { pre: "pre-seed", preseed: "pre-seed", seed: "seed", a: "раунд A", b: "раунд B", "c+": "раунд C и дальше", c: "раунд C" };
+const TH_CIS = ["KZ", "UZ", "KG", "TJ", "AM", "GE", "AZ", "BY", "RU", "UA"];
+
+const TH_PERSONA = `Ты — Скаут, ИИ-аналитик Launch Scout. Ведёшь аккаунты в Threads, Instagram и X для фаундеров и тех, кто выбирает идею для стартапа, в основном из Казахстана и СНГ.
+
+КТО ТЫ
+- Ты честно ИИ. Каждый день читаешь раунды стартапов по всему миру (17 источников, обновление каждые 10 минут) и видишь, куда идут деньги.
+- Ты не человек и не притворяешься: не ходишь на ивенты, не пьёшь кофе, не «был в Астане», не пишешь «наша команда». Можешь шутить над тем, что ты ИИ («пока вы спали, я прочитал 400 новостей о раундах»), но редко.
+- Характер: любопытный, прямой, с мнением и самоиронией. Умный друг в теме, а не пресс-релиз и не мотивационный коуч. Обращаешься на «ты».
+
+КАК ПИШЕШЬ
+- Первая строка — хук до 10 слов: конкретная цифра, противоречие, неожиданное сравнение или вопрос, на который хочется ответить. Не «Привет!», не «Сегодня поговорим о».
+- Короткие предложения. Одна мысль на пост. Конкретика вместо общих слов: имя компании, сумма, ниша, город.
+- Своё мнение можно и нужно: «по-моему, это переоценено», «тут я бы не лез». Но отличай мнение от факта.
+- Мост к читателю: что из этого может взять маленькая команда без миллионов, в Казахстане или СНГ.
+- Финал — вопрос или мысль, на которую хочется ответить в комментариях. Не «Подписывайтесь!».
+- 0–2 эмодзи на пост, не в начале каждой строки. Без хэштегов. Без ссылок в тексте.
+
+ЗАПРЕЩЕНО (это штампы ИИ, за них отписываются)
+«в современном мире», «давайте разберёмся», «не секрет, что», «стоит отметить», «важно понимать», «ключевой», «уникальный», «инновационный», «революционный», «погрузимся», «в эпоху», «играет важную роль», «откроет новые горизонты», «геймчейнджер», «итак», «в заключение», «это не просто X — это Y», «представьте себе», тройки прилагательных, списки с ✅, восклицательные знаки подряд, канцелярит, пересказ очевидного.
+
+ФАКТЫ
+- Компании, суммы, числа, инвесторы, цитаты — ТОЛЬКО из блока FACTS. Ничего не выдумывай и не округляй по-своему: пиши число так, как оно дано.
+- Если факта нет — не пиши число вовсе. Цитату жалобы — только дословно из FACTS.
+- Не давай инвестиционных советов и не обещай заработок.`;
+
+const TH_EDITOR = `Ты — жёсткий редактор аккаунта в Threads, Instagram и X. Тебе дают черновик поста от ИИ-персонажа Скаута (правила персонажа ниже). Перепиши так, чтобы человек остановил скролл и дочитал:
+- хук сильнее и конкретнее, до 10 слов;
+- выкинь штампы ИИ, воду, повторы, канцелярит; живой разговорный русский;
+- на слайдах — минимум слов, одна мысль на слайд;
+- сохрани ВСЕ факты и числа ровно как в FACTS, не добавляй новых;
+- сохрани JSON-структуру и поля; верни только JSON.
+
+Правила персонажа:
+`;
+
+/** Время Астаны: { day: "2026-10-03", hour, mid: unix полуночи по Астане }. */
+function thClock(now) {
+  const a = new Date((now + TH_TZ) * 1000);
+  const day = a.toISOString().slice(0, 10);
+  return { day, hour: a.getUTCHours(), mid: Math.floor(Date.parse(day + "T00:00:00Z") / 1000) - TH_TZ };
+}
+
+const thUsd = (v) => (v >= 1e9 ? `$${(v / 1e9).toFixed(1).replace(".0", "").replace(".", ",")} млрд` : `$${Math.round(v / 1e6)} млн`);
+
+async function thJson(env, k, dflt) {
+  try { return JSON.parse((await meta(env, k)) || "null") ?? dflt; } catch { return dflt; }
+}
+
+async function thPlan(env) {
+  return thJson(env, "th_plan", TH_PLAN0);
+}
+
+// ---- Сети: Threads и Instagram -------------------------------------------
+//
+// Обе — API Meta с одинаковой схемой: контейнер → статус → публикация.
+// Токены живут 60 дней; Worker продлевает их раз в 30 дней и держит свежий
+// в kv (<p>_token), пока секрет не сменили (<p>_token_base — его начало).
+
+const NET = {
+  th: { name: "Threads", secret: "THREADS_TOKEN", api: TH_API, emoji: "🧵",
+    refresh: (t) => `https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token=${encodeURIComponent(t)}` },
+  ig: { name: "Instagram", secret: "IG_TOKEN", api: IG_API, emoji: "📸",
+    refresh: (t) => `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(t)}` },
+};
+const netOn = (env, p) => !!env[NET[p].secret];
+
+// ---- Сети через веб (куки) -----------------------------------------------
+//
+// Без аккаунта разработчика Meta (верификация не проходит): GitHub Actions
+// (social_publish.py) открывает веб-версию Threads или Instagram с куки
+// владельца — секреты TH_COOKIES и IG_COOKIES в репозитории — и публикует
+// пост как человек, потом сообщает ссылку на POST /th/pub. X так же, но с
+// отдельного аккаунта Скаута (X_SCOUT_COOKIES): куки X_AUTH_TOKEN / X_CT0 —
+// аккаунт парсера, его не трогаем. Какие сети идут так — /threads web
+// th,ig,x (meta th_web). Риск — блокировка аккаунта за
+// автоматизацию. Куки протухли — придёт «обновите куки».
+const netName = (p) => (p === "x" ? "X" : NET[p].name);
+const netEmoji = (p) => (p === "x" ? "𝕏" : NET[p].emoji);
+async function webNets(env) {
+  return String((await meta(env, "th_web")) || "").split(",").map((s) => s.trim()).filter((p) => NET[p] || p === "x");
+}
+
+async function netToken(env, p) {
+  const sec = env[NET[p].secret];
+  if ((await meta(env, p + "_token_base")) === String(sec || "").slice(0, 16)) return (await meta(env, p + "_token")) || sec;
+  return sec;
+}
+
+async function netApi(env, p, path, params = {}, method = "POST") {
+  const form = new URLSearchParams({ ...params, access_token: await netToken(env, p) });
+  const u = NET[p].api + path;
+  let r = null, j = null;
+  try {
+    r = method === "GET" ? await fetch(`${u}?${form}`) : await fetch(u, { method, body: form, headers: { "content-type": "application/x-www-form-urlencoded" } });
+    j = await r.json().catch(() => null);
+  } catch (e) { j = { error: { message: String(e) } }; }
+  if (!r || !r.ok || !j || j.error) {
+    await logError(env, NET[p].name, `${path}: ${JSON.stringify((j && j.error) || (r && r.status)).slice(0, 300)}`);
+    return null;
+  }
+  return j;
+}
+
+/** id аккаунта для публикации (у Instagram — user_id профессионального аккаунта). */
+async function netUid(env, p) {
+  const c = await meta(env, p + "_uid");
+  if (c) return c;
+  const me = await netApi(env, p, "me", { fields: p === "ig" ? "user_id,username" : "id,username" }, "GET");
+  const id = me && (me.user_id || me.id);
+  if (id) { await setMeta(env, p + "_uid", String(id)); await setMeta(env, p + "_username", me.username || ""); }
+  return id ? String(id) : null;
+}
+
+async function netRefresh(env, p, now) {
+  const base = String(env[NET[p].secret] || "").slice(0, 16);
+  if ((await meta(env, p + "_token_base")) !== base) {
+    await setMeta(env, p + "_token_base", base); await setMeta(env, p + "_token", env[NET[p].secret]);
+    await setMeta(env, p + "_token_ts", String(now)); await setMeta(env, p + "_uid", "");
+    return;
+  }
+  if (now - Number((await meta(env, p + "_token_ts")) || 0) < 30 * 86400) return;
+  const r = await fetch(NET[p].refresh(await netToken(env, p))).catch(() => null);
+  const j = r ? await r.json().catch(() => null) : null;
+  if (j && j.access_token) {
+    await setMeta(env, p + "_token", j.access_token); await setMeta(env, p + "_token_ts", String(now));
+  } else {
+    await setMeta(env, p + "_token_ts", String(now - 29 * 86400));   // повторим завтра
+    await ownerNotify(env, { text: `⚠️ ${NET[p].name}: не удалось продлить токен (${JSON.stringify(j && j.error || (r && r.status)).slice(0, 150)}). Если не выйдет за 30 дней — Скаут там замолчит; выпустите новый и поставьте секретом ${NET[p].secret}.` });
+  }
+}
+
+/** Контейнер под пост: Threads берёт и текст, Instagram — только картинки. */
+async function netContainer(env, p, post) {
+  const uid = await netUid(env, p);
+  if (!uid) return null;
+  const img = (i) => `https://launch-scout-bot.clam83574.workers.dev/th/m/${post.id}/${i}.jpg`;
+  const n = post.n_media || 0;
+  if (p === "th") {
+    if (!n) return netApi(env, p, `${uid}/threads`, { media_type: "TEXT", text: post.text, ...(post.link ? { link_attachment: post.link } : {}) });
+    if (n === 1) return netApi(env, p, `${uid}/threads`, { media_type: "IMAGE", image_url: img(0), text: post.text });
+  } else if (n === 1) return netApi(env, p, `${uid}/media`, { image_url: img(0), caption: post.ig_text || post.text });
+  const kids = [];
+  for (let i = 0; i < n; i++) {
+    const c = await netApi(env, p, `${uid}/${p === "th" ? "threads" : "media"}`, { ...(p === "th" ? { media_type: "IMAGE" } : {}), image_url: img(i), is_carousel_item: "true" });
+    if (!c || !c.id) return null;
+    kids.push(c.id);
+  }
+  return netApi(env, p, `${uid}/${p === "th" ? "threads" : "media"}`, { media_type: "CAROUSEL", children: kids.join(","), [p === "th" ? "text" : "caption"]: p === "th" ? post.text : post.ig_text || post.text });
+}
+
+/** Статус контейнера: FINISHED, IN_PROGRESS, ERROR, EXPIRED (или null — сеть не ответила). */
+async function netStatus(env, p, id) {
+  const j = await netApi(env, p, id, { fields: p === "th" ? "status,error_message" : "status_code" }, "GET");
+  return j ? { status: j.status || j.status_code, msg: j.error_message || "" } : null;
+}
+
+async function netPublish(env, p, container) {
+  const uid = await netUid(env, p);
+  const pub = uid && (await netApi(env, p, `${uid}/${p === "th" ? "threads_publish" : "media_publish"}`, { creation_id: container }));
+  if (!pub || !pub.id) return null;
+  const pl = await netApi(env, p, pub.id, { fields: "permalink" }, "GET");
+  return { id: pub.id, permalink: (pl && pl.permalink) || "" };
+}
+
+// ---- X (Twitter) ----------------------------------------------------------
+//
+// API X с февраля 2026 — оплата за запрос: пост $0,015, пост со ссылкой $0,20,
+// чтение поста $0,005. Поэтому ссылок в твитах нет (бот — в профиле), а
+// статистику читаем только по постам последних трёх дней. Подпись — OAuth 1.0a
+// от имени аккаунта Скаута: ключи X_API_KEY / X_API_SECRET и токены
+// X_ACCESS_TOKEN / X_ACCESS_SECRET не протухают, продлевать нечего.
+// В твите до 4 картинок: карусель длиннее — первые 4 слайда в посте,
+// остальные ответом на него.
+
+const X_API = "https://api.x.com/2/";
+const X_POST_USD = 0.015, X_READ_USD = 0.005;
+const xOn = (env) => !!(env.X_API_KEY && env.X_API_SECRET && env.X_ACCESS_TOKEN && env.X_ACCESS_SECRET);
+/** Длина по правилам X: латиница и кириллица — 1, остальное (эмодзи, CJK) — 2; лимит 280. */
+const xLen = (t) => [...String(t || "")].reduce((a, c) => a + (c.codePointAt(0) <= 4351 ? 1 : 2), 0);
+
+/** Заголовок OAuth 1.0a (HMAC-SHA1). extra — параметры формы, если тело form-urlencoded (JSON и multipart в подпись не входят). */
+async function xSign(env, method, url, extra = {}, fixed = {}) {
+  const enc = (s) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
+  const u = new URL(url);
+  const oauth = { oauth_consumer_key: env.X_API_KEY, oauth_nonce: fixed.nonce || crypto.randomUUID().replace(/-/g, ""), oauth_signature_method: "HMAC-SHA1",
+    oauth_timestamp: fixed.ts || String(Math.floor(Date.now() / 1000)), oauth_token: env.X_ACCESS_TOKEN, oauth_version: "1.0" };
+  const params = [...Object.entries(oauth), ...u.searchParams.entries(), ...Object.entries(extra)].map(([k, v]) => [enc(k), enc(v)])
+    .sort((a, b) => (a[0] === b[0] ? (a[1] < b[1] ? -1 : 1) : a[0] < b[0] ? -1 : 1));
+  const base = [method.toUpperCase(), enc(u.origin + u.pathname), enc(params.map(([k, v]) => `${k}=${v}`).join("&"))].join("&");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(`${enc(env.X_API_SECRET)}&${enc(env.X_ACCESS_SECRET)}`), { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+  const sig = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(base)))));
+  return "OAuth " + Object.entries({ ...oauth, oauth_signature: sig }).map(([k, v]) => `${enc(k)}="${enc(v)}"`).join(", ");
+}
+
+async function xFetch(env, method, path, { json: body, form } = {}) {
+  const url = X_API + path;
+  let r = null, j = null;
+  try {
+    r = await fetch(url, { method, body: form || (body ? JSON.stringify(body) : undefined),
+      headers: { authorization: await xSign(env, method, url), ...(body ? { "content-type": "application/json" } : {}) } });
+    j = await r.json().catch(() => null);
+  } catch (e) { j = { detail: String(e) }; }
+  if (!r || !r.ok) {
+    await logError(env, "X", `${path}: ${r ? r.status : ""} ${JSON.stringify(j).slice(0, 300)}`);
+    // 402 — кончились кредиты X: без них Скаут в X молчит.
+    if (r && r.status === 402 && (await meta(env, "x_nocredit_day")) !== thClock(Math.floor(Date.now() / 1000)).day) {
+      await setMeta(env, "x_nocredit_day", thClock(Math.floor(Date.now() / 1000)).day);
+      await ownerNotify(env, { text: "⚠️ X: кончились кредиты API — посты в X не выходят. Пополните на developer.x.com → Billing." });
+    }
+    return null;
+  }
+  return j;
+}
+
+async function xMe(env) {
+  const c = await meta(env, "x_username");
+  if (c) return c;
+  const me = await xFetch(env, "GET", "users/me");
+  const u = me && me.data && me.data.username;
+  if (u) await setMeta(env, "x_username", u);
+  return u || "i";
+}
+
+/** Опубликовать пост в X: { id, permalink, cost } или null. */
+async function xPublish(env, post) {
+  let cost = 0;
+  const media = [];
+  for (let i = 0; i < (post.n_media || 0); i++) {
+    const row = await env.DB.prepare("SELECT img FROM th_media WHERE post = ?1 AND ix = ?2").bind(post.id, i).first().catch(() => null);
+    if (!row || !row.img) return null;
+    const fd = new FormData();
+    fd.append("media", new Blob([new Uint8Array(row.img)], { type: "image/jpeg" }), `slide${i + 1}.jpg`);
+    fd.append("media_category", "tweet_image");
+    const up = await xFetch(env, "POST", "media/upload", { form: fd });
+    if (!up || !up.data || !up.data.id) return null;
+    media.push(up.data.id);
+  }
+  let text = String(post.x_text || post.text || "").replace(/https?:\/\/\S+/g, "").trim();   // ссылка в твите — $0,20 вместо $0,015
+  if (xLen(text) > 280) text = [...text].slice(0, 270).join("").replace(/\s+\S*$/, "") + "…";
+  const first = await xFetch(env, "POST", "tweets", { json: { text, ...(media.length ? { media: { media_ids: media.slice(0, 4) } } : {}) } });
+  if (!first || !first.data) return null;
+  cost += X_POST_USD;
+  if (media.length > 4) {
+    const rest = await xFetch(env, "POST", "tweets", { json: { text: "Продолжение 👇 Проверить свою нишу — бот в профиле.", media: { media_ids: media.slice(4, 8) }, reply: { in_reply_to_tweet_id: first.data.id } } });
+    if (rest) cost += X_POST_USD;
+  }
+  return { id: first.data.id, permalink: `https://x.com/${await xMe(env)}/status/${first.data.id}`, cost };
+}
+
+/** Статистика X: показы и реакции постов за 3 дня, подписчики. */
+async function xStats(env, now) {
+  let cost = 0;
+  const rows = (await env.DB.prepare("SELECT id, x_id FROM th_posts WHERE x_st = 'published' AND x_pub_ts >= ?1").bind(now - 3 * 86400).all()).results || [];
+  if (rows.length) {
+    const j = await xFetch(env, "GET", `tweets?ids=${rows.map((r) => r.x_id).join(",")}&tweet.fields=public_metrics`);
+    cost += rows.length * X_READ_USD;
+    for (const t of j && Array.isArray(j.data) ? j.data : []) {
+      const m = t.public_metrics || {}, r = rows.find((x) => x.x_id === t.id);
+      if (r) await env.DB.prepare("UPDATE th_posts SET x_views = ?2, x_likes = ?3, x_replies = ?4, x_reposts = ?5 WHERE id = ?1")
+        .bind(r.id, m.impression_count || 0, m.like_count || 0, m.reply_count || 0, (m.retweet_count || 0) + (m.quote_count || 0)).run();
+    }
+  }
+  const me = await xFetch(env, "GET", "users/me?user.fields=public_metrics");
+  cost += X_READ_USD;
+  const fc = me && me.data && me.data.public_metrics ? me.data.public_metrics.followers_count : null;
+  if (fc !== null && fc !== undefined) { if (!(await meta(env, "x_followers0"))) await setMeta(env, "x_followers0", String(fc)); await setMeta(env, "x_followers", String(fc)); }
+  await setMeta(env, "x_read_usd", String(Number((await meta(env, "x_read_usd")) || 0) + cost));
+}
+
+// ---- Факты из своей базы под источник поста ------------------------------
+
+async function thUsed(env) { return thJson(env, "th_used", []); }
+async function thMarkUsed(env, key) {
+  if (!key) return;
+  const u = await thUsed(env);
+  await setMeta(env, "th_used", JSON.stringify([key, ...u.filter((x) => x !== key)].slice(0, 300)));
+}
+
+async function thFacts(env, source, now) {
+  const used = await thUsed(env);
+  const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results || []).catch(() => []);
+  const roundLine = (r) => `${r.company}: ${thUsd(r.usd)}${TH_STAGE[r.stage] ? ", " + TH_STAGE[r.stage] : ""}${r.what_ru ? " — " + r.what_ru : ""}${r.investors ? "; инвесторы: " + r.investors : ""}${r.country ? "; страна: " + r.country : ""}`;
+  if (source === "week") {
+    const [cur, prev, top] = await Promise.all([
+      q("SELECT sector, COUNT(*) n, SUM(usd) usd FROM rounds WHERE ts >= ?1 AND usd < 1e9 AND sector IS NOT NULL GROUP BY sector ORDER BY usd DESC", now - 7 * 86400),
+      q("SELECT sector, SUM(usd) usd FROM rounds WHERE ts >= ?1 AND ts < ?2 AND usd < 1e9 AND sector IS NOT NULL GROUP BY sector", now - 14 * 86400, now - 7 * 86400),
+      q("SELECT company, usd, stage, what_ru, investors, country FROM rounds WHERE ts >= ?1 AND usd < 1e9 ORDER BY usd DESC LIMIT 3", now - 7 * 86400),
+    ]);
+    if (!cur.length) return null;
+    const pm = Object.fromEntries(prev.map((r) => [r.sector, r.usd]));
+    const tot = cur.reduce((a, r) => a + (r.usd || 0), 0), n = cur.reduce((a, r) => a + r.n, 0);
+    const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+    const bars = cur.slice(0, 6).map((r) => ({ label: cap(TH_SECTOR[r.sector] || r.sector), value: Math.round(r.usd / 1e6), display: thUsd(r.usd) }));
+    return { key: null, bars, lines: [
+      `За 7 дней: ${n} раундов, всего ${thUsd(tot)} (без мегараундов от $1 млрд).`,
+      ...cur.slice(0, 8).map((r) => `Сектор «${TH_SECTOR[r.sector] || r.sector}»: ${thUsd(r.usd)}, раундов ${r.n}${pm[r.sector] ? `; неделей раньше ${thUsd(pm[r.sector])}` : "; неделей раньше почти ноль"}`),
+      ...top.map((r) => "Крупный раунд недели — " + roundLine(r)),
+    ] };
+  }
+  if (source === "round") {
+    const rows = await q("SELECT company, usd, stage, sector, niche, what_ru, investors, country FROM rounds WHERE ts >= ?1 AND usd >= 3e6 AND usd < 2e9 AND what_ru IS NOT NULL AND what_ru != '' ORDER BY usd DESC LIMIT 25", now - 3 * 86400);
+    const r = rows.find((x) => !used.includes("r:" + String(x.company).toLowerCase()));
+    if (!r) return null;
+    return { key: "r:" + String(r.company).toLowerCase(), lines: [roundLine(r), `Сектор: ${TH_SECTOR[r.sector] || r.sector}`, r.niche ? `Ниша: ${r.niche}` : ""].filter(Boolean) };
+  }
+  if (source === "niche" || source === "pain") {
+    const rows = await q("SELECT niche, name_ru, sector, data FROM niche_matrix WHERE ts >= ?1", now - 14 * 86400);
+    const cand = [];
+    for (const row of rows) {
+      let d = null;
+      try { d = JSON.parse(row.data); } catch { continue; }
+      const w = d.weekly || [];
+      const last4 = w.slice(-4).reduce((a, x) => a + x, 0), prev = w.slice(-12, -4).reduce((a, x) => a + x, 0) / 2;
+      const pains = (d.pain || []).map((p) => (typeof p === "string" ? { text: p } : p)).filter((p) => p && p.text);
+      if (source === "pain" ? pains.length >= 1 : last4 >= 2 && last4 > prev * 1.5) cand.push({ row, d, last4, prev, pains, score: source === "pain" ? pains.length + last4 : last4 - prev });
+    }
+    cand.sort((a, b) => b.score - a.score);
+    const c = cand.find((x) => !used.includes((source === "pain" ? "p:" : "n:") + x.row.niche));
+    if (!c) return null;
+    const comp = (c.d.companies || []).slice(0, 4).map((x) => `${x.company}${x.usd ? " — " + thUsd(x.usd) : ""}${x.stage && TH_STAGE[x.stage] ? ", " + TH_STAGE[x.stage] : ""}`);
+    return { key: (source === "pain" ? "p:" : "n:") + c.row.niche, lines: [
+      `Ниша: ${c.row.name_ru || c.row.niche} (сектор: ${TH_SECTOR[c.row.sector] || c.row.sector})`,
+      `Раундов за последние 4 недели: ${c.last4}; в среднем за 4 недели до этого: ${Math.round(c.prev * 10) / 10}`,
+      `За полгода: ${c.d.n || 0} раундов, ${thUsd(c.d.usd || 0)}`,
+      comp.length ? `Кто поднял: ${comp.join("; ")}` : "",
+      ...c.pains.slice(0, 3).map((p) => `Жалоба пользователей (цитата): «${String(p.text).slice(0, 200)}»${p.source || p.url ? " — источник: " + (p.source || String(p.url).replace(/^https?:\/\/(www\.)?/, "").split("/")[0]) : ""}`),
+      c.d.gap ? `Дыра на рынке: ${typeof c.d.gap === "string" ? c.d.gap : JSON.stringify(c.d.gap).slice(0, 200)}` : "",
+    ].filter(Boolean) };
+  }
+  if (source === "cis") {
+    const rows = await q(`SELECT company, usd, stage, what_ru, investors, country FROM rounds WHERE ts >= ?1 AND country IN (${TH_CIS.map((c) => `'${c}'`).join(",")}) ORDER BY ts DESC LIMIT 8`, now - 30 * 86400);
+    const world = await q("SELECT COUNT(*) n FROM rounds WHERE ts >= ?1", now - 30 * 86400);
+    return { key: null, lines: [
+      `Раундов в Казахстане и СНГ за 30 дней в нашей базе: ${rows.length}; во всём мире за то же время: ${(world[0] || {}).n || 0}.`,
+      ...rows.map((r) => "Раунд региона — " + roundLine(r)),
+    ] };
+  }
+  if (source === "bot") {
+    const tot = await q("SELECT COUNT(*) n FROM rounds WHERE ts >= ?1", now - 90 * 86400);
+    return { key: null, lines: [
+      "Launch Scout — бот в Telegram @Launch_Scout_bot. Следит за раундами стартапов по всему миру: 17 источников, обновление каждые 10 минут.",
+      `В базе за 90 дней: ${(tot[0] || {}).n || 0} раундов.`,
+      "Отвечает на вопрос о нише текстом или голосом за 5–10 секунд: кто уже есть, сколько привлекли, куда идут деньги.",
+      "Живой поиск: если в базе нет — ищет прямо сейчас в вебе, Hacker News, GitHub.",
+      "Проверка идеи: сначала пытается опровергнуть её фактами, потом даёт план проверки на 7 дней.",
+      "Радар ниш под профиль фаундера, сводка и лента — бесплатно. На старте 300 LS бесплатно — это около 30 ответов.",
+      "Каждую цифру сверяет с источником и не выдумывает.",
+    ] };
+  }
+  return { key: null, lines: [] };   // «none» — пост-мнение без цифр
+}
+
+// ---- Текст: автор → редактор, сверка чисел --------------------------------
+
+async function thLlm(env, system, user, meter) {
+  if (!env.LS_OPENROUTER_KEY) return null;
+  for (const model of [env.LS_TH_MODEL || TH_MODEL, OR_CHAT_MODEL]) {
+    try {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
+          "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-threads" },
+        body: JSON.stringify({ model, max_tokens: 3000, temperature: 0.85, usage: { include: true },
+          messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
+      });
+      if (!r.ok) { await noteAiError(env, "threads " + model, r.status, await r.text().catch(() => "")); continue; }
+      const j = await r.json();
+      if (j.usage && j.usage.cost) meter.usd += Number(j.usage.cost) || 0;
+      const t = (((j.choices || [])[0] || {}).message || {}).content || "";
+      const m = t.match(/\{[\s\S]*\}/);
+      if (m) return JSON.parse(m[0]);
+    } catch (e) { await noteAiError(env, "threads " + model, 0, String(e)); }
+  }
+  return null;
+}
+
+/** Длина для Threads: эмодзи считаются байтами UTF-8, лимит 500. */
+const thLen = (t) => [...String(t || "")].reduce((a, c) => a + (/\p{Extended_Pictographic}/u.test(c) ? new TextEncoder().encode(c).length : 1), 0);
+
+/** Числа поста, которых нет в фактах (числа до 10 и годы — можно). */
+function thBadNumbers(post, facts) {
+  const norm = (x) => x.replace(/\s/g, "").replace(",", ".").replace(/\.0+$/, "");
+  const nums = (t) => (String(t).match(/\d{1,3}(?:[   ]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g) || []).map(norm).filter(Boolean);
+  const allowed = new Set(nums(facts.join("\n")));
+  const texts = [post.caption, post.ig_caption, post.x_caption, ...(post.slides || []).flatMap((s) => [s.title, s.body, s.number, s.unit, s.quote, ...(s.items || [])])];
+  return [...new Set(texts.flatMap((t) => nums(t || "")))].filter((n) => !allowed.has(n) && !(Number(n) <= 10) && !(Number(n) >= 2024 && Number(n) <= 2027));
+}
+
+const TH_IG = `"ig_caption": "подпись для Instagram: те же мысли развёрнутее, 400–1200 знаков, абзацы через пустую строку, в конце «Проверить свою нишу — бот по ссылке в профиле» и 3–5 хэштегов по-русски и по-английски (#стартап #венчур ...)"`;
+const TH_X = `"x_caption": "версия для X: та же мысль плотнее, до 260 знаков, без ссылок и хэштегов"`;
+const TH_SHAPE = {
+  text: `{"caption": "текст поста для Threads, до 450 знаков", ${TH_X}}`,
+  image: `{"caption": "подпись для Threads, до 300 знаков", ${TH_IG}, ${TH_X}, "slides": [{"kind": "stat", "number": "главное число, ровно как в FACTS, до 9 знаков", "unit": "единица, до 20 знаков", "title": "что это значит, до 45 знаков", "body": "одна фраза-пояснение, до 90 знаков"}]}`,
+  carousel: `{"caption": "подпись к карусели для Threads: хук + вопрос к читателю, до 300 знаков", ${TH_IG}, ${TH_X},
+ "slides": [ 5–7 слайдов:
+   {"kind": "hook", "number": "необязательное число из FACTS", "unit": "необязательно", "title": "хук до 45 знаков", "body": "подзаголовок до 80 знаков"},
+   {"kind": "text", "title": "до 50 знаков", "body": "до 170 знаков; **жирный** и ==акцент== можно"},
+   {"kind": "list", "title": "до 45 знаков", "items": ["3–4 пункта, до 60 знаков"]},
+   {"kind": "quote", "quote": "дословная цитата из FACTS", "source": "источник из FACTS"},
+   {"kind": "stat", "number": "число из FACTS", "unit": "...", "title": "...", "body": "..."},
+   {"kind": "bars", "title": "до 45 знаков", "bars": "AUTO"}  ← только если в задании есть данные по секторам, Worker сам подставит цифры,
+   {"kind": "cta", "title": "мягкий призыв до 40 знаков (не «подпишись»)", "body": "до 90 знаков"}  ← последний слайд
+ ]}`,
+};
+
+/** Пост по пункту плана: { caption, ig_caption, slides, facts, key, cost } или { skip: причина }. */
+async function thCompose(env, item, now) {
+  const f = await thFacts(env, item.source, now);
+  if (!f) return { skip: `нет свежих данных для «${item.source}»` };
+  const meter = { usd: 0 };
+  const fmtKind = TH_SHAPE[item.format] ? item.format : "text";
+  const ask = `РУБРИКА: ${item.rubric}
+ФОРМАТ: ${fmtKind === "carousel" ? "карусель (листают слайды)" : fmtKind === "image" ? "одна картинка с большим числом + подпись" : "текстовый пост (только Threads)"}
+ЗАДАНИЕ: ${item.brief}
+${item.source === "bot" ? "Это пост о самом боте: польза через конкретный сценарий, без рекламного тона.\n" : ""}
+FACTS:
+${f.lines.length ? f.lines.join("\n") : "(фактов нет — пост-мнение без цифр, кроме очевидных вроде «7 дней»)"}
+
+Ответь только JSON такой формы:
+${TH_SHAPE[fmtKind]}`;
+  let post = null, bad = [];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const draft = await thLlm(env, TH_PERSONA, ask + (bad.length ? `\n\nВ прошлом варианте было не так: ${bad.join(", ")}. Исправь.` : ""), meter);
+    if (!draft) break;
+    const edited = await thLlm(env, TH_EDITOR + TH_PERSONA, `FACTS:\n${f.lines.join("\n")}\n\nЧЕРНОВИК (${fmtKind}):\n${JSON.stringify(draft)}\n\nВерни улучшенный JSON той же формы.`, meter);
+    post = edited && edited.caption ? edited : draft;
+    bad = thBadNumbers(post, f.lines).map((n) => "число не из FACTS: " + n);
+    if (thLen(post.caption) > 490) bad.push("подпись Threads длиннее 450 знаков — сократи");
+    if (post.ig_caption && String(post.ig_caption).length > 2100) bad.push("подпись Instagram длиннее 2000 знаков — сократи");
+    if (post.x_caption && xLen(post.x_caption) > 275) bad.push("версия для X длиннее 260 знаков — сократи");
+    if (!bad.length) break;
+  }
+  if (!post || !post.caption) return { skip: "модель не ответила", cost: meter.usd };
+  if (bad.length) return { skip: bad.join("; "), cost: meter.usd };
+  let slides = fmtKind === "text" ? [] : (post.slides || []).slice(0, 8).map((s) => ({ ...s, rubric: item.rubric }));
+  // Столбики — только из базы: модель их не пишет.
+  slides = slides.map((s) => (s.kind === "bars" ? (f.bars ? { ...s, bars: f.bars, body: s.body || "Без мегараундов от $1 млрд." } : null) : s)).filter(Boolean);
+  if (fmtKind !== "text" && !slides.length) return { skip: "в ответе нет слайдов", cost: meter.usd };
+  return { caption: String(post.caption).trim(), ig_caption: post.ig_caption ? String(post.ig_caption).trim() : null, x_caption: post.x_caption ? String(post.x_caption).trim() : null, slides, facts: f.lines, key: f.key, cost: meter.usd };
+}
+
+// ---- Конвейер: пишем → рисуем → публикуем ----------------------------------
+
+async function thPrepare(env, item, day, slot, now) {
+  // plan_key — один пункт плана выходит один раз, даже если его взяли раньше командой /threads now.
+  const key = `${(await meta(env, "th_plan_start")) || 0}:${item.d}:${item.s}`;
+  const ins = await env.DB.prepare("INSERT OR IGNORE INTO th_posts (plan_key, day, slot, plan_d, plan_s, rubric, format, source, status, ts) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'gen', ?9)")
+    .bind(key, day, slot, item.d, item.s, item.rubric, item.format, item.source, now).run();
+  if (!(ins && ins.meta && ins.meta.changes)) return null;
+  const id = ins.meta.last_row_id;
+  const p = await thCompose(env, item, now);
+  if (p.skip) {
+    await env.DB.prepare("UPDATE th_posts SET status = 'skip', err = ?2, cost = ?3 WHERE id = ?1").bind(id, p.skip, p.cost || 0).run();
+    await ownerNotify(env, { text: `🧵 Скаут: пост «${item.rubric}» (${day}${slot >= 0 ? `, ${TH_SLOTS[slot]}:00` : ""}) пропущен — ${p.skip}` });
+    return { id, skip: p.skip };
+  }
+  const needArt = p.slides.length > 0;
+  await env.DB.prepare("UPDATE th_posts SET status = ?2, text = ?3, ig_text = ?4, x_text = ?10, slides = ?5, n_media = ?6, cost = ?7, ukey = ?8, link = ?9 WHERE id = ?1")
+    .bind(id, needArt ? "render" : "ready", p.caption, p.ig_caption, JSON.stringify(p.slides), p.slides.length, p.cost, p.key, item.source === "bot" && !needArt ? TH_LINK : null, p.x_caption).run();
+  if (needArt) {
+    const err = await dispatchRun(env, { job: String(id) }, "threads.yml");
+    if (err) await logError(env, "threads", "рендер: " + err);
+  }
+  return { id, caption: p.caption, ig_caption: p.ig_caption, slides: p.slides };
+}
+
+async function thTick(env, now) {
+  const web = await webNets(env);
+  const nets = Object.keys(NET).filter((p) => netOn(env, p) && !web.includes(p));
+  if (!nets.length && !web.length && !xOn(env)) return;
+  await ensureTables(env);
+  const clk = thClock(now);
+  for (const p of nets) if (clk.hour === 4 || !(await meta(env, p + "_token_base"))) await netRefresh(env, p, now);
+  const off = (await meta(env, "th_off")) === "1";
+  const q = (sql, ...b) => env.DB.prepare(sql).bind(...b);
+
+  // 1. Контейнер готов → публикуем (в каждой сети отдельно).
+  for (const p of nets) {
+    const cont = await q(`SELECT * FROM th_posts WHERE ${p}_st = 'container' ORDER BY id LIMIT 3`).all().then((r) => r.results || []);
+    for (const post of cont) {
+      const st = await netStatus(env, p, post[p + "_container"]);
+      if ((!st || st.status === "IN_PROGRESS") && now - post.ts < 3600) continue;
+      if (!st || st.status !== "FINISHED") {
+        const why = (st && (st.msg || st.status)) || "сеть не ответила";
+        await q(`UPDATE th_posts SET ${p}_st = 'failed', err = ?2 WHERE id = ?1`, post.id, `${NET[p].name}: ${why}`).run();
+        await ownerNotify(env, { text: `⚠️ ${NET[p].name}: пост #${post.id} «${post.rubric}» не опубликован — ${why}` });
+        continue;
+      }
+      const pub = await netPublish(env, p, post[p + "_container"]);
+      if (!pub) continue;   // попробуем на следующем тике
+      await q(`UPDATE th_posts SET ${p}_st = 'published', ${p}_media_id = ?2, ${p}_permalink = ?3, ${p}_pub_ts = ?4 WHERE id = ?1`, post.id, pub.id, pub.permalink, now).run();
+      await thMarkUsed(env, post.ukey);
+      await ownerNotify(env, { text: `${NET[p].emoji} Опубликовано в ${NET[p].name} · ${post.rubric}${post.n_media > 1 ? ` · карусель ${post.n_media} слайдов` : post.n_media ? " · картинка" : ""}\n${pub.permalink}${p === "th" ? `\n\n${post.text}` : ""}` });
+    }
+  }
+  // Веб-публикация не отчиталась за полтора часа — Actions упал или завис.
+  for (const p of web) {
+    const lost = await q(`SELECT id, rubric FROM th_posts WHERE ${p}_st = 'web' AND ${p}_pub_ts < ?1`, now - 5400).all().then((r) => r.results || []);
+    for (const post of lost) {
+      await q(`UPDATE th_posts SET ${p}_st = 'failed', err = ?2 WHERE id = ?1`, post.id, `${netName(p)}: веб-публикация не отчиталась`).run();
+      await ownerNotify(env, { text: `⚠️ ${netName(p)}: пост #${post.id} «${post.rubric}» не опубликован — запуск в Actions не отчитался (см. вкладку Actions → threads).` });
+    }
+  }
+  if (off) return;
+
+  // 2. Наступил слот → контейнеры у готового поста; рендер не успел за 2 часа — Threads получает текст, Instagram пропускает.
+  const due = await q("SELECT * FROM th_posts WHERE status IN ('ready', 'render') AND (day < ?1 OR (day = ?1 AND slot <= ?2)) ORDER BY id LIMIT 3",
+    clk.day, TH_SLOTS.filter((h) => h <= clk.hour).length - 1).all().then((r) => r.results || []);
+  for (const post of due) {
+    if (post.status === "render") {
+      const slotTs = post.slot >= 0 ? Date.parse(post.day + "T00:00:00Z") / 1000 - TH_TZ + TH_SLOTS[post.slot] * 3600 : post.ts;
+      if (now < slotTs + 2 * 3600) continue;
+      await q("UPDATE th_posts SET n_media = 0, err = 'рендер не успел — вышел текстом' WHERE id = ?1", post.id).run();
+      post.n_media = 0;
+    }
+    const viaWeb = [];
+    for (const p of Object.keys(NET)) {
+      if (p === "ig" && !post.n_media) { await q(`UPDATE th_posts SET ${p}_st = 'skip' WHERE id = ?1`, post.id).run(); continue; }
+      if (web.includes(p)) { viaWeb.push(p); continue; }
+      if (!nets.includes(p)) { await q(`UPDATE th_posts SET ${p}_st = 'skip' WHERE id = ?1`, post.id).run(); continue; }
+      const c = await netContainer(env, p, post);
+      if (c && c.id) await q(`UPDATE th_posts SET ${p}_st = 'container', ${p}_container = ?2, ts = ?3 WHERE id = ?1`, post.id, c.id, now).run();
+      else await q(`UPDATE th_posts SET ${p}_st = 'failed', err = ?2 WHERE id = ?1`, post.id, `${NET[p].name}: не создан контейнер (см. ошибки)`).run();
+    }
+    if (web.includes("x")) viaWeb.push("x");
+    else if (xOn(env)) {
+      const x = await xPublish(env, post);
+      if (x) {
+        await q("UPDATE th_posts SET x_st = 'published', x_id = ?2, x_permalink = ?3, x_pub_ts = ?4, cost = COALESCE(cost, 0) + ?5 WHERE id = ?1", post.id, x.id, x.permalink, now, x.cost).run();
+        await thMarkUsed(env, post.ukey);
+        await ownerNotify(env, { text: `𝕏 Опубликовано в X · ${post.rubric}${post.n_media > 4 ? " · с продолжением" : ""}\n${x.permalink}` });
+      } else await q("UPDATE th_posts SET x_st = 'failed', err = 'X: не опубликован (см. ошибки)' WHERE id = ?1", post.id).run();
+    } else await q("UPDATE th_posts SET x_st = 'skip' WHERE id = ?1", post.id).run();
+    if (viaWeb.length) {
+      // Один запуск Actions на все веб-сети поста; отчёт по каждой — на /th/pub.
+      const err = await dispatchRun(env, { job: String(post.id), mode: "publish", nets: viaWeb.join(",") }, "threads.yml");
+      for (const p of viaWeb) {
+        if (err) await q(`UPDATE th_posts SET ${p}_st = 'failed', err = ?2 WHERE id = ?1`, post.id, "запуск Actions: " + err).run();
+        else await q(`UPDATE th_posts SET ${p}_st = 'web', ${p}_pub_ts = ?2 WHERE id = ?1`, post.id, now).run();
+      }
+      if (err) await ownerNotify(env, { text: `⚠️ Пост #${post.id} «${post.rubric}» не ушёл в ${viaWeb.join(", ")}: ${err}` });
+    }
+    await q("UPDATE th_posts SET status = 'out' WHERE id = ?1", post.id).run();
+  }
+
+  // 3. План: старт, пост к ближайшему слоту, конец месяца.
+  let start = Number((await meta(env, "th_plan_start")) || 0);
+  if (!start) { start = clk.mid + 86400; await setMeta(env, "th_plan_start", String(start)); }   // день 1 — завтра
+  const plan = await thPlan(env);
+  const dayN = Math.floor((now - start) / 86400) + 1;
+  const lastD = Math.max(...plan.map((x) => x.d));
+  if (dayN > lastD) { await thMonthEnd(env, now, start, plan); return; }
+  if (dayN < 1) return;
+  for (let s = 0; s < TH_SLOTS.length; s++) {
+    if (clk.hour < TH_SLOTS[s] - TH_PREP_H || clk.hour >= TH_SLOTS[s]) continue;
+    const item = plan.find((x) => x.d === dayN && x.s === s);
+    if (item) await thPrepare(env, item, clk.day, s, now);
+  }
+
+  // 4. Раз в сутки — статистика постов за неделю.
+  if (clk.hour === 23 && (await meta(env, "th_stats_day")) !== clk.day) {
+    await setMeta(env, "th_stats_day", clk.day);
+    await thStats(env, now);
+  }
+}
+
+async function thStats(env, now) {
+  if (xOn(env)) await xStats(env, now);
+  const val = (m) => (m.values && m.values[0] && m.values[0].value) || (m.total_value && m.total_value.value) || 0;
+  if (netOn(env, "th")) {
+    const rows = (await env.DB.prepare("SELECT id, th_media_id FROM th_posts WHERE th_st = 'published' AND th_pub_ts >= ?1").bind(now - 8 * 86400).all()).results || [];
+    for (const r of rows) {
+      const j = await netApi(env, "th", `${r.th_media_id}/insights`, { metric: "views,likes,replies,reposts,quotes" }, "GET");
+      if (!j || !j.data) continue;
+      const v = Object.fromEntries(j.data.map((m) => [m.name, val(m)]));
+      await env.DB.prepare("UPDATE th_posts SET views = ?2, likes = ?3, replies = ?4, reposts = ?5 WHERE id = ?1")
+        .bind(r.id, v.views || 0, v.likes || 0, v.replies || 0, (v.reposts || 0) + (v.quotes || 0)).run();
+    }
+    const uid = await netUid(env, "th");
+    const f = uid && (await netApi(env, "th", `${uid}/threads_insights`, { metric: "followers_count" }, "GET"));
+    const fc = f && f.data && f.data[0] && f.data[0].total_value ? f.data[0].total_value.value : null;
+    if (fc !== null) { if (!(await meta(env, "th_followers0"))) await setMeta(env, "th_followers0", String(fc)); await setMeta(env, "th_followers", String(fc)); }
+  }
+  if (netOn(env, "ig")) {
+    const rows = (await env.DB.prepare("SELECT id, ig_media_id FROM th_posts WHERE ig_st = 'published' AND ig_pub_ts >= ?1").bind(now - 8 * 86400).all()).results || [];
+    for (const r of rows) {
+      const j = await netApi(env, "ig", `${r.ig_media_id}/insights`, { metric: "reach,likes,comments,saved,shares" }, "GET");
+      if (!j || !j.data) continue;
+      const v = Object.fromEntries(j.data.map((m) => [m.name, val(m)]));
+      await env.DB.prepare("UPDATE th_posts SET ig_reach = ?2, ig_likes = ?3, ig_comments = ?4, ig_saves = ?5, ig_shares = ?6 WHERE id = ?1")
+        .bind(r.id, v.reach || 0, v.likes || 0, v.comments || 0, v.saved || 0, v.shares || 0).run();
+    }
+    const me = await netApi(env, "ig", "me", { fields: "followers_count" }, "GET");
+    if (me && me.followers_count !== undefined) { if (!(await meta(env, "ig_followers0"))) await setMeta(env, "ig_followers0", String(me.followers_count)); await setMeta(env, "ig_followers", String(me.followers_count)); }
+  }
+}
+
+/** Цифры периода по обеим сетям: для отчёта в конце месяца и /threads report. */
+async function thReport(env, now, start) {
+  await thStats(env, now);
+  const one = (sql, ...b) => env.DB.prepare(sql).bind(...b).first().catch(() => ({}));
+  const all = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results || []).catch(() => []);
+  const th = await one("SELECT COUNT(*) n, SUM(views) v, SUM(likes) l, SUM(replies) r, SUM(reposts) rp FROM th_posts WHERE th_st = 'published' AND th_pub_ts >= ?1", start);
+  const ig = await one("SELECT COUNT(*) n, SUM(ig_reach) v, SUM(ig_likes) l, SUM(ig_comments) r, SUM(ig_saves) sv, SUM(ig_shares) sh FROM th_posts WHERE ig_st = 'published' AND ig_pub_ts >= ?1", start);
+  const xs = await one("SELECT COUNT(*) n, SUM(x_views) v, SUM(x_likes) l, SUM(x_replies) r, SUM(x_reposts) rp FROM th_posts WHERE x_st = 'published' AND x_pub_ts >= ?1", start);
+  const all0 = await one("SELECT SUM(cost) c, SUM(status = 'skip') sk, SUM(th_st = 'failed') + SUM(ig_st = 'failed') + SUM(x_st = 'failed') fl FROM th_posts WHERE ts >= ?1", start);
+  const top = await all("SELECT rubric, views, ig_reach, x_views, th_permalink, ig_permalink, x_permalink FROM th_posts WHERE status = 'out' AND ts >= ?1 ORDER BY COALESCE(views, 0) + COALESCE(ig_reach, 0) + COALESCE(x_views, 0) DESC LIMIT 3", start);
+  const rub = await all("SELECT rubric, format, COUNT(*) n, AVG(views) v, AVG(ig_reach) ir, AVG(x_views) xv, AVG(COALESCE(likes, 0) + COALESCE(replies, 0) + COALESCE(reposts, 0) + COALESCE(ig_likes, 0) + COALESCE(ig_comments, 0) + COALESCE(ig_saves, 0) + COALESCE(x_likes, 0) + COALESCE(x_replies, 0) + COALESCE(x_reposts, 0)) e FROM th_posts WHERE status = 'out' AND ts >= ?1 GROUP BY rubric, format ORDER BY COALESCE(AVG(views), 0) + COALESCE(AVG(ig_reach), 0) + COALESCE(AVG(x_views), 0) DESC", start);
+  const src = async (s) => {
+    const u = await one("SELECT COUNT(*) n FROM user_src WHERE src = ?2 AND ts >= ?1", start, s);
+    const pay = await one("SELECT COUNT(DISTINCT p.user_id) n, COALESCE(SUM(p.stars), 0) s FROM payments p JOIN user_src u ON u.user_id = p.user_id WHERE u.src = ?2 AND p.ts >= ?1", start, s);
+    return { users: u.n || 0, payers: pay.n || 0, revenue: (pay.s || 0) * STAR_USD };
+  };
+  const m = async (k) => Number((await meta(env, k)) || 0);
+  return { th: { ...th, ...(await src("threads")), f0: await m("th_followers0"), f1: await m("th_followers"), on: netOn(env, "th") },
+    ig: { ...ig, ...(await src("instagram")), f0: await m("ig_followers0"), f1: await m("ig_followers"), on: netOn(env, "ig") },
+    x: { ...xs, ...(await src("x")), f0: await m("x_followers0"), f1: await m("x_followers"), on: xOn(env) },
+    cost: (all0.c || 0) + (await m("x_read_usd")), skipped: all0.sk || 0, failed: all0.fl || 0, top, rub };
+}
+
+function thReportText(r, start, now, title) {
+  const d = (t) => new Date((t + TH_TZ) * 1000).toISOString().slice(0, 10).split("-").reverse().join(".");
+  const pct = (a, b) => (b ? ((a / b) * 100).toFixed(a / b < 0.01 ? 2 : 1) + "%" : "—");
+  const n = (x) => Number(x || 0).toLocaleString("ru-RU");
+  const net = (x, name, reachWord, extra) => !x.on ? [`<b>${name}</b>: не подключён`] : [`<b>${name}</b>`,
+    `Постов: ${x.n || 0} · ${reachWord}: <b>${n(x.v)}</b> · лайки ${n(x.l)} · ${extra}`,
+    `Подписчики: <b>${x.f1}</b> (было ${x.f0}, ${x.f1 - x.f0 >= 0 ? "+" : ""}${x.f1 - x.f0})`,
+    `Перешли в бота: <b>${x.users}</b> (${pct(x.users, x.v)} от ${{ Охват: "охвата", Показы: "показов" }[reachWord] || "просмотров"}) · оплатили ${x.payers} (${pct(x.payers, x.users)}) · ≈ $${x.revenue.toFixed(2)}`];
+  const users = r.th.users + r.ig.users + r.x.users;
+  return [`📊 <b>${title}</b> · ${d(start)} — ${d(now)}`, "",
+    ...net(r.th, "Threads", "Просмотры", `ответы ${n(r.th.r)} · репосты ${n(r.th.rp)}`), "",
+    ...net(r.ig, "Instagram", "Охват", `комментарии ${n(r.ig.r)} · сохранения ${n(r.ig.sv)} · пересылки ${n(r.ig.sh)}`), "",
+    ...net(r.x, "X", "Показы", `ответы ${n(r.x.r)} · репосты ${n(r.x.rp)}`), "",
+    `Затраты: <b>$${r.cost.toFixed(2)}</b> — тексты и API X (рендер и хостинг бесплатно)${users ? ` · $${(r.cost / users).toFixed(2)} за пришедшего в бота` : ""}`,
+    `Пропущено постов: ${r.skipped}${r.failed ? ` · не вышло ${r.failed}` : ""}`,
+    "", "<b>Лучшие посты</b>", ...r.top.map((t, i) => `${i + 1}. ${t.rubric} — Threads ${n(t.views)} · Instagram ${n(t.ig_reach)} · X ${n(t.x_views)} ${t.th_permalink || t.x_permalink || t.ig_permalink || ""}`),
+    "", "<b>Рубрики</b> (в среднем: Threads просмотры / Instagram охват / X показы)", ...r.rub.slice(0, 8).map((x) => `${x.rubric} (${x.format}): ${Math.round(x.v || 0)} / ${Math.round(x.ir || 0)} / ${Math.round(x.xv || 0)}, ${x.n} шт.`),
+  ].join("\n");
+}
+
+/** План кончился: отчёт владельцу и новый план от Скаута по итогам месяца. */
+async function thMonthEnd(env, now, start, plan) {
+  if ((await meta(env, "th_reported")) === String(start)) return;
+  await setMeta(env, "th_reported", String(start));
+  const r = await thReport(env, now, start);
+  await ownerNotify(env, { parse_mode: "HTML", text: thReportText(r, start, now, "Скаут: тестовый месяц закончен") +
+    "\n\nКонтент-план закончился. Скаут составляет новый план по тому, что зашло, и продолжит с завтрашнего дня. Чтобы дать свой — пришлите сюда файл .json с подписью /threads plan." });
+  const meter = { usd: 0 };
+  const next = await thLlm(env, TH_PERSONA, `Ты составляешь себе контент-план на следующие 30 дней (3 поста в день: слот 0 = 09:00, 1 = 13:00, 2 = 19:00 по Астане). Карусели и картинки выходят в Threads, Instagram и X, текстовые посты — в Threads и X.
+Итоги прошлого месяца по рубрикам (v — просмотры Threads, ir — охват Instagram, xv — показы X, e — вовлечённость): ${JSON.stringify(r.rub)}.
+Лучшие посты: ${JSON.stringify(r.top.map((t) => t.rubric))}.
+Прошлый план (для формы): ${JSON.stringify(plan.slice(0, 21))}
+Усиль то, что зашло, убери то, что не набрало, добавь 1–2 новые рубрики на пробу. Источники данных: week, round, niche, pain, cis, bot, none. Форматы: text, image, carousel (не больше одной карусели в день). Посты о боте (source bot) — не чаще одного в два дня.
+Ответь только JSON: {"plan": [{"d": 1..30, "s": 0..2, "rubric": "...", "format": "...", "source": "...", "brief": "задание на 1–2 предложения"}, ...]} — ровно 90 пунктов.`, meter);
+  const np = next && Array.isArray(next.plan) ? next.plan.filter((x) => x && x.d >= 1 && x.d <= 30 && x.s >= 0 && x.s <= 2 && TH_SHAPE[x.format] && x.brief) : [];
+  if (np.length >= 60) {
+    await setMeta(env, "th_plan", JSON.stringify(np));
+    await setMeta(env, "th_plan_start", String(thClock(now).mid + 86400));
+    await setMeta(env, "th_followers0", String(r.th.f1)); await setMeta(env, "ig_followers0", String(r.ig.f1)); await setMeta(env, "x_followers0", String(r.x.f1));
+    const rubs = [...new Set(np.map((x) => x.rubric))];
+    await ownerNotify(env, { text: `🗓 Новый план Скаута: ${np.length} постов, рубрики: ${rubs.join(", ")}. Стартует завтра. Стоил $${meter.usd.toFixed(2)}.` });
+  } else {
+    await setMeta(env, "th_off", "1");
+    await ownerNotify(env, { text: "⚠️ Скаут не смог составить новый план — публикации на паузе. Пришлите план файлом .json с подписью /threads plan или включите старый: /threads restart." });
+  }
+}
+
+/** Команды владельца в служебном боте. */
+async function thAdmin(env, aenv, chatId, raw, msg) {
+  const arg = raw.replace(/^\/threads(@\S+)?\s*/i, "").trim().toLowerCase();
+  const send = (text, extra = {}) => tg(aenv, "sendMessage", { chat_id: chatId, text, disable_web_page_preview: true, ...extra });
+  const now = Math.floor(Date.now() / 1000);
+  await ensureTables(env);
+  if (msg && msg.document && arg.startsWith("plan")) {
+    const f = await tg(aenv, "getFile", { file_id: msg.document.file_id });
+    const r = f && f.ok ? await fetch(`https://api.telegram.org/file/bot${aenv.LS_BOT_TOKEN}/${f.result.file_path}`).catch(() => null) : null;
+    let np = null;
+    try { np = await r.json(); np = Array.isArray(np) ? np : np.plan; } catch { np = null; }
+    np = Array.isArray(np) ? np.filter((x) => x && x.d >= 1 && x.s >= 0 && x.s <= 2 && TH_SHAPE[x.format] && x.brief) : [];
+    if (!np.length) return send("Не разобрал план: нужен JSON-массив [{d, s, rubric, format, source, brief}].");
+    await setMeta(env, "th_plan", JSON.stringify(np));
+    await setMeta(env, "th_plan_start", String(thClock(now).mid + 86400));
+    await setMeta(env, "th_off", "0");
+    return send(`✅ Новый план: ${np.length} постов на ${Math.max(...np.map((x) => x.d))} дней, старт завтра.`);
+  }
+  if (arg === "off" || arg === "on") { await setMeta(env, "th_off", arg === "off" ? "1" : "0"); return send(arg === "off" ? "⏸ Скаут на паузе." : "▶️ Скаут снова публикует."); }
+  if (arg === "start" || arg === "restart") {
+    await setMeta(env, "th_plan_start", String(thClock(now).mid)); await setMeta(env, "th_off", "0"); await setMeta(env, "th_reported", "");
+    if (arg === "restart") await setMeta(env, "th_plan", "");
+    return send("▶️ План стартует сегодня: день 1. Ближайший пост — к следующему слоту (9:00, 13:00, 19:00 по Астане).");
+  }
+  if (arg === "report") {
+    const start = Number((await meta(env, "th_plan_start")) || now);
+    return send(thReportText(await thReport(env, now, start), start, now, "Скаут: промежуточный отчёт"), { parse_mode: "HTML" });
+  }
+  if (arg === "preview" || arg === "now") {
+    const plan = await thPlan(env);
+    const start = Number((await meta(env, "th_plan_start")) || thClock(now).mid);
+    const dayN = Math.max(1, Math.floor((now - start) / 86400) + 1);
+    const keys = new Set(((await env.DB.prepare("SELECT plan_key FROM th_posts WHERE plan_key LIKE ?1").bind(start + ":%").all()).results || []).map((r) => r.plan_key));
+    const item = plan.find((x) => x.d >= dayN && !keys.has(`${start}:${x.d}:${x.s}`));
+    if (!item) return send("В плане не осталось постов.");
+    await send(`✍️ Пишу «${item.rubric}» (${item.format}, день ${item.d})… это ~1 минута.`);
+    if (arg === "preview") {
+      const p = await thCompose(env, item, now);
+      if (p.skip) return send(`Пропуск: ${p.skip}`);
+      return send([`🧵 ${item.rubric} · ${item.format} · $${p.cost.toFixed(3)}`, "", "<Threads>", p.caption,
+        ...p.slides.map((s, i) => `\n— слайд ${i + 1} (${s.kind}) —\n${[s.number, s.unit, s.title, s.body, s.quote, ...(s.items || []), ...(s.bars || []).map((b) => b.label + " " + b.display)].filter(Boolean).join("\n")}`),
+        ...(p.ig_caption ? ["", "<Instagram>", p.ig_caption] : []), ...(p.x_caption ? ["", "<X>", p.x_caption] : [])].join("\n").slice(0, 4000));
+    }
+    // now: слот −1 — «уже пора», ближайший тик cron опубликует.
+    if (!(await meta(env, "th_plan_start"))) await setMeta(env, "th_plan_start", String(start));
+    const r = await thPrepare(env, item, thClock(now).day, -1, now);
+    if (!r) return send("Этот пост уже в работе.");
+    return send(r.skip ? `Пропуск: ${r.skip}` : `✅ Готово, пост #${r.id}. ${r.slides && r.slides.length ? "Рисую слайды (~3 мин), " : ""}выйдет в течение 10–15 минут.`);
+  }
+  if (arg.startsWith("test")) {
+    // Прогон веб-публикации без последней кнопки: скриншот готового поста придёт сюда.
+    const want = arg.slice(4).split(/[\s,]+/).filter((x) => NET[x] || x === "x");
+    const post = await env.DB.prepare("SELECT id, rubric FROM th_posts WHERE status IN ('ready', 'out') ORDER BY n_media > 0 DESC, id DESC LIMIT 1").first();
+    if (!post) return send("Нет готового поста — сначала /threads now или дождитесь слота.");
+    const err = await dispatchRun(env, { job: String(post.id), mode: "dry", nets: (want.length ? want : ["th", "ig", "x"]).join(",") }, "threads.yml");
+    return send(err ? `Не запустил: ${err}` : `🧪 Проверяю пост #${post.id} «${post.rubric}» без публикации — скриншоты придут через 2–4 минуты.`);
+  }
+  if (arg.startsWith("web")) {
+    const want = arg.slice(3).split(/[\s,]+/).filter((x) => NET[x] || x === "x");
+    await setMeta(env, "th_web", want.join(","));
+    return send(want.length ? `🍪 Через веб (куки в секретах GitHub ${want.map((x) => ({ th: "TH_COOKIES", ig: "IG_COOKIES", x: "X_SCOUT_COOKIES" })[x]).join(", ")}): ${want.map(netName).join(", ")}.`
+      : "Веб-публикация выключена: только API с токенами.");
+  }
+  // Статус.
+  const web = await webNets(env);
+  const plan = await thPlan(env);
+  const start = Number((await meta(env, "th_plan_start")) || 0);
+  const dayN = start ? Math.floor((now - start) / 86400) + 1 : 0;
+  const st = await env.DB.prepare("SELECT status, COUNT(*) n FROM th_posts GROUP BY status").all().then((r) => r.results || []).catch(() => []);
+  const line = async (p) => `${NET[p].emoji} ${NET[p].name}${(await meta(env, p + "_username")) ? " @" + (await meta(env, p + "_username")) : ""}: ${web.includes(p) ? "через веб (куки)" : netOn(env, p) ? "подключён" : `нет токена ${NET[p].secret}`}`;
+  return send([`🤖 Скаут: ${(await meta(env, "th_off")) === "1" ? "на паузе" : "работает"}`, await line("th"), await line("ig"),
+    `𝕏 X${(await meta(env, "x_username")) ? " @" + (await meta(env, "x_username")) : ""}: ${web.includes("x") ? "через веб (куки)" : xOn(env) ? "подключён" : "нет ключей X_API_KEY / X_API_SECRET / X_ACCESS_TOKEN / X_ACCESS_SECRET"}`,
+    `План: день ${Math.max(0, dayN)} из ${Math.max(...plan.map((x) => x.d))}${dayN < 1 ? " (старт завтра)" : ""}, постов в плане ${plan.length}`,
+    `Посты: ${st.map((x) => `${x.status} ${x.n}`).join(" · ") || "пока нет"}`, "",
+    "/threads preview — показать следующий пост (без публикации)", "/threads now — написать и опубликовать следующий сейчас",
+    "/threads report — отчёт · /threads off | on — пауза", "/threads web th,ig,x — публиковать через веб по куки · /threads web — выключить", "/threads test th,ig,x — проверить публикацию без последней кнопки", "/threads start — начать план с сегодняшнего дня", "Файл .json с подписью /threads plan — свой контент-план"].join("\n"));
 }
 
 // ---------------------------------------------------------------------------
@@ -3528,6 +4714,10 @@ async function handleAdminUpdate(env, update) {
   }
   if (/^\/(grant|credit|costs)/i.test(text)) {
     await lsAdmin(aenv, chatId, text, env);
+    return;
+  }
+  if (/^\/threads\b/i.test(raw) || (msg && msg.document && /^\/threads\b/i.test(msg.caption || ""))) {
+    await thAdmin(env, aenv, chatId, raw || msg.caption || "", msg);
     return;
   }
   if (/^\/refund\b/.test(text)) {
@@ -4311,7 +5501,7 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   } else {
     await tg(env, "sendMessage", { chat_id: chatId, text: finalText, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: kb });
   }
-  if (charge.warn) await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.ls_low, charge.left) + "\n\n" + lsTariffs(s), reply_markup: starsButtons(s, await promoActive(env, chatId)) });
+  if (charge.warn) await tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(s.ls_low, charge.left) + "\n\n" + lsTariffs(s), reply_markup: await payButtons(env, s, chatId, lang) });
   if (liveRes) await learnRounds(env, liveRes.facts);
   // «Искать везде»: X и Google Trends — в GitHub Actions, дополнение придёт следом.
   if (research && plan && !(await lsCanAfford(env, chatId, "research"))) {
@@ -4567,6 +5757,12 @@ async function ensureTables(env) {
     env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) SELECT user_id, ts FROM prefs"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS payments (charge_id TEXT PRIMARY KEY, user_id TEXT, ts INTEGER, item TEXT, stars INTEGER, sub_exp INTEGER, recurring INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ls_log (user_id TEXT, ts INTEGER, action TEXT, ls INTEGER, cost_usd REAL)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS th_posts (id INTEGER PRIMARY KEY AUTOINCREMENT, plan_key TEXT UNIQUE, day TEXT, slot INTEGER, plan_d INTEGER, plan_s INTEGER, rubric TEXT, format TEXT, source TEXT, status TEXT, text TEXT, ig_text TEXT, slides TEXT, n_media INTEGER, link TEXT, ukey TEXT, cost REAL, ts INTEGER, err TEXT, " +
+      "th_st TEXT, th_container TEXT, th_media_id TEXT, th_permalink TEXT, th_pub_ts INTEGER, views INTEGER, likes INTEGER, replies INTEGER, reposts INTEGER, " +
+      "ig_st TEXT, ig_container TEXT, ig_media_id TEXT, ig_permalink TEXT, ig_pub_ts INTEGER, ig_reach INTEGER, ig_likes INTEGER, ig_comments INTEGER, ig_saves INTEGER, ig_shares INTEGER, " +
+      "x_text TEXT, x_st TEXT, x_id TEXT, x_permalink TEXT, x_pub_ts INTEGER, x_views INTEGER, x_likes INTEGER, x_replies INTEGER, x_reposts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS th_media (post INTEGER, ix INTEGER, img BLOB, ts INTEGER, PRIMARY KEY (post, ix))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS user_src (user_id TEXT PRIMARY KEY, src TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS ls_log_ts ON ls_log (ts)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS found_rounds (url TEXT, company TEXT, usd REAL, stage TEXT, date TEXT, investors TEXT, fact TEXT, ts INTEGER, status TEXT, PRIMARY KEY (company, url))"),
   ]);
@@ -4907,11 +6103,16 @@ export default {
       if (url.pathname === "/api/ls") {
         await ensureTables(env);
         const r = await lsGet(env, user.id);
-        return json({ plan: r.plan, sub_ls: r.sub_ls, credits: r.credits, plan_ls: (PLANS[r.plan] || PLANS.free).ls, period_end: r.period_end,
-          owner: isOwner(env, user.id), admin: await isAdmin(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE, pack: CREDIT_PACK });
+        return json({ plan: r.plan, sub_ls: r.sub_ls, credits: r.credits, plan_ls: (PLANS[r.plan] || PLANS.free).ls, welcome: WELCOME_LS, period_end: r.period_end,
+          owner: isOwner(env, user.id), admin: await isAdmin(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE, pack: CREDIT_PACK,
+          card: !!env.TRIBUTE_API_KEY, card_sub: !!(env.TRIBUTE_API_KEY && await trbSub(env, user.id)) });
       }
       if (url.pathname === "/api/buy") {
         const lang = (await getPrefs(env, user.id)).lang || "ru";
+        if (env.TRIBUTE_API_KEY) {
+          const r = await cardLink(env, user.id, url.searchParams.get("item"));
+          return r && r.link ? json({ link: r.link, card: true }) : json({ error: "no link" }, 400);
+        }
         const link = await starsLink(env, user.id, url.searchParams.get("item"), lang);
         return link ? json({ link }) : json({ error: "no link" }, 400);
       }
@@ -4952,6 +6153,63 @@ export default {
           sectors: p.sectors || [], sources: p.sources || [], sens: p.sens });
       }
       return json({ error: "не найдено" }, 404);
+    }
+
+    if (request.method === "POST" && url.pathname === "/cryptopay") return cpWebhook(request, env);
+    if (request.method === "POST" && url.pathname === "/tribute") return trbWebhook(request, env);
+
+    // 🧵 Слайды Скаута: задание для Actions, приём JPEG, раздача картинок Threads и Instagram.
+    if (url.pathname === "/th/job" || url.pathname === "/th/media" || url.pathname === "/th/pub") {
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) return new Response("нет", { status: 403 });
+      await ensureTables(env);
+      const id = Number(url.searchParams.get(url.pathname === "/th/job" ? "id" : "post"));
+      const post = await env.DB.prepare("SELECT id, status, rubric, text, ig_text, x_text, link, ukey, slides, n_media FROM th_posts WHERE id = ?1").bind(id).first();
+      if (!post) return json({ error: "нет поста" }, 404);
+      if (url.pathname === "/th/job") return json({ id, slides: JSON.parse(post.slides || "[]"), n_media: post.n_media || 0,
+        text: post.text || "", ig_text: post.ig_text || post.text || "", x_text: post.x_text || post.text || "", link: post.link || "" });
+      if (url.pathname === "/th/pub") {
+        // Отчёт веб-публикации: ?net=th|ig|x&url=ссылка или &err=причина (+ скриншот JPEG в теле).
+        const p = url.searchParams.get("net");
+        if (!(NET[p] || p === "x")) return json({ error: "не та сеть" }, 400);
+        const link = url.searchParams.get("url") || "", why = (url.searchParams.get("err") || "").slice(0, 300);
+        const now = Math.floor(Date.now() / 1000);
+        if (!why) {
+          await env.DB.prepare(`UPDATE th_posts SET ${p}_st = 'published', ${p}_permalink = ?2, ${p}_pub_ts = ?3 WHERE id = ?1`).bind(id, link, now).run();
+          await thMarkUsed(env, post.ukey);
+          await ownerNotify(env, { text: `${netEmoji(p)} Опубликовано в ${netName(p)} · ${post.rubric}${post.n_media > 1 ? ` · карусель ${post.n_media} слайдов` : post.n_media ? " · картинка" : ""}
+${link || "(ссылку не нашёл — проверьте профиль)"}` });
+          return json({ ok: true });
+        }
+        const dry = url.searchParams.get("dry") === "1";   // проверка без публикации: статус не трогаем
+        if (!dry) await env.DB.prepare(`UPDATE th_posts SET ${p}_st = 'failed', err = ?2 WHERE id = ?1`).bind(id, `${netName(p)}: ${why}`).run();
+        const text = dry ? `🧪 ${netName(p)}, пост #${id}: ${why}` : `⚠️ ${netName(p)}: пост #${id} «${post.rubric}» не опубликован — ${why}`;
+        const shot = new Uint8Array(await request.arrayBuffer());
+        if (shot.length > 1000) {
+          const aenv = adminEnv(env);
+          for (const o of await adminIds(env)) {
+            const fd = new FormData();
+            fd.append("chat_id", String(o)); fd.append("caption", text.slice(0, 1000));
+            fd.append("photo", new Blob([shot], { type: "image/jpeg" }), "error.jpg");
+            await fetch(`https://api.telegram.org/bot${aenv.LS_BOT_TOKEN}/sendPhoto`, { method: "POST", body: fd }).catch(() => null);
+          }
+        } else await ownerNotify(env, { text });
+        return json({ ok: true });
+      }
+      const ix = Number(url.searchParams.get("ix"));
+      const img = new Uint8Array(await request.arrayBuffer());
+      if (!(ix >= 0 && ix < (post.n_media || 0)) || img.length < 1000 || img.length > 1.9e6) return json({ error: "не тот слайд" }, 400);
+      await env.DB.prepare("INSERT OR REPLACE INTO th_media (post, ix, img, ts) VALUES (?1, ?2, ?3, ?4)").bind(id, ix, img, Math.floor(Date.now() / 1000)).run();
+      const got = await env.DB.prepare("SELECT COUNT(*) n FROM th_media WHERE post = ?1").bind(id).first();
+      if (got.n >= post.n_media && post.status === "render") await env.DB.prepare("UPDATE th_posts SET status = 'ready' WHERE id = ?1").bind(id).run();
+      // Старые картинки не нужны: сети копируют их при публикации.
+      await env.DB.prepare("DELETE FROM th_media WHERE ts < ?1").bind(Math.floor(Date.now() / 1000) - 7 * 86400).run().catch(() => null);
+      return json({ ok: true, got: got.n });
+    }
+    const thm = request.method === "GET" && /^\/th\/m\/(\d+)\/(\d+)\.jpg$/.exec(url.pathname);
+    if (thm) {
+      const r = await env.DB.prepare("SELECT img FROM th_media WHERE post = ?1 AND ix = ?2").bind(Number(thm[1]), Number(thm[2])).first().catch(() => null);
+      if (!r || !r.img) return new Response("нет", { status: 404 });
+      return new Response(new Uint8Array(r.img), { headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=86400" } });
     }
 
     if (request.method === "POST" && url.pathname === "/notify") {
@@ -5289,6 +6547,7 @@ export default {
       await ownerNotify(env, { text: `⚠️ На OpenRouter осталось $${(orc.total - orc.used).toFixed(2)} — пополните, иначе ИИ-ответы остановятся.` });
     }
     await tokenReminder(env, now);
+    await thTick(env, now).catch((e) => logError(env, "threads", String(e && e.stack || e)));
     await setupCommands(env);
   },
 };

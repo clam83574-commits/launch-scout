@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<!-- Шаблон слайда Threads (1080×1350, 4:5). threads_render.py подставляет
+     аватар в {{AVATAR}}, вызывает render(spec) и снимает скриншот.
+     Стиль — как у сайта: Unbounded / Golos Text / JetBrains Mono, синий #1d4fd8. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=block">
+<style>
+:root { --paper: #f5f7fc; --ink: #0f1d3a; --muted: #56647f; --line: #e1e8f5; --blue: #1d4fd8; --mint: #3ee0a1; --live: #0e9f6a; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1080px; height: 1350px; overflow: hidden; }
+body { font-family: "Golos Text", sans-serif; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; }
+.s { position: relative; width: 1080px; height: 1350px; padding: 84px 84px 0; display: flex; flex-direction: column;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 54px 54px; background-position: -1px -1px; }
+.s.dark { --paper: #0f1d3a; --ink: #ffffff; --muted: #a8b6d4; --line: #1a2b52; background-color: #0f1d3a; color: #fff; }
+.top { display: flex; justify-content: space-between; align-items: center; font: 500 26px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.who { display: flex; align-items: center; gap: 14px; color: var(--ink); }
+.who img { width: 56px; height: 56px; border-radius: 50%; }
+.k { display: inline-flex; gap: 12px; align-items: center; }
+.k i { width: 14px; height: 14px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 6px color-mix(in srgb, var(--live) 25%, transparent); }
+.body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px; padding-bottom: 40px; }
+h1 { font: 700 96px/1.02 "Unbounded", sans-serif; letter-spacing: -.035em; text-wrap: balance; }
+h2 { font: 500 64px/1.08 "Unbounded", sans-serif; letter-spacing: -.03em; text-wrap: balance; }
+.num { font: 700 210px/.92 "Unbounded", sans-serif; letter-spacing: -.06em; color: var(--blue); }
+.dark .num { color: var(--mint); }
+.num.long { font-size: 150px; }
+.unit { font: 500 54px/1.1 "Unbounded", sans-serif; color: var(--muted); letter-spacing: -.02em; }
+p { font: 400 42px/1.38 "Golos Text", sans-serif; color: var(--muted); text-wrap: pretty; }
+p b, li b { color: var(--ink); font-weight: 600; }
+mark { background: none; color: var(--blue); font-weight: 600; }
+.dark mark { color: var(--mint); }
+ol { list-style: none; padding: 0; display: grid; gap: 34px; counter-reset: n; }
+li { counter-increment: n; display: grid; grid-template-columns: 84px 1fr; gap: 20px; font: 400 40px/1.32 "Golos Text", sans-serif; color: var(--muted); }
+li::before { content: counter(n, decimal-leading-zero); font: 700 34px/1.3 "JetBrains Mono", monospace; color: var(--blue); }
+.bars { display: grid; gap: 26px; }
+.bar { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: end; }
+.bar span { font: 500 36px/1.15 "Golos Text", sans-serif; }
+.bar b { font: 700 34px/1 "JetBrains Mono", monospace; color: var(--blue); }
+.bar u { grid-column: 1 / -1; display: block; height: 22px; border-radius: 11px; background: color-mix(in srgb, var(--blue) 12%, transparent); position: relative; overflow: hidden; text-decoration: none; }
+.bar u::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); border-radius: 11px; background: var(--blue); }
+.bar.top1 u::after { background: linear-gradient(90deg, var(--blue), #4a7bff); }
+.quote { font: 500 58px/1.22 "Unbounded", sans-serif; letter-spacing: -.02em; }
+.quote::before { content: "«"; color: var(--blue); }
+.quote::after { content: "»"; color: var(--blue); }
+.src { font: 500 26px/1.3 "JetBrains Mono", monospace; color: var(--muted); letter-spacing: .04em; }
+.cta { align-items: center; text-align: center; }
+.cta img { width: 300px; height: 300px; border-radius: 50%; box-shadow: 0 30px 60px -30px #1d4fd8; }
+.pill { display: inline-block; font: 600 46px/1 "Golos Text", sans-serif; background: var(--blue); color: #fff; padding: 30px 46px; border-radius: 999px; }
+.foot { height: 120px; display: flex; justify-content: space-between; align-items: center; border-top: 2px solid var(--line); font: 500 24px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.foot .go { font: 700 40px/1 "Unbounded", sans-serif; color: var(--blue); letter-spacing: 0; }
+.dark .foot .go { color: var(--mint); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const AVATAR = "{{AVATAR}}";
+const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// **жирный** и ==акцент== — единственная разметка в текстах слайдов.
+const md = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/==(.+?)==/g, "<mark>$1</mark>").replace(/\n/g, "<br>");
+
+/** spec: {kind, rubric, i, n, title, body, number, unit, items, bars:[{label, value, display}], quote, source, dark} */
+function render(spec) {
+  const s = spec || {};
+  const dark = s.dark ?? (s.kind === "hook" || s.kind === "stat");
+  let inner = "";
+  switch (s.kind) {
+    case "hook":
+      inner = `${s.number ? `<div><div class="num${String(s.number).length > 6 ? " long" : ""}">${esc(s.number)}</div>${s.unit ? `<div class="unit">${esc(s.unit)}</div>` : ""}</div>` : ""}
+        <h1>${md(s.title)}</h1>${s.body ? `<p>${md(s.body)}</p>` : ""}`;
+      break;
+    case "stat":
+      inner = `<div><div class="num${String(s.number).length > 6 ? " long" : ""}">${esc(s.number)}</div>${s.unit ? `<div class="unit">${esc(s.unit)}</div>` : ""}</div>
+        ${s.title ? `<h2>${md(s.title)}</h2>` : ""}${s.body ? `<p>${md(s.body)}</p>` : ""}`;
+      break;
+    case "bars": {
+      const max = Math.max(...(s.bars || []).map((b) => Number(b.value) || 0), 1);
+      inner = `<h2>${md(s.title)}</h2><div class="bars">${(s.bars || []).slice(0, 7).map((b, k) =>
+        `<div class="bar${k === 0 ? " top1" : ""}" style="--w:${Math.max(3, Math.round((Number(b.value) || 0) / max * 100))}%"><span>${esc(b.label)}</span><b>${esc(b.display ?? b.value)}</b><u></u></div>`).join("")}</div>
+        ${s.body ? `<p>${md(s.body)}</p>` : ""}`;
+      break;
+    }
+    case "list":
+      inner = `<h2>${md(s.title)}</h2><ol>${(s.items || []).slice(0, 5).map((t) => `<li><span>${md(t)}</span></li>`).join("")}</ol>`;
+      break;
+    case "quote":
+      inner = `<div class="quote">${esc(s.quote)}</div>${s.source ? `<div class="src">${esc(s.source)}</div>` : ""}${s.body ? `<p>${md(s.body)}</p>` : ""}`;
+      break;
+    case "cta":
+      inner = `<img src="${AVATAR}" alt=""><h2>${md(s.title)}</h2>${s.body ? `<p>${md(s.body)}</p>` : ""}<div><span class="pill">@Launch_Scout_bot</span></div>`;
+      break;
+    default:
+      inner = `${s.title ? `<h2>${md(s.title)}</h2>` : ""}${s.body ? `<p>${md(s.body)}</p>` : ""}`;
+  }
+  const last = s.i && s.n && s.i === s.n;
+  document.getElementById("root").innerHTML = `<section class="s${dark ? " dark" : ""}">
+    <div class="top"><span class="k"><i></i>${esc(s.rubric || "Launch Scout")}</span>
+      <span class="who"><img src="${AVATAR}" alt="">Скаут</span></div>
+    <div class="body${s.kind === "cta" ? " cta" : ""}">${inner}</div>
+    <div class="foot"><span>Launch Scout · ИИ-аналитик</span><span>${s.n > 1 ? `${s.i}/${s.n}` : ""}${s.n > 1 && !last ? ` <span class="go">→</span>` : ""}</span></div>
+  </section>`;
+}
+</script>
+</body>
+</html>

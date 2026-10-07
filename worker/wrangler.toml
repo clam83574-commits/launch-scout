@@ -58,6 +58,13 @@ crons = ["*/10 * * * *"]
 #   LS_BOT_TOKEN       - токен бота
 #   LS_WEBHOOK_SECRET  - подпись вебхука Telegram
 #   LS_ACCESS_CODE     - код доступа для друзей
+#   CRYPTO_PAY_TOKEN   - токен приложения @CryptoBot (оплата криптой)
+#   THREADS_TOKEN      - токен Threads API для аккаунта Скаута; без него
+#                        публикации в Threads выключены
+#   IG_TOKEN           - токен Instagram API (тот же аккаунт Скаута,
+#                        профессиональный); без него Instagram выключен
+#   X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET - ключи X
+#                        (OAuth 1.0a, аккаунт Скаута, права Read and Write)
 #   LS_INGEST_SECRET   - подпись среза, который присылает GitHub Actions
 #   LS_GH_TOKEN        - fine-grained токен GitHub ТОЛЬКО на этот репозиторий,
 #                        право Actions: Read and write — чтобы запускать прогоны

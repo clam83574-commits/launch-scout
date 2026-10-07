@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Скаут — открытый ИИ-персонаж Launch Scout: голова-радар с биноклем.
+       Цвета сайта: синий #1d4fd8, чернила #0f1d3a, зелёный #0e9f6a. -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#2e63f0"/>
+      <stop offset="1" stop-color="#1638a8"/>
+    </radialGradient>
+    <clipPath id="c"><circle cx="256" cy="256" r="256"/></clipPath>
+  </defs>
+  <g clip-path="url(#c)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <!-- кольца радара -->
+    <g fill="none" stroke="#fff" stroke-opacity=".13" stroke-width="3">
+      <circle cx="256" cy="300" r="120"/><circle cx="256" cy="300" r="190"/><circle cx="256" cy="300" r="260"/>
+    </g>
+    <path d="M256 300 L470 150" stroke="#fff" stroke-opacity=".18" stroke-width="3"/>
+    <!-- антенна с сигналом -->
+    <line x1="256" y1="148" x2="256" y2="104" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="256" cy="94" r="15" fill="#3ee0a1"/>
+    <path d="M222 74 a44 44 0 0 1 68 0" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".85"/>
+    <path d="M204 52 a70 70 0 0 1 104 0" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".5"/>
+    <!-- голова -->
+    <rect x="120" y="148" width="272" height="236" rx="84" fill="#fff"/>
+    <!-- визор-бинокль -->
+    <rect x="148" y="206" width="216" height="98" rx="49" fill="#0f1d3a"/>
+    <circle cx="208" cy="255" r="34" fill="#16264a" stroke="#3ee0a1" stroke-width="7"/>
+    <circle cx="304" cy="255" r="34" fill="#16264a" stroke="#3ee0a1" stroke-width="7"/>
+    <circle cx="218" cy="244" r="10" fill="#fff"/>
+    <circle cx="314" cy="244" r="10" fill="#fff"/>
+    <!-- улыбка -->
+    <path d="M226 336 q30 22 60 0" fill="none" stroke="#0f1d3a" stroke-width="9" stroke-linecap="round"/>
+    <!-- плечи -->
+    <path d="M150 512 q0-104 106-104 q106 0 106 104z" fill="#0f1d3a"/>
+    <text x="256" y="486" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="700" font-size="30" fill="#3ee0a1" letter-spacing="4">AI</text>
+  </g>
+</svg>

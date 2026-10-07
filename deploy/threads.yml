@@ -1,0 +1,59 @@
+# Слайды Скаута и публикация через веб по куки (social_publish.py, mode=publish).
+# Слайды Скаута для Threads и Instagram: Worker пишет пост и запускает этот workflow с номером
+# поста (сам текст в запуск не передаётся — логи публичного репозитория видны
+# всем). Скрипт забирает задание у Worker'а, рисует слайды в Chromium и
+# отправляет JPEG обратно. Рисовать в самом Worker'е нельзя: на бесплатном
+# тарифе у него 10 мс процессора на запрос.
+name: threads
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Номер поста от бота"
+        required: true
+      mode:
+        description: "render — нарисовать слайды; publish — опубликовать; dry — всё, кроме последней кнопки"
+        default: render
+      nets:
+        description: "Сети для publish/dry: th,ig,x"
+        default: ""
+
+concurrency:
+  group: threads-${{ github.event.inputs.job }}-${{ github.event.inputs.mode }}
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      LS_INGEST_SECRET: ${{ secrets.LS_INGEST_SECRET }}
+      WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt playwright
+      # Chromium с системными библиотеками — кэш браузера сокращает запуск до ~30 с.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-v1
+      - run: python -m playwright install --with-deps chromium
+      - if: github.event.inputs.mode == 'render' || github.event.inputs.mode == ''
+        run: python threads_render.py --job "${{ github.event.inputs.job }}"
+      # Куки аккаунтов Скаута — только в этом шаге; текст поста в лог не пишется.
+      - if: github.event.inputs.mode == 'publish' || github.event.inputs.mode == 'dry'
+        env:
+          TH_COOKIES: ${{ secrets.TH_COOKIES }}
+          IG_COOKIES: ${{ secrets.IG_COOKIES }}
+          X_SCOUT_COOKIES: ${{ secrets.X_SCOUT_COOKIES }}
+          TH_USER: ${{ vars.TH_USER }}
+          IG_USER: ${{ vars.IG_USER }}
+          X_USER: ${{ vars.X_USER }}
+          NETS: ${{ github.event.inputs.nets }}
+          JOB: ${{ github.event.inputs.job }}
+          MODE: ${{ github.event.inputs.mode }}
+        run: python social_publish.py --job "$JOB" --nets "$NETS" $([ "$MODE" = dry ] && echo --dry)
