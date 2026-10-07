@@ -123,8 +123,8 @@ def openrouter(system, user, max_tokens=1500):
 def groq(system, user):
     """Выбор, проверка автора и проверка ответа — Groq (бесплатный тариф), ключи по очереди;
     лимит или сбой у всех ключей — тот же вызов в OpenRouter."""
-    keys = [k for k in (os.environ.get(n, "").strip() for n in ("GROQ_API_KEY", "GROQ_API_KEY_2", "GROQ_API_KEY_3")) if k]
-    random.shuffle(keys)
+    # По очереди: основной ключ, потом запасные _2.._4 — следующий берём, когда у текущего кончился лимит (429).
+    keys = [k for k in (os.environ.get(n, "").strip() for n in ("GROQ_API_KEY", "GROQ_API_KEY_2", "GROQ_API_KEY_3", "GROQ_API_KEY_4")) if k]
     for key in keys:
         try:
             r = requests.post("https://api.groq.com/openai/v1/chat/completions", timeout=90,
