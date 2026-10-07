@@ -114,6 +114,29 @@ def need_login(page):
 
 # ---- Threads ---------------------------------------------------------------
 
+def set_topic(page, topic):
+    """Тема поста («Сообщество или тема»): по ней Threads показывает пост читателям темы.
+    Не вышло — пост уходит без темы, это не ошибка."""
+    if not topic:
+        return
+    try:
+        page.get_by_text(re.compile("^(Сообщество или тема|Добавить тему|Add a topic|Community or topic)$")).last.click(timeout=5000)
+        pause()
+        # Фокус должен быть в поле темы, а не в тексте поста — иначе тема допишется в пост.
+        if page.evaluate("() => !!document.activeElement && document.activeElement.isContentEditable"):
+            print("тема не поставлена: фокус в тексте поста")
+            return
+        page.keyboard.insert_text(topic)
+        pause(1.5, 2.5)
+        opt = page.get_by_role("option").or_(page.locator("[role=listbox] [role=button], [role=menu] [role=menuitem]")).first
+        if opt.is_visible(timeout=4000):
+            opt.click()
+        else:
+            page.keyboard.press("Enter")
+        pause()
+    except Exception as e:
+        print("тема не поставлена:", type(e).__name__)
+
 def post_threads(page, job, files, dry):
     text = job["text"]
     if job.get("link") and not files:
@@ -139,6 +162,7 @@ def post_threads(page, job, files, dry):
     pause()
     page.keyboard.insert_text(text)
     pause()
+    set_topic(page, job.get("topic"))
     # Контейнер окна — ближайший предок заголовка, где есть кнопка «Опубликовать».
     dlg = head.locator("xpath=ancestor::div[.//*[normalize-space(text())='Опубликовать' or normalize-space(text())='Post']][1]")
     if not dlg.count():

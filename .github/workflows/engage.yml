@@ -1,0 +1,50 @@
+# Автокомментарии Скаута в Threads и X (social_engage.py): 5 заходов в день,
+# в каждом по одному ответу в сети — до 10 в сутки (лимит и пауза — у Worker'а,
+# /threads engage в служебном боте). Время по Астане: 10:30, 12:30, 15:30, 17:30, 20:30
+# плюс случайные 0–10 минут.
+name: engage
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+    - cron: "30 7 * * *"
+    - cron: "30 10 * * *"
+    - cron: "30 12 * * *"
+    - cron: "30 15 * * *"
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "true — подобрать посты и ответы без публикации"
+        default: "false"
+
+concurrency:
+  group: engage
+
+jobs:
+  engage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      LS_INGEST_SECRET: ${{ secrets.LS_INGEST_SECRET }}
+      WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt playwright
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-v1
+      - run: python -m playwright install --with-deps chromium
+      # Куки аккаунтов Скаута и ключ модели — только в этом шаге; тексты в лог не пишутся.
+      - env:
+          TH_COOKIES: ${{ secrets.TH_COOKIES }}
+          X_SCOUT_COOKIES: ${{ secrets.X_SCOUT_COOKIES }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          TH_USER: ${{ vars.TH_USER }}
+          X_USER: ${{ vars.X_USER }}
+          DRY: ${{ github.event.inputs.dry }}
+        run: python social_engage.py $([ "$DRY" = true ] && echo --dry)

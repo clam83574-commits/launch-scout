@@ -3744,6 +3744,10 @@ const TH_SECTOR = { hardware: "железо", defense_space: "оборона и 
   ai_infra: "ИИ-инфраструктура", devtools: "инструменты разработчиков", security: "кибербезопасность", fintech: "финтех", health: "медицина",
   consumer: "потребительские продукты", commerce: "e-commerce", b2b_saas: "B2B SaaS", edu: "образование", proptech: "недвижимость", crypto: "крипта" };
 const TH_STAGE = { pre: "pre-seed", preseed: "pre-seed", seed: "seed", a: "раунд A", b: "раунд B", "c+": "раунд C и дальше", c: "раунд C" };
+// Тема поста в Threads («Сообщество или тема»): по ней Threads показывает пост
+// тем, кто читает эту тему, а не случайной ленте.
+const TH_REPLY_DAY = 10;                 // автокомментариев в сутки (Threads + X)
+const TH_TOPIC = { week: "Венчур", round: "Стартапы", niche: "Стартапы", pain: "Бизнес", cis: "Казахстан", bot: "Стартапы", none: "Стартапы" };
 const TH_CIS = ["KZ", "UZ", "KG", "TJ", "AM", "GE", "AZ", "BY", "RU", "UA"];
 
 const TH_PERSONA = `Ты — Скаут, ИИ-аналитик Launch Scout. Ведёшь аккаунты в Threads, Instagram и X для фаундеров и тех, кто выбирает идею для стартапа, в основном из Казахстана и СНГ.
@@ -3758,6 +3762,7 @@ const TH_PERSONA = `Ты — Скаут, ИИ-аналитик Launch Scout. В�
 - Короткие предложения. Одна мысль на пост. Конкретика вместо общих слов: имя компании, сумма, ниша, город.
 - Своё мнение можно и нужно: «по-моему, это переоценено», «тут я бы не лез». Но отличай мнение от факта.
 - Мост к читателю: что из этого может взять маленькая команда без миллионов, в Казахстане или СНГ.
+- Пиши так, чтобы с первой строки было ясно: это для тех, кто делает стартап или выбирает идею («если ты пилишь SaaS…», «фаундерам из Алматы…»). Местные ориентиры — Astana Hub, гранты, Kaspi, цены в тенге — когда они есть в FACTS или очевидны; не выдумывай.
 - Финал — вопрос или мысль, на которую хочется ответить в комментариях. Не «Подписывайтесь!».
 - 0–2 эмодзи на пост, не в начале каждой строки. Без хэштегов. Без ссылок в тексте.
 
@@ -4137,7 +4142,7 @@ function thBadNumbers(post, facts) {
   return [...new Set(texts.flatMap((t) => nums(t || "")))].filter((n) => !allowed.has(n) && !(Number(n) <= 10) && !(Number(n) >= 2024 && Number(n) <= 2027));
 }
 
-const TH_IG = `"ig_caption": "подпись для Instagram: те же мысли развёрнутее, 400–1200 знаков, абзацы через пустую строку, в конце «Проверить свою нишу — бот по ссылке в профиле» и 3–5 хэштегов по-русски и по-английски (#стартап #венчур ...)"`;
+const TH_IG = `"ig_caption": "подпись для Instagram: те же мысли развёрнутее, 400–1200 знаков, абзацы через пустую строку, в конце «Проверить свою нишу — бот по ссылке в профиле» и 4–6 узких хэштегов для фаундеров: 2–3 из #стартап #стартапказахстан #astanahub #венчур #фаундер #бизнесидея и 1–3 по теме поста (#saas #ииагенты #финтех …)"`;
 const TH_X = `"x_caption": "версия для X: та же мысль плотнее, до 260 знаков, без ссылок и хэштегов"`;
 const TH_SHAPE = {
   text: `{"caption": "текст поста для Threads, до 450 знаков", ${TH_X}}`,
@@ -4504,6 +4509,18 @@ async function thAdmin(env, aenv, chatId, raw, msg) {
     const err = await dispatchRun(env, { job: String(post.id), mode: "dry", nets: (want.length ? want : ["th", "ig", "x"]).join(",") }, "threads.yml");
     return send(err ? `Не запустил: ${err}` : `🧪 Проверяю пост #${post.id} «${post.rubric}» без публикации — скриншоты придут через 2–4 минуты.`);
   }
+  if (arg.startsWith("engage")) {
+    // Автокомментарии: on | off | test (подбор и тексты без публикации).
+    const a = arg.slice(6).trim();
+    if (a === "on" || a === "off") { await setMeta(env, "th_engage_off", a === "off" ? "1" : "0"); return send(a === "off" ? "⏸ Автокомментарии выключены." : `▶️ Автокомментарии включены: до ${TH_REPLY_DAY} в день, 5 заходов.`); }
+    if (a === "test") {
+      const err = await dispatchRun(env, { dry: "true" }, "engage.yml");
+      return send(err ? `Не запустил: ${err}` : "🧪 Ищу посты и пишу ответы без публикации — пришлю через 3–5 минут.");
+    }
+    const rows = ((await env.DB.prepare("SELECT net, author, reply, url FROM th_replies ORDER BY id DESC LIMIT 8").all()).results) || [];
+    return send([`💬 Автокомментарии: ${(await meta(env, "th_engage_off")) === "1" ? "выключены" : "включены"} · до ${TH_REPLY_DAY} в день`, "",
+      ...rows.map((r) => `${netEmoji(r.net)} @${r.author} → ${r.reply}\n${r.url}`), rows.length ? "" : "Пока ни одного.", "/threads engage on | off | test"].join("\n").slice(0, 4000));
+  }
   if (arg.startsWith("web")) {
     const want = arg.slice(3).split(/[\s,]+/).filter((x) => NET[x] || x === "x");
     await setMeta(env, "th_web", want.join(","));
@@ -4522,7 +4539,7 @@ async function thAdmin(env, aenv, chatId, raw, msg) {
     `План: день ${Math.max(0, dayN)} из ${Math.max(...plan.map((x) => x.d))}${dayN < 1 ? " (старт завтра)" : ""}, постов в плане ${plan.length}`,
     `Посты: ${st.map((x) => `${x.status} ${x.n}`).join(" · ") || "пока нет"}`, "",
     "/threads preview — показать следующий пост (без публикации)", "/threads now — написать и опубликовать следующий сейчас",
-    "/threads report — отчёт · /threads off | on — пауза", "/threads web th,ig,x — публиковать через веб по куки · /threads web — выключить", "/threads test th,ig,x — проверить публикацию без последней кнопки", "/threads start — начать план с сегодняшнего дня", "Файл .json с подписью /threads plan — свой контент-план"].join("\n"));
+    "/threads report — отчёт · /threads off | on — пауза", "/threads web th,ig,x — публиковать через веб по куки · /threads web — выключить", "/threads test th,ig,x — проверить публикацию без последней кнопки", "/threads engage — автокомментарии (on | off | test)", "/threads start — начать план с сегодняшнего дня", "Файл .json с подписью /threads plan — свой контент-план"].join("\n"));
 }
 
 // ---------------------------------------------------------------------------
@@ -5832,6 +5849,7 @@ async function ensureTables(env) {
       "ig_st TEXT, ig_container TEXT, ig_media_id TEXT, ig_permalink TEXT, ig_pub_ts INTEGER, ig_reach INTEGER, ig_likes INTEGER, ig_comments INTEGER, ig_saves INTEGER, ig_shares INTEGER, " +
       "x_text TEXT, x_st TEXT, x_id TEXT, x_permalink TEXT, x_pub_ts INTEGER, x_views INTEGER, x_likes INTEGER, x_replies INTEGER, x_reposts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS th_media (post INTEGER, ix INTEGER, img BLOB, ts INTEGER, PRIMARY KEY (post, ix))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS th_replies (id INTEGER PRIMARY KEY AUTOINCREMENT, net TEXT, url TEXT, author TEXT, post_text TEXT, reply TEXT, reply_url TEXT, score INTEGER, followed INTEGER, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS user_src (user_id TEXT PRIMARY KEY, src TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS ls_log_ts ON ls_log (ts)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS found_rounds (url TEXT, company TEXT, usd REAL, stage TEXT, date TEXT, investors TEXT, fact TEXT, ts INTEGER, status TEXT, PRIMARY KEY (company, url))"),
@@ -6236,10 +6254,11 @@ export default {
       if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) return new Response("нет", { status: 403 });
       await ensureTables(env);
       const id = Number(url.searchParams.get(url.pathname === "/th/job" ? "id" : "post"));
-      const post = await env.DB.prepare("SELECT id, status, rubric, text, ig_text, x_text, link, ukey, slides, n_media FROM th_posts WHERE id = ?1").bind(id).first();
+      const post = await env.DB.prepare("SELECT id, status, rubric, source, text, ig_text, x_text, link, ukey, slides, n_media FROM th_posts WHERE id = ?1").bind(id).first();
       if (!post) return json({ error: "нет поста" }, 404);
       if (url.pathname === "/th/job") return json({ id, slides: JSON.parse(post.slides || "[]"), n_media: post.n_media || 0,
-        text: post.text || "", ig_text: post.ig_text || post.text || "", x_text: post.x_text || post.text || "", link: post.link || "" });
+        text: post.text || "", ig_text: post.ig_text || post.text || "", x_text: post.x_text || post.text || "", link: post.link || "",
+        topic: TH_TOPIC[post.source] || "Стартапы" });
       if (url.pathname === "/th/pub") {
         // Отчёт веб-публикации: ?net=th|ig|x&url=ссылка или &err=причина (+ скриншот JPEG в теле).
         const p = url.searchParams.get("net");
@@ -6277,6 +6296,33 @@ ${link || "(ссылку не нашёл — проверьте профиль)"
       // Старые картинки не нужны: сети копируют их при публикации.
       await env.DB.prepare("DELETE FROM th_media WHERE ts < ?1").bind(Math.floor(Date.now() / 1000) - 7 * 86400).run().catch(() => null);
       return json({ ok: true, got: got.n });
+    }
+    if (url.pathname === "/th/engage" || url.pathname === "/th/engaged") {
+      // Автокомментарии Скаута (social_engage.py в Actions): GET — настройки, факты
+      // и кому уже отвечали; POST — отчёт о том, что опубликовано.
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) return new Response("нет", { status: 403 });
+      await ensureTables(env);
+      const now = Math.floor(Date.now() / 1000);
+      if (url.pathname === "/th/engage") {
+        const web = await webNets(env);
+        const off = (await meta(env, "th_off")) === "1" || (await meta(env, "th_engage_off")) === "1";
+        const recent = ((await env.DB.prepare("SELECT net, url, author FROM th_replies WHERE ts >= ?1").bind(now - 14 * 86400).all()).results) || [];
+        const today = await env.DB.prepare("SELECT COUNT(*) n FROM th_replies WHERE ts >= ?1").bind(thClock(now).mid).first();
+        const f = await thFacts(env, "week", now).catch(() => null);
+        return json({ off, nets: web.filter((p) => p === "th" || p === "x"), today: today.n, limit: TH_REPLY_DAY,
+          persona: TH_PERSONA, facts: f ? f.lines.slice(0, 25) : [], recent });
+      }
+      const body = await request.json().catch(() => ({}));
+      const items = Array.isArray(body.items) ? body.items.slice(0, 10) : [];
+      for (const it of body.dry ? [] : items) {
+        await env.DB.prepare("INSERT INTO th_replies (net, url, author, post_text, reply, reply_url, score, followed, ts) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)")
+          .bind(String(it.net || ""), String(it.url || ""), String(it.author || ""), String(it.post_text || "").slice(0, 600), String(it.reply || "").slice(0, 600),
+            String(it.reply_url || ""), Number(it.score) || 0, it.followed ? 1 : 0, now).run();
+      }
+      const lines = items.map((it) => `${netEmoji(it.net)} @${it.author}: «${String(it.post_text || "").replace(/\s+/g, " ").slice(0, 120)}…»\n→ ${it.reply}\n${it.url}${it.followed ? "\n+ подписался" : ""}`);
+      const fails = (Array.isArray(body.errors) ? body.errors : []).slice(0, 3).map((e) => "⚠️ " + String(e).slice(0, 200));
+      if (lines.length || fails.length) await ownerNotify(env, { text: [body.dry ? "🧪 Проверка комментариев (не опубликовано):" : "💬 Скаут прокомментировал:", ...lines, ...fails].join("\n\n").slice(0, 4000) });
+      return json({ ok: true });
     }
     const thm = request.method === "GET" && /^\/th\/m\/(\d+)\/(\d+)\.jpg$/.exec(url.pathname);
     if (thm) {
