@@ -1322,7 +1322,7 @@ async function handleUpdate(env, update) {
   if (seen && seen.meta && seen.meta.changes && !isOwner(env, chatId)) {
     const from = (msg && msg.from) || (cb && cb.from) || {};
     const src = await env.DB.prepare("SELECT src FROM user_src WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
-    await ownerNotify(env, { text: `👤 Новый пользователь: ${from.first_name || ""}${from.username ? " @" + from.username : ""} (${chatId})\nОткуда: ${srcName(src && src.src)}` });
+    await ownerNotify(env, { text: `👤 Новый пользователь: ${from.first_name || ""}${from.username ? " @" + from.username : ""} (${chatId})\nОткуда: ${channelName(src && src.src)}` });
   }
   const prefs = await getPrefs(env, chatId);
   const msgId = cb && cb.message ? cb.message.message_id : null;
@@ -4690,7 +4690,7 @@ async function adminStats(env) {
   const channels = Object.values(chan).sort((a, b) => b.users - a.users)
     .map((c) => ({ ...c, usd: Math.round(c.usd * 1000) / 1000, revenue: Math.round(c.stars * STAR_USD * 100) / 100 }));
   const topUsers = [...people].sort((a, b) => (b.usd || 0) - (a.usd || 0) || (b.first || 0) - (a.first || 0)).slice(0, 40).map((p) => ({
-    id: p.id, name: p.name || "", username: p.username || "", channel: srcName(p.src), first: p.first, last: p.last || null,
+    id: p.id, name: p.name || "", username: p.username || "", channel: channelName(p.src), first: p.first, last: p.last || null,
     acts: p.acts || 0, ls: p.ls || 0, usd: Math.round((p.usd || 0) * 1000) / 1000, stars: p.stars || 0, plan: p.plan || "free" }));
 
   const credits = await orCredits(env);
@@ -5056,7 +5056,7 @@ function srcLabel(raw) {
 const SRC_GROUP = { site: "🌐 Сайт", threads: "🧵 Threads", instagram: "📸 Instagram", x: "𝕏 X", ref: "🤝 Реферал", promo: "🎟 Промокод",
   start: "🔗 Другая ссылка", direct: "💬 Прямая ссылка / поиск в Telegram", unknown: "❔ До учёта источников" };
 const srcGroup = (src) => (src ? String(src).split(":")[0] : "unknown");
-function srcName(src) {
+function channelName(src) {
   const g = srcGroup(src);
   const tail = src && src.includes(":") ? " " + src.split(":")[1] : "";
   return (SRC_GROUP[g] || g) + (g === "ref" ? ` от ${tail.trim()}` : g === "promo" || g === "start" ? tail : "");
