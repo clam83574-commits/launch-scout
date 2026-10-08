@@ -1,0 +1,12 @@
+# Временная проверка расхода ключа OpenRouter (суммы, без ключа) — удаляется после запуска.
+name: or-usage
+on: workflow_dispatch
+jobs:
+  usage:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          K: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          curl -s -H "Authorization: Bearer $K" https://openrouter.ai/api/v1/key | python3 -c "import sys,json;d=json.load(sys.stdin).get('data',{});print({k:d.get(k) for k in ('label','usage','usage_daily','usage_weekly','usage_monthly','limit','limit_remaining')})"
+          curl -s -H "Authorization: Bearer $K" https://openrouter.ai/api/v1/credits | python3 -c "import sys,json;print(json.load(sys.stdin).get('data'))"
