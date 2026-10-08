@@ -2490,6 +2490,42 @@ async function indexNiches(env, items) {
  */
 const GATE_MODEL = "openai/gpt-oss-20b";
 
+/**
+ * Покрывает ли база вопрос: найденные ниши — про тот же продукт и рынок, а не
+ * соседние? Нет — чат сразу идёт в живой поиск, не заставляя человека искать
+ * кнопку (2026-10-09: на вопрос про мисвак бот отвечал переработкой спандекса,
+ * пока владелец не нажал поиск). Groq, бесплатно; ключи по очереди. Сбой → null:
+ * решает прежняя логика.
+ */
+async function coversQuestion(env, question, niches) {
+  const list = niches.slice(0, 8).map((d) => `- ${d.niche}${d.name_ru ? " / " + d.name_ru : ""}`).join("\n");
+  for (const key of groqKeys(env)) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3500);
+    try {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST", signal: ctrl.signal,
+        headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+        body: JSON.stringify({ model: env.LS_GATE_MODEL || GATE_MODEL, temperature: 0, max_completion_tokens: 200,
+          reasoning_effort: "low", response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: "A founder asks a question; a startup database matched these niches. Decide if at least one niche is DIRECTLY about the same product, customer or market the question asks about (not just the same broad sector). General questions about where money goes or which sectors are hot count as covered. Reply JSON only: {\"covers\": true|false}" },
+            { role: "user", content: `Question: ${question.slice(0, 700)}\nNiches:\n${list}` }] }),
+      });
+      if (r.status === 429) continue;
+      if (!r.ok) return null;
+      const t = ((await r.json()).choices[0].message.content || "").trim();
+      const v = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)).covers;
+      return typeof v === "boolean" ? v : null;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return null;
+}
+
 async function gateNiches(env, question, cands) {
   const keys = groqKeys(env);
   if (!keys.length || cands.length <= 1) return cands.map((c) => c.niche);
@@ -5519,7 +5555,10 @@ async function fastAnswer(env, chatId, question, lang, mode, { niche = null, pro
   // Живой поиск дороже (40 LS): без баланса на него отвечаем по базе.
   const meter = { usd: 0 };
   const canLive = await lsCanAfford(env, chatId, "live");
-  if (plan && canLive && (live || ((plan.live || named) && !invAnswered) || (!fx.niches.length && mode === "chat" && !invAnswered))) {
+  // Ниши нашлись, но, может, соседние: база не про то — сразу живой поиск.
+  const uncovered = plan && canLive && !live && mode === "chat" && !invAnswered && fx.niches.length && !plan.live && !named
+    && (await coversQuestion(env, rq, fx.niches)) === false;
+  if (plan && canLive && (live || uncovered || ((plan.live || named) && !invAnswered) || (!fx.niches.length && mode === "chat" && !invAnswered))) {
     liveRes = await liveSearch(env, chatId, question, plan, lang, meter);
     for (const f of liveRes.facts) fx.facts.push({ id: fx.facts.length + 1, text: f.text, url: f.url });
   }
