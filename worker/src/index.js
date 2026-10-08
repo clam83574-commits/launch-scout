@@ -1301,9 +1301,15 @@ async function handleUpdate(env, update) {
   if (msg && raw && cardOn(env) && await cardEmailReply(env, chatId, raw)) return;
   if (msg && raw.startsWith("/start")) await refCapture(env, chatId, raw);
   if (msg && /^\/start\s+site\b/i.test(raw)) await setMeta(env, "from_site", String(Number((await meta(env, "from_site")) || 0) + 1));
-  // Откуда пришёл человек (сайт, Threads, Instagram, X) — до проверки доступа, чтобы считать и тех, кто упёрся в закрытый бот.
-  const srcStart = msg && /^\/start\s+(site|threads|instagram|x)\b/i.exec(raw);
-  if (srcStart) await env.DB.prepare("INSERT OR IGNORE INTO user_src (user_id, src, ts) VALUES (?1, ?2, ?3)").bind(String(chatId), srcStart[1].toLowerCase(), Math.floor(Date.now() / 1000)).run().catch(() => null);
+  // Откуда пришёл новый человек — по ссылке первого /start: сайт, соцсети, реферал,
+  // промокод или прямая ссылка / поиск в Telegram. Раньше метились только сайт и
+  // соцсети — остальные оставались «неизвестно» (2026-10-09). До проверки доступа.
+  if (msg && raw.startsWith("/start") && !(await env.DB.prepare("SELECT 1 FROM users_seen WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null))) {
+    const now = Math.floor(Date.now() / 1000), from = msg.from || {};
+    await env.DB.prepare("INSERT OR IGNORE INTO user_src (user_id, src, ts) VALUES (?1, ?2, ?3)").bind(String(chatId), srcLabel(raw), now).run().catch(() => null);
+    await env.DB.prepare("INSERT OR IGNORE INTO user_names (user_id, name, username, ts) VALUES (?1, ?2, ?3, ?4)")
+      .bind(String(chatId), [from.first_name, from.last_name].filter(Boolean).join(" ").slice(0, 80), from.username || "", now).run().catch(() => null);
+  }
   const promoStart = msg && /^\/start\s+([a-z0-9_]+)/i.exec(raw);
   if (promoStart && PROMOS[promoStart[1].toLowerCase()]) await promoActivate(env, chatId, promoStart[1].toLowerCase(), "ru", false);
   if (!(await hasAccess(env, chatId))) {
@@ -1315,7 +1321,8 @@ async function handleUpdate(env, update) {
   const seen = await env.DB.prepare("INSERT OR IGNORE INTO users_seen (user_id, ts) VALUES (?1, ?2)").bind(String(chatId), Math.floor(Date.now() / 1000)).run().catch(() => null);
   if (seen && seen.meta && seen.meta.changes && !isOwner(env, chatId)) {
     const from = (msg && msg.from) || (cb && cb.from) || {};
-    await ownerNotify(env, { text: `👤 Новый пользователь: ${from.first_name || ""}${from.username ? " @" + from.username : ""} (${chatId})` });
+    const src = await env.DB.prepare("SELECT src FROM user_src WHERE user_id = ?1").bind(String(chatId)).first().catch(() => null);
+    await ownerNotify(env, { text: `👤 Новый пользователь: ${from.first_name || ""}${from.username ? " @" + from.username : ""} (${chatId})\nОткуда: ${srcName(src && src.src)}` });
   }
   const prefs = await getPrefs(env, chatId);
   const msgId = cb && cb.message ? cb.message.message_id : null;
@@ -4662,6 +4669,30 @@ async function adminStats(env) {
   const churn = await one(`SELECT COUNT(DISTINCT p.user_id) n FROM payments p WHERE p.${notIn.replace("user_id", "user_id")} AND p.sub_exp > 0 AND p.sub_exp BETWEEN ?${n + 1} AND ?${n + 2}
     AND NOT EXISTS (SELECT 1 FROM payments x WHERE x.user_id = p.user_id AND x.ts > p.ts)`, now - 30 * 86400, now);
 
+  // Каналы и пользователи: откуда пришли, сколько потратили (LS и себестоимость) и заплатили.
+  const notInU = notIn.replace("user_id", "u.user_id");
+  const people = await all(`SELECT u.user_id id, u.ts first, s.src, nm.name, nm.username, b.plan,
+      (SELECT COUNT(*) FROM ls_log l WHERE l.user_id = u.user_id) acts,
+      (SELECT COALESCE(SUM(ls), 0) FROM ls_log l WHERE l.user_id = u.user_id) ls,
+      (SELECT COALESCE(SUM(cost_usd), 0) FROM ls_log l WHERE l.user_id = u.user_id) usd,
+      (SELECT MAX(ts) FROM ls_log l WHERE l.user_id = u.user_id) last,
+      (SELECT COALESCE(SUM(stars), 0) FROM payments p WHERE p.user_id = u.user_id) stars
+    FROM users_seen u LEFT JOIN user_src s ON s.user_id = u.user_id LEFT JOIN user_names nm ON nm.user_id = u.user_id
+      LEFT JOIN ls_balance b ON b.user_id = u.user_id
+    WHERE ${notInU} ORDER BY u.ts DESC LIMIT 300`);
+  const chan = {};
+  for (const p of people) {
+    const g = srcGroup(p.src);
+    const c = chan[g] || (chan[g] = { channel: SRC_GROUP[g] || g, users: 0, active: 0, payers: 0, stars: 0, ls: 0, usd: 0 });
+    c.users++; if (p.acts) c.active++; if (p.stars) c.payers++;
+    c.stars += p.stars || 0; c.ls += p.ls || 0; c.usd += p.usd || 0;
+  }
+  const channels = Object.values(chan).sort((a, b) => b.users - a.users)
+    .map((c) => ({ ...c, usd: Math.round(c.usd * 1000) / 1000, revenue: Math.round(c.stars * STAR_USD * 100) / 100 }));
+  const topUsers = [...people].sort((a, b) => (b.usd || 0) - (a.usd || 0) || (b.first || 0) - (a.first || 0)).slice(0, 40).map((p) => ({
+    id: p.id, name: p.name || "", username: p.username || "", channel: srcName(p.src), first: p.first, last: p.last || null,
+    acts: p.acts || 0, ls: p.ls || 0, usd: Math.round((p.usd || 0) * 1000) / 1000, stars: p.stars || 0, plan: p.plan || "free" }));
+
   const credits = await orCredits(env);
   const mark = await orMonthMark(env, credits);
   const aiMonth = credits && mark ? Math.max(0, credits.used - mark.used) : lsM.reduce((a, x) => a + (x.usd || 0), 0);
@@ -4684,6 +4715,7 @@ async function adminStats(env) {
     daily: { users: series(daily, "users"), actions: series(daily, "actions"), cost: series(daily, "usd"), new: series(dailyNew, "n"), stars: series(dailyPay, "stars") },
     assumptions: { star_usd: STAR_USD, topup_fee: TOPUP_FEE, fixed: FIXED_USD_MONTH },
     quota: await quotaStats(env),
+    channels, top_users: topUsers,
   };
 }
 
@@ -5008,6 +5040,26 @@ async function botUsername(env) {
     if (u) await setMeta(env, "bot_username", u);
   }
   return u || "Launch_Scout_bot";
+}
+
+/** Метка источника по тексту /start: site | threads | instagram | x | ref:<id> | promo:<код> | start:<что-то> | direct. */
+function srcLabel(raw) {
+  const p = ((/^\/start(?:@\w+)?\s+(\S+)/i.exec(raw || "") || [])[1] || "").toLowerCase();
+  if (!p) return "direct";
+  if (/^(site|threads|instagram|x)$/.test(p)) return p;
+  if (/^ref_\d{3,15}$/.test(p)) return "ref:" + p.slice(4);
+  if (PROMOS[p]) return "promo:" + p;
+  return "start:" + p.replace(/[^\w-]/g, "").slice(0, 30);
+}
+
+/** Канал по метке — для уведомлений и дашборда. */
+const SRC_GROUP = { site: "🌐 Сайт", threads: "🧵 Threads", instagram: "📸 Instagram", x: "𝕏 X", ref: "🤝 Реферал", promo: "🎟 Промокод",
+  start: "🔗 Другая ссылка", direct: "💬 Прямая ссылка / поиск в Telegram", unknown: "❔ До учёта источников" };
+const srcGroup = (src) => (src ? String(src).split(":")[0] : "unknown");
+function srcName(src) {
+  const g = srcGroup(src);
+  const tail = src && src.includes(":") ? " " + src.split(":")[1] : "";
+  return (SRC_GROUP[g] || g) + (g === "ref" ? ` от ${tail.trim()}` : g === "promo" || g === "start" ? tail : "");
 }
 
 /** /start ref_<id> от нового человека — запомнить пригласившего (один раз). */
@@ -5912,6 +5964,7 @@ async function ensureTables(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS th_media (post INTEGER, ix INTEGER, img BLOB, ts INTEGER, PRIMARY KEY (post, ix))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS th_replies (id INTEGER PRIMARY KEY AUTOINCREMENT, net TEXT, url TEXT, author TEXT, post_text TEXT, reply TEXT, reply_url TEXT, score INTEGER, followed INTEGER, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS user_src (user_id TEXT PRIMARY KEY, src TEXT, ts INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS user_names (user_id TEXT PRIMARY KEY, name TEXT, username TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS ls_log_ts ON ls_log (ts)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS found_rounds (url TEXT, company TEXT, usd REAL, stage TEXT, date TEXT, investors TEXT, fact TEXT, ts INTEGER, status TEXT, PRIMARY KEY (company, url))"),
   ]);

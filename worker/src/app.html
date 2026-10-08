@@ -109,6 +109,9 @@
   .adm table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .adm td, .adm th { padding: 5px 4px; border-bottom: 1px solid var(--line); text-align: right; }
   .adm td:first-child, .adm th:first-child { text-align: left; }
+  .adm .scroll { overflow-x: auto; }
+  .adm .scroll table { min-width: 520px; }
+  .adm .scroll td:nth-child(2) { text-align: left; }
   .adm .note { color: var(--hint); font-size: 12px; margin-top: 10px; }
   .lsbox { background: var(--bg2); border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px; }
   .lsbox .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
@@ -339,7 +342,7 @@
       tap_topic: "Нажмите на тему — откроется лента по ней.", topics_pending: "Темы ещё проставляются.",
       rising: "Растут", prelim: " (предварительно)", history_note: "История {d} дн. — надёжно после 14.", was: "было",
       new_topics: "Новое, чего нет в привычных темах", story: "🧠 Выводы", other: "прочее", day_col: "День", total_col: "Всего",
-      s_lang: "Язык", ls_month: "%d LS в месяц", ls_forever: "%d LS, не сгорают", ls_pack_t: "Пакет LS", ls_owner: "Владелец — без лимита", ls_note: "Вопрос — 10 LS, живой поиск — 40 LS. Цена в $ примерная: звёзды с телефона дороже, чем с компьютера.", ls_note_card: "Вопрос — 10 LS, живой поиск — 40 LS. Тарифы — подписка по карте, отменить можно в любой момент в боте: /balance.", ls_mo: "мес", ls_paid_hint: "После оплаты бот пришлёт подтверждение, баланс обновится сам.", ls_renew: "обновится %s", ls_credits: "докупленные: %d — не сгорают", s_notify: "Уведомления в чате",
+      s_lang: "Язык", ls_month: "%d LS в месяц", ls_forever: "%d LS, не сгорают", ls_pack_t: "Пакет LS", ls_owner: "Владелец — без лимита", ls_note: "Вопрос — 10 LS, живой поиск — 40 LS. Цена в $ примерная: звёзды с телефона дороже, чем с компьютера.", ls_note_card: "Вопрос — 10 LS, живой поиск — 40 LS. Тарифы — подписка по карте, отменить можно в любой момент в боте: /balance.", ls_mo: "мес", ls_paid_hint: "После оплаты бот пришлёт подтверждение, баланс обновится сам.", ls_need_email: "Бот попросил email для чека — ответьте ему в чате.", ls_renew: "обновится %s", ls_credits: "докупленные: %d — не сгорают", s_notify: "Уведомления в чате",
       n_brief: "☀️ Сводка дня", n_brief_d: "Одно короткое сообщение: новые стартапы и ниши, куда пошли деньги",
       n_hot: "🔥 Горячие находки — сразу", n_hot_d: "Запуск быстро набирает внимание",
       n_digest: "📋 Сводка — дважды в день", n_digest_d: "До 12 заметных находок за полдня",
@@ -377,7 +380,7 @@
       tap_topic: "Тақырыпты басыңыз — сол бойынша лента ашылады.", topics_pending: "Тақырыптар әлі қойылып жатыр.",
       rising: "Өсіп жатқандар", prelim: " (алдын ала)", history_note: "Тарих {d} күн — 14 күннен кейін сенімді.", was: "бұрын",
       new_topics: "Әдеттегі тақырыптарда жоқ жаңалар", story: "🧠 Қорытынды", other: "басқа", day_col: "Күн", total_col: "Барлығы",
-      s_lang: "Тіл", ls_month: "айына %d LS", ls_forever: "%d LS, күймейді", ls_pack_t: "LS пакеті", ls_owner: "Иесі — шектеусіз", ls_note: "Сұрақ — 10 LS, тікелей іздеу — 40 LS. $ бағасы шамамен: телефоннан жұлдыз компьютерден қымбатырақ.", ls_note_card: "Сұрақ — 10 LS, тікелей іздеу — 40 LS. Тарифтер — картамен жазылым, ботта кез келген уақытта тоқтатуға болады: /balance.", ls_mo: "ай", ls_paid_hint: "Төлемнен кейін бот растау жібереді, баланс өзі жаңарады.", ls_renew: "%s жаңарады", ls_credits: "сатып алынған: %d — күймейді", s_notify: "Чаттағы хабарламалар",
+      s_lang: "Тіл", ls_month: "айына %d LS", ls_forever: "%d LS, күймейді", ls_pack_t: "LS пакеті", ls_owner: "Иесі — шектеусіз", ls_note: "Сұрақ — 10 LS, тікелей іздеу — 40 LS. $ бағасы шамамен: телефоннан жұлдыз компьютерден қымбатырақ.", ls_note_card: "Сұрақ — 10 LS, тікелей іздеу — 40 LS. Тарифтер — картамен жазылым, ботта кез келген уақытта тоқтатуға болады: /balance.", ls_mo: "ай", ls_paid_hint: "Төлемнен кейін бот растау жібереді, баланс өзі жаңарады.", ls_need_email: "Бот чек үшін email сұрады — чатта жауап беріңіз.", ls_renew: "%s жаңарады", ls_credits: "сатып алынған: %d — күймейді", s_notify: "Чаттағы хабарламалар",
       n_brief: "☀️ Күн шолуы", n_brief_d: "Бір қысқа хабарлама: жаңа стартаптар және ақша келген тауашалар",
       n_hot: "🔥 Ыстық табылымдар — бірден", n_hot_d: "Іске қосылым тез назар жинап жатыр",
       n_digest: "📋 Шолу — күніне екі рет", n_digest_d: "Жарты күндегі 12-ге дейін байқалған табылым",
@@ -415,7 +418,7 @@
       tap_topic: "Tap a topic to open its feed.", topics_pending: "Topics are still being assigned.",
       rising: "Rising", prelim: " (preliminary)", history_note: "{d} days of history — reliable after 14.", was: "was",
       new_topics: "New, outside the usual topics", story: "🧠 Takeaways", other: "other", day_col: "Day", total_col: "Total",
-      s_lang: "Language", ls_month: "%d LS a month", ls_forever: "%d LS, never expire", ls_pack_t: "LS pack", ls_owner: "Owner — unlimited", ls_note: "A question is 10 LS, live search 40 LS. $ price is approximate: Stars cost more on mobile than on desktop.", ls_note_card: "A question is 10 LS, live search 40 LS. Plans are a card subscription — cancel anytime in the bot: /balance.", ls_mo: "mo", ls_paid_hint: "After payment the bot sends a confirmation and the balance updates itself.", ls_renew: "renews %s", ls_credits: "purchased: %d — never expire", s_notify: "Chat notifications",
+      s_lang: "Language", ls_month: "%d LS a month", ls_forever: "%d LS, never expire", ls_pack_t: "LS pack", ls_owner: "Owner — unlimited", ls_note: "A question is 10 LS, live search 40 LS. $ price is approximate: Stars cost more on mobile than on desktop.", ls_note_card: "A question is 10 LS, live search 40 LS. Plans are a card subscription — cancel anytime in the bot: /balance.", ls_mo: "mo", ls_paid_hint: "After payment the bot sends a confirmation and the balance updates itself.", ls_need_email: "The bot asked for your email for the receipt — reply in the chat.", ls_renew: "renews %s", ls_credits: "purchased: %d — never expire", s_notify: "Chat notifications",
       n_brief: "☀️ Daily brief", n_brief_d: "One short message: new startups and the niches money went into",
       n_hot: "🔥 Hot findings — instantly", n_hot_d: "A launch is gaining attention fast",
       n_digest: "📋 Digest — twice a day", n_digest_d: "Up to 12 notable findings per half-day",
@@ -767,6 +770,14 @@
       ${bars(d.daily.new, "Новые по дням")}
       ${bars(d.daily.stars, "Оплаты по дням, ⭐")}
       ${bars(d.daily.cost, "Расход ИИ по дням, $")}
+      <h3>Каналы — откуда пришли</h3>
+      <div class="scroll"><table><tr><th>канал</th><th>пришло</th><th>задавали вопросы</th><th>платят</th><th>выручка</th><th>LS</th><th>себест.</th></tr>
+        ${(d.channels || []).map((c) => `<tr><td>${esc(c.channel)}</td><td>${c.users}</td><td>${c.active}</td><td>${c.payers}</td><td>${usd(c.revenue)}</td><td>${c.ls}</td><td>$${c.usd.toFixed(3)}</td></tr>`).join("") || `<tr><td colspan="7">пока нет</td></tr>`}</table></div>
+      <h3>Пользователи — кто сколько потратил</h3>
+      <div class="scroll"><table><tr><th>кто</th><th>откуда</th><th>пришёл</th><th>вопросов</th><th>LS</th><th>себест.</th><th>оплата</th></tr>
+        ${(d.top_users || []).map((u) => `<tr><td>${esc(u.name || "—")}${u.username ? `<br><span class="note">@${esc(u.username)}</span>` : ""}<br><span class="note">${esc(u.id)}</span></td>
+          <td>${esc(u.channel)}</td><td>${u.first ? new Date(u.first * 1000).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) : "—"}</td>
+          <td>${u.acts}</td><td>${u.ls}</td><td>$${u.usd.toFixed(3)}</td><td>${u.stars ? u.stars + " ⭐" : u.plan !== "free" ? esc(u.plan) : "—"}</td></tr>`).join("") || `<tr><td colspan="7">пока нет</td></tr>`}</table></div>
       <h3>Действия за месяц</h3>
       <table><tr><th>действие</th><th>шт.</th><th>LS</th><th>себест.</th></tr>
         ${(d.actions || []).map((a) => `<tr><td>${esc(a.action)}</td><td>${a.n}</td><td>${a.ls}</td><td>$${a.usd.toFixed(3)}</td></tr>`).join("") || `<tr><td colspan="4">пока нет</td></tr>`}</table>
@@ -780,7 +791,8 @@
       const r = await api("/api/ls");
       if (r && (r.owner || r.admin)) {
         document.querySelector('nav [data-tab="admin"]').hidden = false;
-        if (location.hash === "#admin") setTab("admin");
+        // Служебный бот открывает дашборд с #admin — там только аналитика, без вкладок пользователя.
+        if (location.hash === "#admin") { setTab("admin"); document.querySelector("nav").hidden = true; }
       }
     } catch (e) { /* не владелец */ }
   }
@@ -817,9 +829,10 @@
     if (!b) return;
     let r;
     try { r = await api("/api/buy?item=" + b.dataset.buy); } catch (err) { r = null; }
+    if (r && r.need_email) { toast(tr("ls_need_email")); return; }
     if (!r || !r.link) { toast(tr("save_err")); return; }
     if (r.card) {
-      // Карта: оплата в Tribute (мини-приложение t.me или веб-страница); о результате бот пишет сам.
+      // Карта: оплата на странице lava.top; о результате бот пишет сам.
       if (tg && /^https:\/\/t\.me\//.test(r.link) && tg.openTelegramLink) tg.openTelegramLink(r.link);
       else if (tg && tg.openLink) tg.openLink(r.link);
       else window.open(r.link, "_blank");
