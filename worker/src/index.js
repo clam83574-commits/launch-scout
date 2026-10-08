@@ -5324,16 +5324,12 @@ async function liveSearch(env, chatId, question, plan, lang, meter = null) {
   };
   const [db, web, hn, gh] = await Promise.all([
     dbFacts(env, plan).catch(() => []).then((x) => done("db", x)),
-    Promise.all([webFacts(env, question, plan.queries, { model: WEB_FAST_MODEL, timeoutMs: 11000, meter }),
-      webFacts(env, question, plan.queries, { model: WEB_SOURCE_MODEL, timeoutMs: 14000, meter })])
-      .then(([a, b]) => {
-        const seen = new Set(), out = [];
-        for (const f of [...b, ...a]) {
-          const k = f.text.toLowerCase().replace(/[^a-zа-я0-9]/g, "").slice(0, 60);
-          if (!seen.has(k)) { seen.add(k); out.push(f); }
-        }
-        return out.slice(0, 14);
-      }).then((x) => done("web", x)),
+    // Один поиск — Perplexity (~0,6 цента, первоисточники). Второй параллельный через
+    // flash-lite с плагином поиска OpenRouter стоил 4–6 центов на вопрос и дублировал
+    // факты (замер 2026-10-09) — теперь он только запасной, если Perplexity ничего не дал.
+    webFacts(env, question, plan.queries, { model: WEB_SOURCE_MODEL, timeoutMs: 14000, meter })
+      .then((b) => (b.length ? b : webFacts(env, question, plan.queries, { model: WEB_FAST_MODEL, timeoutMs: 11000, meter })))
+      .then((x) => x.slice(0, 14)).then((x) => done("web", x)),
     hnFacts(plan.queries).catch(() => []).then((x) => done("hn", x)),
     ghFacts(env, plan.queries).catch(() => []).then((x) => done("gh", x)),
   ]);

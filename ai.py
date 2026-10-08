@@ -631,6 +631,10 @@ DEFAULT_DEAL_MODELS = "openai/gpt-oss-120b,openai/gpt-oss-20b"
 OR_BULK_MODEL = "google/gemini-3.1-flash-lite"
 OR_BATCHES_PER_RUN = 10
 OR_API = "https://openrouter.ai/api/v1/chat/completions"
+# Поиск в сети для досье ниш и проверки аналогов — Perplexity sonar (~0,6 цента
+# за запрос). gemini-3.8-flash:online стоил 9–24 цента: длинные рассуждения плюс
+# плагин поиска, 7–8 октября 2026 это было ~$2,5 в сутки — 75% всего расхода.
+SEARCH_MODEL = "perplexity/sonar"
 
 
 def openrouter_key():
@@ -664,7 +668,9 @@ def _chat_or(model, system, user, max_tokens=4000, timeout=90):
     """
     body = {"model": model, "max_tokens": max_tokens, "temperature": 0.2,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
-    if not model.endswith(":online"):
+    # Строгий JSON — только у обычных моделей: с поиском (:online, Perplexity)
+    # ответ текстом со ссылками, JSON достаём из текста.
+    if not model.endswith(":online") and not model.startswith("perplexity/"):
         body["response_format"] = {"type": "json_object"}
     try:
         r = requests.post(OR_API, timeout=timeout, json=body,
@@ -777,8 +783,7 @@ def gap_check(niche, examples):
     """
     user = "Niche: %s\nFunded companies abroad in this niche: %s" % (niche, "; ".join(examples[:5]))
     if openrouter_key():
-        model = (os.environ.get("LS_SMART_MODEL") or "google/gemini-3.8-flash") + ":online"
-        return _chat_or(model, GAP_SYSTEM, user, max_tokens=2500, timeout=120)
+        return _chat_or(os.environ.get("LS_SEARCH_MODEL") or SEARCH_MODEL, GAP_SYSTEM, user, max_tokens=2500, timeout=120)
     ok, why = available()
     if not ok:
         return None, why
@@ -820,8 +825,7 @@ def web_dossier(niche, examples):
     if not openrouter_key():
         return None, "нет OPENROUTER_API_KEY"
     user = "Niche: %s\nFunded companies in this niche: %s" % (niche, "; ".join(examples[:6]))
-    model = (os.environ.get("LS_SMART_MODEL") or "google/gemini-3.8-flash") + ":online"
-    return _chat_or(model, WEB_SYSTEM, user, max_tokens=3000, timeout=150)
+    return _chat_or(os.environ.get("LS_SEARCH_MODEL") or SEARCH_MODEL, WEB_SYSTEM, user, max_tokens=3000, timeout=150)
 
 
 # --- ✂️ Дробление слишком широких ниш ------------------------------------------
