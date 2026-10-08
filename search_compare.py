@@ -21,7 +21,8 @@ QUESTIONS = [
 ]
 FACTS_SYSTEM = """You search the web to answer a startup founder's question. Reply JSON only:
 {"facts": [{"text": "one factual sentence with names, numbers and dates", "url": "https://exact source page", "date": "YYYY-MM-DD or empty"}]}
-6-10 facts, newest first, only from pages you actually opened. Never invent."""
+6-10 facts, newest first, only from pages you actually opened. Never invent.
+Use only the browser_search tool to search; write the final JSON as plain text in your answer (it is not a tool)."""
 
 
 def groq_call(model, system, user, tools=None):
@@ -58,7 +59,8 @@ def live(url):
 ENGINES = [
     ("perplexity/sonar", lambda s, u: or_call(s, u)),
     ("groq gpt-oss-120b+browser", lambda s, u: groq_call("openai/gpt-oss-120b", s, u, [{"type": "browser_search"}])),
-    ("groq/compound", lambda s, u: groq_call("groq/compound", s, u)),
+    ("groq compound-beta", lambda s, u: groq_call("compound-beta", s, u)),
+    ("groq compound-beta-mini", lambda s, u: groq_call("compound-beta-mini", s, u)),
 ]
 
 
@@ -82,6 +84,7 @@ def report(kind, data, err, secs):
             print("      - " + str(f.get("text"))[:170])
 
 
+NICHES = NICHES[:1]
 for niche, ex in NICHES:
     print(f"\n=== Досье: {niche}")
     user = "Niche: %s\nFunded companies in this niche: %s" % (niche, "; ".join(ex))
