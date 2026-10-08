@@ -1801,7 +1801,7 @@ async function smartFetch(env, body, groqModels, { web = false, timeoutMs = 2700
         const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST", signal: ctrl.signal,
           headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-            "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+            "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-bot" },
           body: JSON.stringify({ ...rest, ...(isPplx ? { response_format: undefined } : {}), max_tokens: max_completion_tokens || 2000, model }),
         });
         if (r.ok) return r;
@@ -1865,7 +1865,7 @@ async function transcribe(env, voice, lang) {
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-      "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+      "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-bot" },
     body: JSON.stringify({
       model: env.LS_VOICE_MODEL || "google/gemini-3.1-flash-lite", temperature: 0,
       messages: [{ role: "user", content: [
@@ -2356,7 +2356,7 @@ async function toolChat(env, messages, { maxSteps = 4, budgetMs = 26000, web = f
       r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST", signal: ctrl.signal,
         headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-          "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+          "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-bot" },
         body: JSON.stringify({ model, messages: msgs, max_tokens: 2500, temperature: 0.3,
           ...(step < maxSteps ? { tools: TOOLS, tool_choice: "auto" } : {}) }),
       });
@@ -2748,7 +2748,7 @@ async function streamOpenRouter(env, model, messages, onDelta, timeoutMs = 25000
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-bot" },
       body: JSON.stringify({ model, messages, stream: true, max_tokens: maxTokens, temperature: 0.3, usage: { include: true },
         // Gemini: минимум «размышления» перед ответом — иначе первое слово
         // приходит через 5+ секунд (1 октября 2026 — 9 срывов за час).
@@ -2954,7 +2954,7 @@ async function webSearchWithStatus(env, chatId, statusText, subject, examples, m
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-bot" },
       body: JSON.stringify({ model, max_tokens: 2500, temperature: 0.2, usage: { include: true }, messages: [
         { role: "system", content: WEB_SYSTEM },
         { role: "user", content: `Niche or idea: ${subject}\nKnown funded companies: ${examples.join("; ")}` }] }),
@@ -5170,7 +5170,7 @@ async function webFacts(env, question, queries, { model = null, timeoutMs = 1600
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST", signal: ctrl.signal,
       headers: { authorization: `Bearer ${env.LS_OPENROUTER_KEY}`, "content-type": "application/json",
-        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout" },
+        "HTTP-Referer": "https://launch-scout-bot.clam83574.workers.dev", "X-Title": "launch-scout-bot" },
       body: JSON.stringify({ model: model || env.LS_WEB_MODEL || WEB_FAST_MODEL, max_tokens: 1500, temperature: 0.1, usage: { include: true },
         // У Perplexity поиск свой; остальным — плагин поиска OpenRouter.
         ...(String(model || "").startsWith("perplexity/") ? {} : { plugins: [{ id: "web", max_results: 6 }] }),
