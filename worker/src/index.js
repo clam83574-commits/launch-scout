@@ -3765,11 +3765,14 @@ const TRB_GRACE = 2 * 86400;             // тариф не гаснет, пок
 const TRB_FX = { usd: 1, eur: 1.08, rub: 0.0125 }; // для дашборда, приблизительно
 const TRB_TEXT = {
   ru: { manage: "Автопродление отключается в Tribute: откройте его и выберите подписку <b>%s</b> → «Отменить подписку». Тариф доживёт оплаченный срок.", manage_btn: "Открыть Tribute",
-    old: "\n\nПрежняя подписка <b>%s</b> продолжает списываться — отмените её в Tribute, чтобы не платить дважды." },
+    old: "\n\nПрежняя подписка <b>%s</b> продолжает списываться — отмените её в Tribute, чтобы не платить дважды.",
+    chan: "\n\n🔑 @tribute пришлёт приглашение в закрытый канал подписчиков — это бонус к тарифу, LS уже на балансе.", cancel_btn: "✖️ Отменить автопродление %s" },
   kk: { manage: "Автоұзарту Tribute ішінде тоқтатылады: оны ашып, <b>%s</b> жазылымын таңдаңыз → «Жазылымды тоқтату». Тариф төленген мерзімге дейін жарамды.", manage_btn: "Tribute ашу",
-    old: "\n\nБұрынғы <b>%s</b> жазылымы әлі төленіп жатыр — екі рет төлемеу үшін оны Tribute ішінде тоқтатыңыз." },
+    old: "\n\nБұрынғы <b>%s</b> жазылымы әлі төленіп жатыр — екі рет төлемеу үшін оны Tribute ішінде тоқтатыңыз.",
+    chan: "\n\n🔑 @tribute жазылушылардың жабық арнасына шақыру жібереді — бұл тарифке бонус, LS балансқа түсті.", cancel_btn: "✖️ %s автоұзартуын тоқтату" },
   en: { manage: "Auto-renewal is turned off in Tribute: open it, pick the <b>%s</b> subscription → “Cancel subscription”. The plan runs until the paid period ends.", manage_btn: "Open Tribute",
-    old: "\n\nYour previous <b>%s</b> subscription is still being charged — cancel it in Tribute so you do not pay twice." },
+    old: "\n\nYour previous <b>%s</b> subscription is still being charged — cancel it in Tribute so you do not pay twice.",
+    chan: "\n\n🔑 @tribute will send you an invite to the private subscribers channel — a bonus to the plan; your LS are already on the balance.", cancel_btn: "✖️ Cancel %s auto-renewal" },
 };
 const trbOn = (env) => !!(env.TRIBUTE_API_KEY && env.TRIBUTE_ITEMS);
 function trbItems(env) {
@@ -3781,14 +3784,38 @@ function trbItemOf(env, id, product) {
   return Object.keys(items).find((k) => (k === "pack") === product && String(items[k].id) === String(id)) || null;
 }
 
-/** Ссылка на подписку / товар в Tribute; с промокодом — его ссылка, если она заведена. */
-async function trbLink(env, uid, item) {
+/** Ссылка на подписку / товар в Tribute: { link, usd, off, missing } или null.
+ *  С промокодом — его ссылка, если заведена; нет — полная цена и missing. */
+function trbPick(env, item, promo) {
   const it = trbItems(env)[item];
   if (!(it && it.url)) return null;
-  const promo = await promoActive(env, uid);
   const pl = promo && it.promo && (it.promo[promo.code] || it.promo[promo.code.toUpperCase()]);
-  if (promo && !pl) await ownerNotify(env, { text: `💳 Для промокода ${promo.code.toUpperCase()} нет ссылки Tribute на «${item}» (TRIBUTE_ITEMS.${item}.promo) — ${uid} видит полную цену.` });
-  return { link: pl || it.url, usd: pl ? cardUsd(item, promo.off) : cardUsd(item) };
+  return { link: pl || it.url, usd: pl ? cardUsd(item, promo.off) : cardUsd(item), off: pl ? promo.off : 0, missing: !!(promo && !pl) };
+}
+
+/** Промокод есть, а ссылки Tribute с ним нет — владельцу один раз на код. */
+async function trbPromoWarn(env, promo, items) {
+  if (!promo || !items.length || await meta(env, "trb_promo_warn_" + promo.code)) return;
+  await setMeta(env, "trb_promo_warn_" + promo.code, "1");
+  await ownerNotify(env, { text: `💳 Для промокода ${promo.code.toUpperCase()} нет ссылки Tribute на ${items.join(", ")} (TRIBUTE_ITEMS.<товар>.promo) — по карте покупатели видят полную цену. Заведите код в Tribute и пришлите ссылки.` });
+}
+
+async function trbLink(env, uid, item) {
+  const promo = await promoActive(env, uid);
+  const r = trbPick(env, item, promo);
+  if (r && r.missing && item !== "pack") await trbPromoWarn(env, promo, [item]);
+  return r;
+}
+
+/** Ссылки и цены для мини-приложения — кнопка сразу открывает оплату. */
+async function trbLinks(env, uid) {
+  const promo = await promoActive(env, uid);
+  const out = {};
+  for (const k of ["pro", "max", "promax", "pack"]) {
+    const r = trbPick(env, k, promo);
+    if (r) out[k] = { url: r.link, usd: r.usd, off: r.off };
+  }
+  return out;
 }
 
 async function trbCancel(env, chatId, sub, lang) {
@@ -3887,7 +3914,7 @@ async function trbEvent(env, name, p) {
     await refReward(env, uid);
     const tt = TRB_TEXT[lang] || TRB_TEXT.ru;
     await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.ok_sub, PLAN_TITLE[item], cardN(PLANS[item].ls), cardDate(exp)) +
-      (old && old.plan !== item ? fmt(tt.old, PLAN_TITLE[old.plan] || old.plan) : "") });
+      (old && old.plan !== item ? fmt(tt.old, PLAN_TITLE[old.plan] || old.plan) : "") + tt.chan });
     return;
   }
 
@@ -3915,6 +3942,25 @@ async function payButtons(env, s, uid, lang) {
     return kb;
   }
   const t = CARD_TEXT[lang] || CARD_TEXT.ru;
+  if (trbOn(env)) {
+    // Ссылки постоянные — кнопка сразу открывает оплату в Tribute, без промежуточного сообщения.
+    const sub = await cardSub(env, uid);
+    const pick = Object.fromEntries(["pro", "max", "promax", "pack"].map((k) => [k, trbPick(env, k, promo)]));
+    // Промокоды Tribute бывают только у подписок — про пакет не напоминаем.
+    await trbPromoWarn(env, promo, Object.keys(pick).filter((k) => k !== "pack" && pick[k] && pick[k].missing));
+    const b = (k, label) => {
+      const r = pick[k];
+      const price = `$${(r ? r.usd : cardUsd(k)).toFixed(2)}${k === "pack" ? "" : "/" + t.mon}${r && r.off ? ` (−${Math.round(r.off * 100)}%)` : ""}`;
+      return r ? { text: `💳 ${label} — ${price}`, url: r.link } : { text: `💳 ${label} — ${price}`, callback_data: "card:" + k };
+    };
+    return { inline_keyboard: [
+      [{ text: s.kb_invite, callback_data: "invite" }],
+      [b("pro", "Pro"), b("max", "Max")],
+      [b("promax", "Pro Max"), b("pack", `+${cardN(CREDIT_PACK.ls)} LS`)],
+      ...crypto,
+      ...(sub ? [[{ text: fmt((TRB_TEXT[lang] || TRB_TEXT.ru).cancel_btn, PLAN_TITLE[sub.plan] || sub.plan), url: TRB_APP }]] : []),
+    ] };
+  }
   const off = promo ? promo.off : 0;
   const p = (k) => (off ? `$${cardUsd(k, off).toFixed(2)} (−${Math.round(off * 100)}%)` : `$${cardUsd(k).toFixed(2)}`);
   const sub = await cardSub(env, uid);
@@ -5262,20 +5308,21 @@ async function botUsername(env) {
 function srcLabel(raw) {
   const p = ((/^\/start(?:@\w+)?\s+(\S+)/i.exec(raw || "") || [])[1] || "").toLowerCase();
   if (!p) return "direct";
-  if (/^(site|threads|instagram|x)$/.test(p)) return p;
+  if (/^(site|threads|instagram|x|tg)$/.test(p)) return p;
+  if (/^tg_[a-z0-9]{1,30}$/.test(p)) return "tg:" + p.slice(3);   // рассылка в Telegram с названием: ?start=tg_<название>
   if (/^ref_\d{3,15}$/.test(p)) return "ref:" + p.slice(4);
   if (PROMOS[p]) return "promo:" + p;
   return "start:" + p.replace(/[^\w-]/g, "").slice(0, 30);
 }
 
 /** Канал по метке — для уведомлений и дашборда. */
-const SRC_GROUP = { site: "🌐 Сайт", threads: "🧵 Threads", instagram: "📸 Instagram", x: "𝕏 X", ref: "🤝 Реферал", promo: "🎟 Промокод",
+const SRC_GROUP = { site: "🌐 Сайт", threads: "🧵 Threads", instagram: "📸 Instagram", x: "𝕏 X", tg: "📨 Рассылка в Telegram", ref: "🤝 Реферал", promo: "🎟 Промокод",
   start: "🔗 Другая ссылка", direct: "💬 Прямая ссылка / поиск в Telegram", unknown: "❔ До учёта источников" };
 const srcGroup = (src) => (src ? String(src).split(":")[0] : "unknown");
 function channelName(src) {
   const g = srcGroup(src);
   const tail = src && src.includes(":") ? " " + src.split(":")[1] : "";
-  return (SRC_GROUP[g] || g) + (g === "ref" ? ` от ${tail.trim()}` : g === "promo" || g === "start" ? tail : "");
+  return (SRC_GROUP[g] || g) + (g === "ref" ? ` от ${tail.trim()}` : g === "promo" || g === "start" || g === "tg" ? tail : "");
 }
 
 /** /start ref_<id> от нового человека — запомнить пригласившего (один раз). */
@@ -6524,7 +6571,7 @@ export default {
         const r = await lsGet(env, user.id);
         return json({ plan: r.plan, sub_ls: r.sub_ls, credits: r.credits, plan_ls: (PLANS[r.plan] || PLANS.free).ls, welcome: WELCOME_LS, period_end: r.period_end,
           owner: isOwner(env, user.id), admin: await isAdmin(env, user.id), plans: PLANS, stars: STAR_ITEMS, prices: LS_PRICE, pack: CREDIT_PACK,
-          card: cardOn(env), card_sub: !!(cardOn(env) && await cardSub(env, user.id)) });
+          card: cardOn(env), card_sub: !!(cardOn(env) && await cardSub(env, user.id)), links: trbOn(env) ? await trbLinks(env, user.id) : null });
       }
       if (url.pathname === "/api/buy") {
         const lang = (await getPrefs(env, user.id)).lang || "ru";
