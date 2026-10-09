@@ -339,7 +339,7 @@ const EXTRA = {
     rq_market: "🎯 Подберу ниши под вас — два коротких вопроса.\n\n<b>1/2. Где запускаете?</b>", rq_model: "<b>2/2. Что строите?</b>", rq_kz: "🇰🇿 Казахстан", rq_cis: "🌍 СНГ", rq_global: "🌐 Весь мир", rq_unsure: "🤷 Пока не знаю", pf_title: "👤 <b>Ваш профиль</b> — по нему радар подбирает ниши, а чат — советы.", pf_chat: "<b>Из разговора бот понял:</b>", pf_hint: "Профиль сам пополняется из чата. Поправить — кнопками ниже.", pf_edit_m: "✏️ Рынок", pf_edit_t: "✏️ Что строю", pf_full: "⚙️ Подробнее", pf_reset: "🧹 Сбросить",
     ex_title: "С чего начать? Нажмите вопрос или задайте свой — текстом или голосом.", ex_1: "💰 Куда сейчас идут деньги?", ex_2: "🇰🇿 Какие ниши свободны в Казахстане?", ex_3: "🧪 Как проверить мою идею?",
     ab_live_p: "📡 Искать везде · +%d LS", ab_xtrends: "📡 X и Google Trends · %d LS",
-    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS в месяц на вопросы, поиск и разборы. Продление каждые 30 дней, отмена в любой момент.", st_descr_pack: "Докупленные LS не сгорают и тратятся после подписочных.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Счёт готов — оплата в один клик звёздами Telegram.", st_pay_btn: "Оплатить %d ⭐", st_ok_sub: "✅ Тариф <b>%s</b> подключён: %d LS до %s.", st_ok_pack: "✅ +%d LS. Докупленных теперь %d — они не сгорают.", st_support_hint: "Опишите проблему одним сообщением: /paysupport <текст>. Передам владельцу.", st_support_ok: "Передал — ответим здесь же.", ls_pay_soon: "Оплата картой — подписка с автопродлением, отмена в любой момент. Или криптой — разовая оплата на 1, 3, 6 или 12 месяцев, за долгий срок месяц дешевле (до −30%). Условия — /terms.", cp_btn: "💎 Криптой · USDT / TON", st_terms: "<b>Условия Launch Scout</b>\n\n1. Сервис даёт аналитику рынка и ответы ИИ по открытым данным. Это не инвестиционная рекомендация; решения вы принимаете сами.\n2. Действия оплачиваются внутренними единицами LS по фиксированному прайсу (/balance): вопрос — 10 LS; если для ответа нужен живой поиск в интернете (вопрос о конкретной компании, продукте или новостях) — 40 LS, и бот сообщает об этом в начале поиска. Подписочные LS действуют один расчётный месяц и не переносятся; докупленные LS не сгорают.\n3. Тариф оплачивается банковской картой через lava.top и продлевается автоматически каждые 30 дней с той же карты, пока вы не отмените автопродление (кнопка в /balance); после отмены тариф действует до конца оплаченного срока. Подписки, оформленные ранее через Telegram Stars, продлеваются, пока вы их не отмените в настройках Telegram. При оплате криптой через @CryptoBot тариф действует оплаченный срок (1, 3, 6 или 12 месяцев) без автопродления, LS начисляются каждые 30 дней. Бесплатные 300 LS даются один раз и не сгорают. Сервис не начисляет проценты, штрафы и скрытые платежи.\n4. Оплата за оказанный период не возвращается. Исключение — технический сбой: деньги списаны, а тариф или LS не начислены, или списание прошло дважды. Напишите /paysupport, исправим или вернём оплату.\n5. Вопросы об оплате — /paysupport.",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS в месяц на вопросы, поиск и разборы. Продление каждые 30 дней, отмена в любой момент.", st_descr_pack: "Докупленные LS не сгорают и тратятся после подписочных.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Счёт готов — оплата в один клик звёздами Telegram.", st_pay_btn: "Оплатить %d ⭐", st_ok_sub: "✅ Тариф <b>%s</b> подключён: %d LS до %s.", st_ok_pack: "✅ +%d LS. Докупленных теперь %d — они не сгорают.", st_support_hint: "Опишите проблему одним сообщением: /paysupport <текст>. Передам владельцу.", st_support_ok: "Передал — ответим здесь же.", ls_pay_soon: "Оплата картой — подписка с автопродлением, отмена в любой момент. Или криптой — разовая оплата на 1, 3, 6 или 12 месяцев, за долгий срок месяц дешевле (до −30%). Условия — /terms.", cp_btn: "💎 Криптой · USDT / TON", st_terms: "<b>Условия Launch Scout</b>\n\n1. Сервис даёт аналитику рынка и ответы ИИ по открытым данным. Это не инвестиционная рекомендация; решения вы принимаете сами.\n2. Действия оплачиваются внутренними единицами LS по фиксированному прайсу (/balance): вопрос — 10 LS; если для ответа нужен живой поиск в интернете (вопрос о конкретной компании, продукте или новостях) — 40 LS, и бот сообщает об этом в начале поиска. Подписочные LS действуют один расчётный месяц и не переносятся; докупленные LS не сгорают.\n3. Тариф оплачивается банковской картой через Tribute и продлевается автоматически каждые 30 дней с той же карты, пока вы не отмените автопродление (кнопка в /balance); после отмены тариф действует до конца оплаченного срока. Подписки, оформленные ранее через Telegram Stars, продлеваются, пока вы их не отмените в настройках Telegram. При оплате криптой через @CryptoBot тариф действует оплаченный срок (1, 3, 6 или 12 месяцев) без автопродления, LS начисляются каждые 30 дней. Бесплатные 300 LS даются один раз и не сгорают. Сервис не начисляет проценты, штрафы и скрытые платежи.\n4. Оплата за оказанный период не возвращается. Исключение — технический сбой: деньги списаны, а тариф или LS не начислены, или списание прошло дважды. Напишите /paysupport, исправим или вернём оплату.\n5. Вопросы об оплате — /paysupport.",
     ls_footer: "−%d LS · осталось %d LS", ls_low: "⚠️ Осталось %d LS — скоро закончатся.", ls_short: "💳 На это нужно %d LS, а у вас %d.", ls_balance: "💳 <b>Тариф: %s</b>\nПодписочные LS: <b>%d</b> · докупленные: <b>%d</b>\nПодписочные обновятся %s; докупленные не сгорают.", ls_tariffs_title: "<b>Тарифы</b>", ls_plan_free: "Free — %s LS на старте, один раз", ls_plan_pro: "Pro — $%s · %s LS в месяц", ls_plan_max: "Max — $%s · %s LS в месяц", ls_plan_promax: "Pro Max — $%s · %s LS в месяц", ls_pack: "Докупить: %s LS за $%s — не сгорают", ls_prices: "Цена действий: вопрос 10 · глубже / карта идеи / конкуренты 20 · проверка идеи 30 · живой поиск 40 · X и Google Trends 15 · карточка идеи 10 LS. Сводка, лента и радар — бесплатно.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "База раундов", src_web: "Веб и новости", live_head: "🔎 Живой поиск в интернете (40 LS): %s", research_started: "📡 Запустил глубокий поиск по X и Google Trends — дополнение придёт отдельным сообщением через 1–2 минуты.", research_limit: "📡 Глубокий поиск — до %d раз в сутки, лимит на сегодня исчерпан.", research_err: "📡 Глубокий поиск сейчас не запустился — попробуйте позже.", research_head: "📡 <b>Дополнение: X и Google Trends</b>", research_empty: "📡 В X и Google Trends по этому запросу ничего заметного.", ab_deep: "🔬 Глубже", ab_map: "🗺 Карта идеи", ab_wide: "🧭 Смежные ниши", ab_comp: "⚔️ Конкуренты", ab_follow: "🔔 Следить", ab_unfollow: "✅ Слежу", ab_live: "📡 Искать везде", ctx_gone: "Контекст устарел — задайте вопрос заново", adj_title: "🧭 <b>Рядом с «%s»</b>", adj_line: "компаний за 6 мес: %d, ранних %d, %s", onboard: "👋 Пять быстрых вопросов — и я буду подбирать ниши и инсайты под вас. Отметьте, что подходит, и нажмите «Показать радар».",
     opp_window: "🔥 Окно: спрос есть, игроков мало", opp_forming: "🧭 Формируется: ищите незакрытую вертикаль",
@@ -399,7 +399,7 @@ const EXTRA = {
     rq_market: "🎯 Сізге тауашаларды таңдаймын — екі қысқа сұрақ.\n\n<b>1/2. Қай жерде іске қосасыз?</b>", rq_model: "<b>2/2. Не жасап жатырсыз?</b>", rq_kz: "🇰🇿 Қазақстан", rq_cis: "🌍 ТМД", rq_global: "🌐 Бүкіл әлем", rq_unsure: "🤷 Әзірге білмеймін", pf_title: "👤 <b>Сіздің профиліңіз</b> — радар тауашаларды, чат кеңестерді осы бойынша таңдайды.", pf_chat: "<b>Әңгімеден бот түсінгені:</b>", pf_hint: "Профиль чаттан өзі толығады. Түзету — төмендегі батырмалармен.", pf_edit_m: "✏️ Нарық", pf_edit_t: "✏️ Не жасаймын", pf_full: "⚙️ Толығырақ", pf_reset: "🧹 Тазарту",
     ex_title: "Неден бастаймыз? Сұрақты басыңыз немесе өзіңіздікін қойыңыз — мәтінмен не дауыспен.", ex_1: "💰 Қазір ақша қайда барады?", ex_2: "🇰🇿 Қазақстанда қай тауашалар бос?", ex_3: "🧪 Идеямды қалай тексеремін?",
     ab_live_p: "📡 Барлық жерден іздеу · +%d LS", ab_xtrends: "📡 X және Google Trends · %d LS",
-    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "Айына %d LS: сұрақтар, іздеу және талдаулар. 30 күн сайын ұзартылады, кез келген уақытта тоқтатуға болады.", st_descr_pack: "Сатып алынған LS күймейді және жазылым LS-тен кейін жұмсалады.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Шот дайын — Telegram жұлдыздарымен бір рет басып төлеңіз.", st_pay_btn: "%d ⭐ төлеу", st_ok_sub: "✅ <b>%s</b> тарифі қосылды: %d LS, %s дейін.", st_ok_pack: "✅ +%d LS. Сатып алынғандары енді %d — күймейді.", st_support_hint: "Мәселені бір хабарламамен жазыңыз: /paysupport <мәтін>.", st_support_ok: "Жіберілді — осында жауап береміз.", ls_pay_soon: "Картамен төлеу — автоұзартылатын жазылым, кез келген уақытта тоқтатуға болады. Не криптомен — 1, 3, 6 не 12 айға бір реттік төлем, ұзақ мерзімге айы арзанырақ (−30%-ға дейін). Шарттар — /terms.", cp_btn: "💎 Криптомен · USDT / TON", st_terms: "<b>Launch Scout шарттары</b>\n\n1. Сервис ашық деректер бойынша нарық аналитикасын және ЖИ жауаптарын береді. Бұл инвестициялық кеңес емес.\n2. Әрекеттер LS бірліктерімен тұрақты баға бойынша төленеді (/balance): сұрақ — 10 LS; жауапқа интернеттен тікелей іздеу керек болса (нақты компания, өнім не жаңалық туралы сұрақ) — 40 LS, бот бұл туралы іздеу басында хабарлайды. Жазылым LS бір есеп айы жарамды және келесі айға ауыспайды; сатып алынған LS күймейді.\n3. Тариф lava.top арқылы банк картасымен төленеді және автоұзартуды тоқтатқанша (/balance ішіндегі батырма) 30 күн сайын сол картадан автоматты түрде ұзартылады; тоқтатқаннан кейін тариф төленген мерзім соңына дейін жарамды. Бұрын Telegram Stars арқылы рәсімделген жазылымдар Telegram баптауларында тоқтатқанша ұзартылады. @CryptoBot арқылы криптомен төлегенде тариф төленген мерзімге (1, 3, 6 не 12 ай) автоұзартусыз жарамды, LS әр 30 күн сайын беріледі. Тегін 300 LS бір рет беріледі және күймейді. Сервис пайыз, айыппұл және жасырын төлем алмайды.\n4. Көрсетілген кезең үшін төлем қайтарылмайды. Ерекшелік — техникалық ақау: ақша алынды, бірақ тариф не LS берілмеді, не екі рет алынды. /paysupport жазыңыз.\n5. Төлем сұрақтары — /paysupport.",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "Айына %d LS: сұрақтар, іздеу және талдаулар. 30 күн сайын ұзартылады, кез келген уақытта тоқтатуға болады.", st_descr_pack: "Сатып алынған LS күймейді және жазылым LS-тен кейін жұмсалады.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Шот дайын — Telegram жұлдыздарымен бір рет басып төлеңіз.", st_pay_btn: "%d ⭐ төлеу", st_ok_sub: "✅ <b>%s</b> тарифі қосылды: %d LS, %s дейін.", st_ok_pack: "✅ +%d LS. Сатып алынғандары енді %d — күймейді.", st_support_hint: "Мәселені бір хабарламамен жазыңыз: /paysupport <мәтін>.", st_support_ok: "Жіберілді — осында жауап береміз.", ls_pay_soon: "Картамен төлеу — автоұзартылатын жазылым, кез келген уақытта тоқтатуға болады. Не криптомен — 1, 3, 6 не 12 айға бір реттік төлем, ұзақ мерзімге айы арзанырақ (−30%-ға дейін). Шарттар — /terms.", cp_btn: "💎 Криптомен · USDT / TON", st_terms: "<b>Launch Scout шарттары</b>\n\n1. Сервис ашық деректер бойынша нарық аналитикасын және ЖИ жауаптарын береді. Бұл инвестициялық кеңес емес.\n2. Әрекеттер LS бірліктерімен тұрақты баға бойынша төленеді (/balance): сұрақ — 10 LS; жауапқа интернеттен тікелей іздеу керек болса (нақты компания, өнім не жаңалық туралы сұрақ) — 40 LS, бот бұл туралы іздеу басында хабарлайды. Жазылым LS бір есеп айы жарамды және келесі айға ауыспайды; сатып алынған LS күймейді.\n3. Тариф Tribute арқылы банк картасымен төленеді және автоұзартуды тоқтатқанша (/balance ішіндегі батырма) 30 күн сайын сол картадан автоматты түрде ұзартылады; тоқтатқаннан кейін тариф төленген мерзім соңына дейін жарамды. Бұрын Telegram Stars арқылы рәсімделген жазылымдар Telegram баптауларында тоқтатқанша ұзартылады. @CryptoBot арқылы криптомен төлегенде тариф төленген мерзімге (1, 3, 6 не 12 ай) автоұзартусыз жарамды, LS әр 30 күн сайын беріледі. Тегін 300 LS бір рет беріледі және күймейді. Сервис пайыз, айыппұл және жасырын төлем алмайды.\n4. Көрсетілген кезең үшін төлем қайтарылмайды. Ерекшелік — техникалық ақау: ақша алынды, бірақ тариф не LS берілмеді, не екі рет алынды. /paysupport жазыңыз.\n5. Төлем сұрақтары — /paysupport.",
     ls_footer: "−%d LS · қалды %d LS", ls_low: "⚠️ %d LS қалды — жақында бітеді.", ls_short: "💳 Бұған %d LS керек, сізде %d.", ls_balance: "💳 <b>Тариф: %s</b>\nЖазылым LS: <b>%d</b> · сатып алынған: <b>%d</b>\nЖазылым LS %s жаңарады; сатып алынғандары күймейді.", ls_tariffs_title: "<b>Тарифтер</b>", ls_plan_free: "Free — бастағанда %s LS, бір рет", ls_plan_pro: "Pro — $%s · айына %s LS", ls_plan_max: "Max — $%s · айына %s LS", ls_plan_promax: "Pro Max — $%s · айына %s LS", ls_pack: "Қосымша: %s LS — $%s, күймейді", ls_prices: "Әрекет бағасы: сұрақ 10 · тереңірек / идея картасы / бәсекелестер 20 · идеяны тексеру 30 · тікелей іздеу 40 · X және Google Trends 15 · идея картасы 10 LS. Шолу, лента және радар — тегін.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Раундтар базасы", src_web: "Веб және жаңалықтар", live_head: "🔎 Интернеттен тікелей іздеу (40 LS): %s", research_started: "📡 X және Google Trends бойынша терең іздеу басталды — толықтыру 1–2 минуттан кейін бөлек хабарламамен келеді.", research_limit: "📡 Терең іздеу — тәулігіне %d рет, бүгінгі лимит бітті.", research_err: "📡 Терең іздеу қазір басталмады — кейінірек көріңіз.", research_head: "📡 <b>Толықтыру: X және Google Trends</b>", research_empty: "📡 Бұл сұрау бойынша X пен Google Trends-те елеулі ештеңе жоқ.", ab_deep: "🔬 Тереңірек", ab_map: "🗺 Идея картасы", ab_wide: "🧭 Көршілес тауашалар", ab_comp: "⚔️ Бәсекелестер", ab_follow: "🔔 Бақылау", ab_unfollow: "✅ Бақылаудамын", ab_live: "📡 Барлық жерден іздеу", ctx_gone: "Контекст ескірді — сұрақты қайта қойыңыз", adj_title: "🧭 <b>«%s» маңында</b>", adj_line: "6 айда компаниялар: %d, ерте %d, %s", onboard: "👋 Бес жылдам сұрақ — сонда тауашалар мен инсайттарды сізге қарай таңдаймын. Сәйкесін белгілеп, «Радарды көрсету» батырмасын басыңыз.",
     opp_window: "🔥 Терезе: сұраныс бар, ойыншы аз", opp_forming: "🧭 Қалыптасуда: бос вертикаль іздеңіз",
@@ -459,7 +459,7 @@ const EXTRA = {
     rq_market: "🎯 I'll pick niches for you — two quick questions.\n\n<b>1/2. Where are you launching?</b>", rq_model: "<b>2/2. What are you building?</b>", rq_kz: "🇰🇿 Kazakhstan", rq_cis: "🌍 CIS", rq_global: "🌐 Worldwide", rq_unsure: "🤷 Not sure yet", pf_title: "👤 <b>Your profile</b> — the radar picks niches and the chat tailors advice from it.", pf_chat: "<b>From the conversation the bot understood:</b>", pf_hint: "The profile updates itself from the chat. Fix it with the buttons below.", pf_edit_m: "✏️ Market", pf_edit_t: "✏️ What I build", pf_full: "⚙️ More", pf_reset: "🧹 Reset",
     ex_title: "Where to start? Tap a question or ask your own — by text or voice.", ex_1: "💰 Where is the money going now?", ex_2: "🇰🇿 Which niches are free in Kazakhstan?", ex_3: "🧪 How do I check my idea?",
     ab_live_p: "📡 Search everywhere · +%d LS", ab_xtrends: "📡 X and Google Trends · %d LS",
-    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS a month for questions, search and deep dives. Renews every 30 days, cancel anytime.", st_descr_pack: "Purchased LS never expire and are spent after plan LS.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Invoice ready — one-tap payment with Telegram Stars.", st_pay_btn: "Pay %d ⭐", st_ok_sub: "✅ Plan <b>%s</b> is on: %d LS until %s.", st_ok_pack: "✅ +%d LS. Purchased LS now %d — they never expire.", st_support_hint: "Describe the problem in one message: /paysupport <text>.", st_support_ok: "Sent — we will reply here.", ls_pay_soon: "Pay by card — a subscription that renews automatically, cancel anytime. Or with crypto — a one-off payment for 1, 3, 6 or 12 months; longer terms cost less per month (up to −30%). Terms — /terms.", cp_btn: "💎 Crypto · USDT / TON", st_terms: "<b>Launch Scout terms</b>\n\n1. The service provides market analytics and AI answers based on public data. It is not investment advice.\n2. Actions are paid in internal LS units at a fixed price list (/balance): a question is 10 LS; if the answer needs a live web search (a question about a specific company, product or news) it is 40 LS, and the bot says so when the search starts. Plan LS are valid for one billing month and do not roll over; purchased LS never expire.\n3. Plans are paid by bank card via lava.top and renew automatically every 30 days from the same card until you cancel auto-renewal (button in /balance); after cancelling, the plan runs until the end of the paid period. Subscriptions started earlier with Telegram Stars renew until you cancel them in Telegram settings. Crypto payments via @CryptoBot cover the paid term (1, 3, 6 or 12 months) without auto-renewal; LS are credited every 30 days. The free 300 LS are given once and never expire. No interest, penalties or hidden fees.\n4. Payments for a period already provided are not refunded. Exception — a technical failure: you were charged but the plan or LS were not credited, or you were charged twice. Write /paysupport and we will fix it or refund the payment.\n5. Payment questions — /paysupport.",
+    st_title_sub: "Launch Scout %s", st_title_pack: "%d LS", st_descr_sub: "%d LS a month for questions, search and deep dives. Renews every 30 days, cancel anytime.", st_descr_pack: "Purchased LS never expire and are spent after plan LS.", st_pack_btn: "⭐ +1000 LS — %d", st_pay_hint: "Invoice ready — one-tap payment with Telegram Stars.", st_pay_btn: "Pay %d ⭐", st_ok_sub: "✅ Plan <b>%s</b> is on: %d LS until %s.", st_ok_pack: "✅ +%d LS. Purchased LS now %d — they never expire.", st_support_hint: "Describe the problem in one message: /paysupport <text>.", st_support_ok: "Sent — we will reply here.", ls_pay_soon: "Pay by card — a subscription that renews automatically, cancel anytime. Or with crypto — a one-off payment for 1, 3, 6 or 12 months; longer terms cost less per month (up to −30%). Terms — /terms.", cp_btn: "💎 Crypto · USDT / TON", st_terms: "<b>Launch Scout terms</b>\n\n1. The service provides market analytics and AI answers based on public data. It is not investment advice.\n2. Actions are paid in internal LS units at a fixed price list (/balance): a question is 10 LS; if the answer needs a live web search (a question about a specific company, product or news) it is 40 LS, and the bot says so when the search starts. Plan LS are valid for one billing month and do not roll over; purchased LS never expire.\n3. Plans are paid by bank card via Tribute and renew automatically every 30 days from the same card until you cancel auto-renewal (button in /balance); after cancelling, the plan runs until the end of the paid period. Subscriptions started earlier with Telegram Stars renew until you cancel them in Telegram settings. Crypto payments via @CryptoBot cover the paid term (1, 3, 6 or 12 months) without auto-renewal; LS are credited every 30 days. The free 300 LS are given once and never expire. No interest, penalties or hidden fees.\n4. Payments for a period already provided are not refunded. Exception — a technical failure: you were charged but the plan or LS were not credited, or you were charged twice. Write /paysupport and we will fix it or refund the payment.\n5. Payment questions — /paysupport.",
     ls_footer: "−%d LS · %d LS left", ls_low: "⚠️ %d LS left — running low.", ls_short: "💳 This needs %d LS, you have %d.", ls_balance: "💳 <b>Plan: %s</b>\nPlan LS: <b>%d</b> · purchased: <b>%d</b>\nPlan LS renew on %s; purchased LS never expire.", ls_tariffs_title: "<b>Plans</b>", ls_plan_free: "Free — %s LS once, on sign-up", ls_plan_pro: "Pro — $%s · %s LS a month", ls_plan_max: "Max — $%s · %s LS a month", ls_plan_promax: "Pro Max — $%s · %s LS a month", ls_pack: "Top up: %s LS for $%s — never expire", ls_prices: "Prices: question 10 · deeper / idea map / competitors 20 · idea check 30 · live search 40 · X and Google Trends 15 · idea card 10 LS. Brief, feed and radar are free.", ls_name_free: "Free", ls_name_pro: "Pro", ls_name_max: "Max", ls_name_promax: "Pro Max",
     src_db: "Rounds database", src_web: "Web and news", live_head: "🔎 Live web search (40 LS): %s", research_started: "📡 Started a deep search on X and Google Trends — the follow-up arrives as a separate message in 1–2 minutes.", research_limit: "📡 Deep search is limited to %d a day — today's limit is used up.", research_err: "📡 Deep search did not start — try again later.", research_head: "📡 <b>Follow-up: X and Google Trends</b>", research_empty: "📡 Nothing notable on X or Google Trends for this query.", ab_deep: "🔬 Deeper", ab_map: "🗺 Idea map", ab_wide: "🧭 Adjacent niches", ab_comp: "⚔️ Competitors", ab_follow: "🔔 Follow", ab_unfollow: "✅ Following", ab_live: "📡 Search everywhere", ctx_gone: "Context expired — ask again", adj_title: "🧭 <b>Next to “%s”</b>", adj_line: "companies in 6 months: %d, early %d, %s", onboard: "👋 Five quick questions — and I'll pick niches and insights for you. Tick what fits and tap “Show radar”.",
     opp_window: "🔥 Window: demand exists, few players", opp_forming: "🧭 Forming: look for an unserved vertical",
@@ -3538,7 +3538,8 @@ const cardN = (v) => Number(v).toLocaleString("ru-RU").replace(/\u00a0/g, " ");
 /** Цена в $ с промокодом (как в promoActivate: вниз до цента) — для кнопок. */
 const cardUsd = (item, off = 0) => Math.floor((item === "pack" ? CREDIT_PACK.usd : PLANS[item].usd) * (1 - off) * 100 + 1e-6) / 100;
 const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}$/i;
-const cardOn = (env) => !!(env.LAVA_API_KEY && env.LAVA_OFFERS);
+const lavaOn = (env) => !!(env.LAVA_API_KEY && env.LAVA_OFFERS);
+const cardOn = (env) => trbOn(env) || lavaOn(env);
 function lavaOffer(env, item) {
   try { return JSON.parse(env.LAVA_OFFERS || "{}")[item] || null; } catch { return null; }
 }
@@ -3553,7 +3554,7 @@ async function lavaCall(env, method, path, body) {
 
 /** Действующая подписка по карте: { id, plan } или null. */
 async function cardSub(env, uid) {
-  const v = await meta(env, "lava_sub_" + uid);
+  const v = await meta(env, (trbOn(env) ? "trb_sub_" : "lava_sub_") + uid);
   if (!v) return null;
   const [id, plan] = v.split(":");
   return id ? { id, plan } : null;
@@ -3562,6 +3563,7 @@ async function cardSub(env, uid) {
 /** Счёт в lava.top. { link, usd } | { needEmail: true } | null. */
 async function cardLink(env, uid, item, lang = "ru") {
   if (item !== "pack" && !PLANS[item]) return null;
+  if (trbOn(env)) return trbLink(env, uid, item);
   const offerId = lavaOffer(env, item);
   if (!offerId) return null;
   const email = await meta(env, "lava_email_" + uid);
@@ -3621,8 +3623,9 @@ async function cardEmailReply(env, chatId, raw) {
 async function cardCancel(env, chatId, lang) {
   const t = CARD_TEXT[lang] || CARD_TEXT.ru;
   const sub = await cardSub(env, chatId);
-  const email = await meta(env, "lava_email_" + chatId);
   if (!sub) return;
+  if (trbOn(env)) return trbCancel(env, chatId, sub, lang);
+  const email = await meta(env, "lava_email_" + chatId);
   const ok = email && await lavaCall(env, "DELETE", `v1/subscriptions?contractId=${encodeURIComponent(sub.id)}&email=${encodeURIComponent(email)}`);
   if (!ok) return tg(env, "sendMessage", { chat_id: chatId, text: t.cancel_err });
   await setMeta(env, "lava_sub_" + chatId, "");
@@ -3733,8 +3736,176 @@ async function lavaEvent(env, u) {
   }
 }
 
-/** Кнопки оплаты под тарифами. Подключён lava.top — карта (основной способ)
- *  и крипта; нет — по-старому звёзды, чтобы бот не остался без оплаты. */
+// ---------------------------------------------------------------------------
+// 💳 Оплата картой через Tribute (@tribute), 2026-10-09 — основной способ
+//
+// Подключён Tribute — он вместо lava.top. API автора работает без Shop API
+// и без активации поддержкой: ключ и адрес вебхука задаются в кабинете
+// автора (Настройки → API-ключи). Тарифы — подписки Tribute с ежемесячным
+// автосписанием (подписка Tribute привязана к каналу: годится закрытый канал
+// для платных), пакет LS — цифровой товар. Их id и ссылки — в переменной
+// TRIBUTE_ITEMS: {"pro":{"id":<subscription_id>,"url":"https://t.me/tribute/app?startapp=s…"},
+// …,"pack":{"id":<product_id>,"url":"https://t.me/tribute/app?startapp=p…"}};
+// у тарифа может быть "promo":{"<код бота>":"<ссылка Tribute с этим кодом>"} —
+// промокод заводится и в Tribute, иначе по карте он не сработает.
+// Цены в Tribute ставить в USD и как в PLANS / CREDIT_PACK.
+//
+// Платят в мини-приложении Tribute в Telegram, поэтому покупатель приходит
+// с telegram_user_id — email не нужен. Действующая подписка — kv
+// trb_sub_<uid> («subscription_id:тариф»). Отменить автопродление API не
+// даёт — это делается в самом Tribute, бот только ведёт туда.
+//
+// Вебхук POST /tribute, подпись — заголовок trbt-signature: HMAC-SHA256 тела
+// с ключом API. События: new_subscription, renewed_subscription,
+// cancelled_subscription, new_digital_product, digital_product_refund.
+// Секрет TRIBUTE_API_KEY, переменная TRIBUTE_ITEMS.
+// ---------------------------------------------------------------------------
+const TRB_APP = "https://t.me/tribute/app";
+const TRB_GRACE = 2 * 86400;             // тариф не гаснет, пока Tribute проводит очередное списание
+const TRB_FX = { usd: 1, eur: 1.08, rub: 0.0125 }; // для дашборда, приблизительно
+const TRB_TEXT = {
+  ru: { manage: "Автопродление отключается в Tribute: откройте его и выберите подписку <b>%s</b> → «Отменить подписку». Тариф доживёт оплаченный срок.", manage_btn: "Открыть Tribute",
+    old: "\n\nПрежняя подписка <b>%s</b> продолжает списываться — отмените её в Tribute, чтобы не платить дважды." },
+  kk: { manage: "Автоұзарту Tribute ішінде тоқтатылады: оны ашып, <b>%s</b> жазылымын таңдаңыз → «Жазылымды тоқтату». Тариф төленген мерзімге дейін жарамды.", manage_btn: "Tribute ашу",
+    old: "\n\nБұрынғы <b>%s</b> жазылымы әлі төленіп жатыр — екі рет төлемеу үшін оны Tribute ішінде тоқтатыңыз." },
+  en: { manage: "Auto-renewal is turned off in Tribute: open it, pick the <b>%s</b> subscription → “Cancel subscription”. The plan runs until the paid period ends.", manage_btn: "Open Tribute",
+    old: "\n\nYour previous <b>%s</b> subscription is still being charged — cancel it in Tribute so you do not pay twice." },
+};
+const trbOn = (env) => !!(env.TRIBUTE_API_KEY && env.TRIBUTE_ITEMS);
+function trbItems(env) {
+  try { return JSON.parse(env.TRIBUTE_ITEMS || "{}") || {}; } catch { return {}; }
+}
+/** Тариф по subscription_id или "pack" по product_id. */
+function trbItemOf(env, id, product) {
+  const items = trbItems(env);
+  return Object.keys(items).find((k) => (k === "pack") === product && String(items[k].id) === String(id)) || null;
+}
+
+/** Ссылка на подписку / товар в Tribute; с промокодом — его ссылка, если она заведена. */
+async function trbLink(env, uid, item) {
+  const it = trbItems(env)[item];
+  if (!(it && it.url)) return null;
+  const promo = await promoActive(env, uid);
+  const pl = promo && it.promo && (it.promo[promo.code] || it.promo[promo.code.toUpperCase()]);
+  if (promo && !pl) await ownerNotify(env, { text: `💳 Для промокода ${promo.code.toUpperCase()} нет ссылки Tribute на «${item}» (TRIBUTE_ITEMS.${item}.promo) — ${uid} видит полную цену.` });
+  return { link: pl || it.url, usd: pl ? cardUsd(item, promo.off) : cardUsd(item) };
+}
+
+async function trbCancel(env, chatId, sub, lang) {
+  const t = TRB_TEXT[lang] || TRB_TEXT.ru;
+  return tg(env, "sendMessage", { chat_id: chatId, parse_mode: "HTML", text: fmt(t.manage, PLAN_TITLE[sub.plan] || sub.plan),
+    reply_markup: { inline_keyboard: [[{ text: t.manage_btn, url: TRB_APP }]] } });
+}
+
+async function hmacHex(key, body) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(body)));
+  return { hex: [...sig].map((b) => b.toString(16).padStart(2, "0")).join(""), b64: btoa(String.fromCharCode(...sig)) };
+}
+
+/** POST /tribute — вебхук Tribute. Без верной подписи ничего не начисляем. */
+async function trbWebhook(request, env) {
+  if (!env.TRIBUTE_API_KEY) return new Response("нет", { status: 404 });
+  const body = await request.text();
+  const got = (request.headers.get("trbt-signature") || "").trim().replace(/^sha256=/i, "");
+  const want = await hmacHex(env.TRIBUTE_API_KEY, body);
+  if (!got || (got.toLowerCase() !== want.hex && got !== want.b64)) return new Response("подпись", { status: 401 });
+  let u = null;
+  try { u = JSON.parse(body); } catch { u = null; }
+  if (u && u.payload) {
+    await ensureTables(env);
+    await trbEvent(env, u.name, u.payload);
+  }
+  return Response.json({ status: "ok" });
+}
+
+async function trbEvent(env, name, p) {
+  const now = Math.floor(Date.now() / 1000);
+  const isPackEv = name === "new_digital_product" || name === "digital_product_refund";
+  const item = trbItemOf(env, isPackEv ? p.product_id : p.subscription_id, isPackEv);
+  const uid = p.telegram_user_id ? String(p.telegram_user_id) : "";
+  const cur = String(p.currency || "usd").toLowerCase();
+  const sum = `${(Number(p.price || p.amount || 0) / 100).toFixed(2)} ${cur.toUpperCase()}`;
+  const who = uid || p.trb_user_id || "?";
+  // Чужие подписки и товары автора (не тарифы бота) — не наше дело.
+  if (!item) {
+    if (name === "new_subscription" || name === "new_digital_product") await ownerNotify(env, { text: `💳 Tribute: ${name} «${p.subscription_name || p.product_name || "?"}» (id ${p.subscription_id || p.product_id}) от ${who} — его нет в TRIBUTE_ITEMS, LS не начислены.` });
+    return;
+  }
+  if (name === "digital_product_refund") {
+    await ownerNotify(env, { text: `💳 Tribute: возврат ${sum} за «${p.product_name}» у ${who} (${p.refund_reason || "без причины"}). LS не списаны — при необходимости поправьте вручную (/credit).` });
+    return;
+  }
+  if (!uid) {
+    await ownerNotify(env, { text: `💳 Tribute: ${name} «${p.subscription_name || p.product_name}» — ${sum} от ${who} без Telegram ID (оплата через web). Начислите вручную.` });
+    return;
+  }
+  const lang = ((await getPrefs(env, uid).catch(() => ({}))) || {}).lang || "ru";
+  const t = CARD_TEXT[lang] || CARD_TEXT.ru;
+  const stars = Math.round(Number(p.amount || 0) / 100 * (TRB_FX[cur] || 1) / STAR_USD);   // amount — уже за вычетом комиссии Tribute
+
+  if (name === "new_digital_product") {
+    // Повтор вебхука — тот же purchase_id, второй раз не начисляем.
+    const ins = await env.DB.prepare("INSERT OR IGNORE INTO payments (charge_id, user_id, ts, item, stars, sub_exp, recurring) VALUES (?1, ?2, ?3, ?4, ?5, 0, 0)")
+      .bind("trb:p:" + p.purchase_id, uid, now, "trb_pack", stars).run();
+    if (!(ins && ins.meta && ins.meta.changes)) return;
+    const r = await lsGet(env, uid);
+    r.credits += CREDIT_PACK.ls;
+    await lsSave(env, r);
+    await ownerNotify(env, { text: `💳 Оплата картой (Tribute): +${CREDIT_PACK.ls} LS — ${sum} от ${uid}` });
+    await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(L(lang).st_ok_pack, CREDIT_PACK.ls, r.credits) });
+    await refReward(env, uid);
+    return;
+  }
+
+  const exp = Math.floor(Date.parse(p.expires_at || "") / 1000) || now + LS_PERIOD;
+  if (name === "new_subscription" || name === "renewed_subscription") {
+    const first = name === "new_subscription";
+    // Повтор вебхука — тот же срок; у продления срок новый.
+    const ins = await env.DB.prepare("INSERT OR IGNORE INTO payments (charge_id, user_id, ts, item, stars, sub_exp, recurring) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")
+      .bind(`trb:s:${p.subscription_id}:${uid}:${exp}`, uid, now, `trb_${item}`, stars, exp, first ? 0 : 1).run();
+    if (!(ins && ins.meta && ins.meta.changes)) return;
+    const discounted = first && Number(p.price || 0) < cardUsd(item) * 100 - 1 && cur === "usd";
+    await ownerNotify(env, { text: `💳 Оплата картой (Tribute): ${PLAN_TITLE[item]} — ${sum}${first ? "" : " (продление)"}${p.type && p.type !== "regular" ? ` [${p.type}]` : ""}${discounted ? " (со скидкой — промокод)" : ""} от ${uid}` });
+    // Месяц тарифа: лимит заново, докупленные LS не трогаем. Оплачен год или квартал —
+    // LS всё равно помесячно, до paid_until.
+    const r = await lsGet(env, uid);
+    Object.assign(r, { plan: item, paid_until: exp + TRB_GRACE, period_end: Math.min(exp, now + LS_PERIOD), sub_ls: PLANS[item].ls, warned: 0 });
+    await lsSave(env, r);
+    if (!first) {
+      await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.renew, PLAN_TITLE[item], cardDate(exp), cardN(PLANS[item].ls)) });
+      return;
+    }
+    // Новая подписка: звёздную не продлеваем; прежнюю в Tribute API не отменить — напомнить.
+    const old = await cardSub(env, uid);
+    await setMeta(env, "trb_sub_" + uid, `${p.subscription_id}:${item}`);
+    const { results } = await env.DB.prepare("SELECT charge_id FROM payments WHERE user_id = ?1 AND item IN ('pro','max','promax') AND sub_exp > ?2")
+      .bind(uid, now).all().catch(() => ({ results: [] }));
+    for (const s of results || []) {
+      await tg(env, "editUserStarSubscription", { user_id: Number(uid), telegram_payment_charge_id: s.charge_id, is_canceled: true });
+    }
+    await refReward(env, uid);
+    const tt = TRB_TEXT[lang] || TRB_TEXT.ru;
+    await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.ok_sub, PLAN_TITLE[item], cardN(PLANS[item].ls), cardDate(exp)) +
+      (old && old.plan !== item ? fmt(tt.old, PLAN_TITLE[old.plan] || old.plan) : "") });
+    return;
+  }
+
+  if (name === "cancelled_subscription") {
+    const sub = await cardSub(env, uid);
+    const mine = sub && String(sub.id) === String(p.subscription_id);
+    if (mine) await setMeta(env, "trb_sub_" + uid, "");
+    await ownerNotify(env, { text: `💳 Tribute: подписка ${PLAN_TITLE[item]} у ${uid} отменена (до ${p.expires_at || "?"})${p.cancel_reason ? ": " + p.cancel_reason : ""}` });
+    // Сменил тариф — новая подписка уже записана, эту молча отпускаем.
+    if (!mine) return;
+    const r = await lsGet(env, uid);
+    if (r.plan === item) { r.paid_until = exp; await lsSave(env, r); }
+    await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML", text: fmt(t.ended, PLAN_TITLE[item], cardDate(Math.max(now, r.paid_until || now))) });
+  }
+}
+
+/** Кнопки оплаты под тарифами. Подключён Tribute или lava.top — карта (основной
+ *  способ) и крипта; нет — по-старому звёзды, чтобы бот не остался без оплаты. */
 async function payButtons(env, s, uid, lang) {
   const promo = await promoActive(env, uid);
   const crypto = env.CRYPTO_PAY_TOKEN ? [[{ text: s.cp_btn, callback_data: "cp" }]] : [];
@@ -3796,6 +3967,7 @@ const TH_STAGE = { pre: "pre-seed", preseed: "pre-seed", seed: "seed", a: "ра�
 // тем, кто читает эту тему, а не случайной ленте.
 const TH_REPLY_DAY = 10;                 // автокомментариев в сутки (Threads + X)
 const TH_ENGAGE_H = [10, 12, 15, 17, 20];  // заходы автокомментариев: в :30 этих часов по Астане
+const TH_INBOX_H = [11, 20];               // проверка директа, комментариев и ответов: в :00 этих часов по Астане
 const TH_TOPIC = { week: "Венчур", round: "Стартапы", niche: "Стартапы", pain: "Бизнес", cis: "Казахстан", bot: "Стартапы", none: "Стартапы" };
 const TH_CIS = ["KZ", "UZ", "KG", "TJ", "AM", "GE", "AZ", "BY", "RU", "UA"];
 
@@ -4387,6 +4559,16 @@ async function thTick(env, now) {
     await q("UPDATE th_posts SET status = 'out' WHERE id = ?1", post.id).run();
   }
 
+  // 2в. Директ, комментарии под постами Скаута и ответы на его комментарии — дважды в день.
+  if (TH_INBOX_H.includes(clk.hour) && (now + TH_TZ) % 3600 < 600 && (await meta(env, "th_inbox_off")) !== "1" && web.length) {
+    const slotKey = `${clk.day}:${clk.hour}`;
+    if ((await meta(env, "th_inbox_slot")) !== slotKey) {
+      await setMeta(env, "th_inbox_slot", slotKey);
+      const err = await dispatchRun(env, { dry: "false" }, "inbox.yml");
+      if (err) await logError(env, "threads", "директ и комментарии: " + err);
+    }
+  }
+
   // 2б. Автокомментарии: заход в Actions запускает этот тик — расписание GitHub
   // для новых workflow опаздывает на часы или пропускает запуски (2026-10-07).
   if (TH_ENGAGE_H.includes(clk.hour) && (now + TH_TZ) % 3600 >= 1800 && (await meta(env, "th_engage_off")) !== "1" && web.some((p) => p === "th" || p === "x")) {
@@ -4583,6 +4765,18 @@ async function thAdmin(env, aenv, chatId, raw, msg) {
       `🧵 Threads: ${(hb.th || []).map((x) => "@" + x).join(", ") || "—"}`, `𝕏 X: ${(hb.x || []).map((x) => "@" + x).join(", ") || "—"}`, "",
       "/threads hub add th <ник> · /threads hub del x <ник>"].join("\n"));
   }
+  if (arg.startsWith("inbox")) {
+    // Директ и комментарии: on | off | test (разбор без отправки ответов).
+    const a = arg.slice(5).trim();
+    if (a === "on" || a === "off") { await setMeta(env, "th_inbox_off", a === "off" ? "1" : "0"); return send(a === "off" ? "⏸ Проверка директа и комментариев выключена." : `▶️ Директ и комментарии проверяются в ${TH_INBOX_H.join(":00 и ")}:00 по Астане.`); }
+    if (a === "test") {
+      const err = await dispatchRun(env, { dry: "true" }, "inbox.yml");
+      return send(err ? `Не запустил: ${err}` : "🧪 Смотрю директ и комментарии, ответы не отправляю — пришлю разбор через 5–10 минут.");
+    }
+    const rows = ((await env.DB.prepare("SELECT net, kind, author, action, ts FROM th_inbox ORDER BY id DESC LIMIT 10").all()).results) || [];
+    return send([`📥 Директ и комментарии: ${(await meta(env, "th_inbox_off")) === "1" ? "выключено" : `проверка в ${TH_INBOX_H.join(":00 и ")}:00`}`, "",
+      ...rows.map((r) => `${netEmoji(r.net)} ${r.kind} @${r.author} → ${r.action}`), rows.length ? "" : "Пока ничего.", "/threads inbox on | off | test"].join("\n"));
+  }
   if (arg.startsWith("engage")) {
     // Автокомментарии: on | off | test (подбор и тексты без публикации).
     const a = arg.slice(6).trim();
@@ -4613,7 +4807,7 @@ async function thAdmin(env, aenv, chatId, raw, msg) {
     `План: день ${Math.max(0, dayN)} из ${Math.max(...plan.map((x) => x.d))}${dayN < 1 ? " (старт завтра)" : ""}, постов в плане ${plan.length}`,
     `Посты: ${st.map((x) => `${x.status} ${x.n}`).join(" · ") || "пока нет"}`, "",
     "/threads preview — показать следующий пост (без публикации)", "/threads now — написать и опубликовать следующий сейчас",
-    "/threads report — отчёт · /threads off | on — пауза", "/threads web th,ig,x — публиковать через веб по куки · /threads web — выключить", "/threads test th,ig,x — проверить публикацию без последней кнопки", "/threads engage — автокомментарии (on | off | test)", "/threads start — начать план с сегодняшнего дня", "Файл .json с подписью /threads plan — свой контент-план"].join("\n"));
+    "/threads report — отчёт · /threads off | on — пауза", "/threads web th,ig,x — публиковать через веб по куки · /threads web — выключить", "/threads test th,ig,x — проверить публикацию без последней кнопки", "/threads engage — автокомментарии (on | off | test)", "/threads inbox — директ и комментарии (on | off | test)", "/threads start — начать план с сегодняшнего дня", "Файл .json с подписью /threads plan — свой контент-план"].join("\n"));
 }
 
 // ---------------------------------------------------------------------------
@@ -5984,6 +6178,7 @@ async function ensureTables(env) {
       "ig_st TEXT, ig_container TEXT, ig_media_id TEXT, ig_permalink TEXT, ig_pub_ts INTEGER, ig_reach INTEGER, ig_likes INTEGER, ig_comments INTEGER, ig_saves INTEGER, ig_shares INTEGER, " +
       "x_text TEXT, x_st TEXT, x_id TEXT, x_permalink TEXT, x_pub_ts INTEGER, x_views INTEGER, x_likes INTEGER, x_replies INTEGER, x_reposts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS th_media (post INTEGER, ix INTEGER, img BLOB, ts INTEGER, PRIMARY KEY (post, ix))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS th_inbox (id INTEGER PRIMARY KEY AUTOINCREMENT, net TEXT, kind TEXT, ikey TEXT UNIQUE, author TEXT, url TEXT, text TEXT, reply TEXT, action TEXT, why TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS th_replies (id INTEGER PRIMARY KEY AUTOINCREMENT, net TEXT, url TEXT, author TEXT, post_text TEXT, reply TEXT, reply_url TEXT, score INTEGER, followed INTEGER, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS user_src (user_id TEXT PRIMARY KEY, src TEXT, ts INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS user_names (user_id TEXT PRIMARY KEY, name TEXT, username TEXT, ts INTEGER)"),
@@ -6384,6 +6579,7 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/cryptopay") return cpWebhook(request, env);
     if (request.method === "POST" && url.pathname === "/lava") return lavaWebhook(request, env);
+    if (request.method === "POST" && url.pathname === "/tribute") return trbWebhook(request, env);
 
     // 🧵 Слайды Скаута: задание для Actions, приём JPEG, раздача картинок Threads и Instagram.
     if (url.pathname === "/th/job" || url.pathname === "/th/media" || url.pathname === "/th/pub") {
@@ -6432,6 +6628,37 @@ ${link || "(ссылку не нашёл — проверьте профиль)"
       // Старые картинки не нужны: сети копируют их при публикации.
       await env.DB.prepare("DELETE FROM th_media WHERE ts < ?1").bind(Math.floor(Date.now() / 1000) - 7 * 86400).run().catch(() => null);
       return json({ ok: true, got: got.n });
+    }
+    if (url.pathname === "/th/inbox" || url.pathname === "/th/inboxed") {
+      // Директ и комментарии (social_inbox.py): GET — персонаж, сети и что уже разобрано;
+      // POST — что ответили, переслали владельцу или пропустили.
+      if (!env.LS_INGEST_SECRET || request.headers.get("x-ingest-secret") !== env.LS_INGEST_SECRET) return new Response("нет", { status: 403 });
+      await ensureTables(env);
+      const now = Math.floor(Date.now() / 1000);
+      if (url.pathname === "/th/inbox") {
+        const seen = ((await env.DB.prepare("SELECT ikey FROM th_inbox WHERE ts >= ?1").bind(now - 60 * 86400).all()).results || []).map((r) => r.ikey);
+        const off = (await meta(env, "th_off")) === "1" || (await meta(env, "th_inbox_off")) === "1";
+        const ourDm = ((await env.DB.prepare("SELECT reply FROM th_inbox WHERE kind = 'dm' AND reply != '' AND ts >= ?1").bind(now - 30 * 86400).all()).results || []).map((r) => r.reply);
+        return json({ off, nets: await webNets(env), persona: TH_PERSONA, seen, our_dm: ourDm, bot: "@Launch_Scout_bot" });
+      }
+      const body = await request.json().catch(() => ({}));
+      const items = Array.isArray(body.items) ? body.items.slice(0, 60) : [];
+      if (!body.dry) for (const it of items) {
+        await env.DB.prepare("INSERT OR IGNORE INTO th_inbox (net, kind, ikey, author, url, text, reply, action, why, ts) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)")
+          .bind(String(it.net || ""), String(it.kind || ""), String(it.key || ""), String(it.author || ""), String(it.url || ""), String(it.text || "").slice(0, 1500),
+            String(it.reply || "").slice(0, 1000), String(it.action || ""), String(it.why || "").slice(0, 200), now).run();
+      }
+      const kindRu = { dm: "директ", comment: "комментарий", reply: "ответ", mention: "упоминание" };
+      const line = (it) => `${netEmoji(it.net)} ${kindRu[it.kind] || it.kind} @${it.author}: «${String(it.text || "").replace(/\s+/g, " ").slice(0, 300)}»`;
+      const replied = items.filter((it) => it.action === "reply" && it.reply);
+      const fwd = items.filter((it) => it.action === "forward");
+      const skipped = items.filter((it) => it.action === "skip").length;
+      const parts = [`${body.dry ? "🧪 Проверка (не отправлено). " : ""}📥 Директ и комментарии: ответил ${replied.length}, вам ${fwd.length}, пропустил ${skipped}`];
+      for (const it of fwd) parts.push(`❗ Нужен ваш ответ\n${line(it)}${it.why ? `\n(${it.why})` : ""}\n${it.url || ""}`);
+      for (const it of replied) parts.push(`${line(it)}\n→ ${it.reply}\n${it.url || ""}`);
+      for (const e of (Array.isArray(body.errors) ? body.errors : []).slice(0, 4)) parts.push("⚠️ " + String(e).slice(0, 200));
+      if (items.length || (body.errors || []).length) await ownerNotify(env, { text: parts.join("\n\n").slice(0, 4000) });
+      return json({ ok: true });
     }
     if (url.pathname === "/th/factsfor" && request.method === "POST") {
       // Факты из нашей базы под чужой пост — тем же поиском по нишам, что в чате:
