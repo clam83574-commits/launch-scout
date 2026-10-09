@@ -193,6 +193,9 @@ def post_threads(page, job, files, dry):
 def post_instagram(page, job, files, dry):
     if not files:
         raise Fail("в Instagram без картинки нельзя")
+    # Последний пост в профиле до публикации: если Instagram не покажет «опубликовано»,
+    # по нему поймём, вышел ли пост на самом деле.
+    before = "" if dry else profile_last(page, "ig")
     page.goto("https://www.instagram.com/", wait_until="domcontentloaded")
     pause(2, 4)
     if need_login(page) or page.locator("input[name=username]").count():
@@ -231,9 +234,19 @@ def post_instagram(page, job, files, dry):
         return None
     share.click()
     try:
-        page.get_by_text(re.compile("(post has been shared|reel has been shared|публикация опубликована|публикация размещена|вы поделились публикацией)", re.I)).first.wait_for(timeout=180000)
+        # Карусель Instagram иногда грузит минутами (2026-10-09: 3 минут не хватило).
+        page.get_by_text(re.compile("(post has been shared|reel has been shared|публикация опубликована|публикация размещена|вы поделились публикацией)", re.I)).first.wait_for(timeout=360000)
     except PwTimeout:
-        raise Fail("Instagram не подтвердил публикацию за 3 минуты")
+        # Подтверждения нет — смотрим профиль во второй вкладке (первую не трогаем:
+        # уход со страницы оборвал бы загрузку). Новый пост наверху — значит, вышел.
+        chk = page.context.new_page()
+        try:
+            after = profile_last(chk, "ig")
+        finally:
+            chk.close()
+        if after and after != before:
+            return after
+        raise Fail("Instagram не подтвердил публикацию за 6 минут, и в профиле нового поста нет")
     pause(2, 3)
     return profile_last(page, "ig")
 

@@ -25,7 +25,7 @@ concurrency:
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 20   # Instagram до 6 мин ждём подтверждения + Threads и X
     env:
       LS_INGEST_SECRET: ${{ secrets.LS_INGEST_SECRET }}
       WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
