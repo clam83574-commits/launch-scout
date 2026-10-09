@@ -214,14 +214,26 @@ def post_instagram(page, job, files, dry):
     dlg = page.get_by_role("dialog").last
     dlg.locator("input[type=file]").first.set_input_files(files)
     pause(2, 3)
-    # Слайды 4:5 — без обрезки до квадрата: «Оригинал».
+    # Слайды 3:4 — без обрезки до квадрата: «Оригинал». Без него Instagram режет
+    # карусель в квадрат, а сетка профиля — ещё и края (2026-10-09: текст обрезан).
+    # Подпись кнопки — в aria-label или во вложенном <title>, ищем по смыслу.
+    crop = page.evaluate("""() => {
+      const t = [...document.querySelectorAll('[role=dialog] svg[aria-label], [role=dialog] svg title')].find((x) =>
+        /обрез|crop|размер/i.test(x.getAttribute && x.getAttribute('aria-label') || x.textContent || ''));
+      if (!t) return false;
+      const svg = t.tagName.toLowerCase() === 'svg' ? t : t.closest('svg');
+      (svg.closest('[role=button], button') || svg.parentElement).click();
+      return true;
+    }""")
+    pause()
+    original = dlg.locator("div[role=button], button, span").filter(has_text=re.compile("^(Original|Оригинал)$")).first
     try:
-        dlg.locator("svg[aria-label='Select crop'], svg[aria-label='Выбрать обрезку'], svg[aria-label='Выбрать размер и обрезку']").first.click(timeout=8000)
-        pause()
-        dlg.locator("div[role=button], span").filter(has_text=re.compile("^(Original|Оригинал|4:5)$")).first.click(timeout=5000)
+        if not crop:
+            raise PwTimeout("нет кнопки обрезки")
+        original.click(timeout=6000)
         pause()
     except Exception:
-        pass
+        raise Fail("не удалось выбрать формат «Оригинал» — Instagram обрезал бы слайды в квадрат, пост в Instagram пропущен")
     for _ in range(2):   # обрезка → фильтры → подпись
         btn(dlg, "Next", "Далее").click(timeout=20000)
         pause(1.5, 2.5)

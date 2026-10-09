@@ -2,16 +2,16 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<!-- Шаблон слайда Threads (1080×1350, 4:5). threads_render.py подставляет
+<!-- Шаблон слайда Threads (1080×1440, 3:4 — родной формат сетки Instagram: превью не обрезается). threads_render.py подставляет
      аватар в {{AVATAR}}, вызывает render(spec) и снимает скриншот.
      Стиль — как у сайта: Unbounded / Golos Text / JetBrains Mono, синий #1d4fd8. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=block">
 <style>
 :root { --paper: #f5f7fc; --ink: #0f1d3a; --muted: #56647f; --line: #e1e8f5; --blue: #1d4fd8; --mint: #3ee0a1; --live: #0e9f6a; }
 * { box-sizing: border-box; margin: 0; }
-html, body { width: 1080px; height: 1350px; overflow: hidden; }
+html, body { width: 1080px; height: 1440px; overflow: hidden; }
 body { font-family: "Golos Text", sans-serif; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; }
-.s { position: relative; width: 1080px; height: 1350px; padding: 84px 84px 0; display: flex; flex-direction: column;
+.s { position: relative; width: 1080px; height: 1440px; padding: 96px 110px 0; display: flex; flex-direction: column;
   background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 54px 54px; background-position: -1px -1px; }
 .s.dark { --paper: #0f1d3a; --ink: #ffffff; --muted: #a8b6d4; --line: #1a2b52; background-color: #0f1d3a; color: #fff; }

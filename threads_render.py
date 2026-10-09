@@ -49,14 +49,14 @@ def render(slides):
     out = []
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": 1080, "height": 1350}, device_scale_factor=1)
+        page = browser.new_page(viewport={"width": 1080, "height": 1440}, device_scale_factor=1)
         page.set_content(html, wait_until="networkidle")
         page.evaluate("document.fonts.ready")
         n = len(slides)
         for i, spec in enumerate(slides, 1):
             page.evaluate("(s) => render(s)", {**spec, "i": i, "n": n})
             page.evaluate("Promise.all([document.fonts.ready, ...[...document.images].map((im) => im.decode().catch(() => 0))])")
-            out.append(page.screenshot(type="jpeg", quality=93, clip={"x": 0, "y": 0, "width": 1080, "height": 1350}))
+            out.append(page.screenshot(type="jpeg", quality=93, clip={"x": 0, "y": 0, "width": 1080, "height": 1440}))
         browser.close()
     return out
 
