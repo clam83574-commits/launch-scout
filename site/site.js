@@ -62,14 +62,23 @@
     fetch(PULSE_URL).then((r) => r.ok ? r.json() : null).then((j) => { if (j && j.rounds90) { DATA = j; safe("bind", bind); } }).catch(() => {});
   });
 
+  // ---------- откуда пришли на сайт (?from=tg) — боту уходит ?start=site_tg ----------
+  // Иначе все, кто пришёл с сайта, в боте одинаковые «сайт» — и не видно, из какой
+  // соцсети или рассылки человек попал на сайт.
+  safe("from", () => {
+    const q = new URLSearchParams(location.search);
+    const from = (q.get("from") || q.get("utm_source") || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+    if (!from || q.get("promo")) return;
+    document.querySelectorAll('a[href*="t.me/Launch_Scout_bot"]').forEach((a) => { a.href = "https://t.me/Launch_Scout_bot?start=site_" + from; });
+  });
+
   // ---------- промокод из ссылки (?promo=aipreneurs) ----------
   safe("promo", () => {
     const code = (new URLSearchParams(location.search).get("promo") || "").toLowerCase();
-    if (!["aipreneurs", "tomorrowschool", "digitalbridge"].includes(code)) return;   // только известные коды: иначе плашка обещала бы скидку, которой нет
+    if (!["aipreneurs", "tomorrowschool"].includes(code)) return;   // только известные коды: иначе плашка обещала бы скидку, которой нет
     document.querySelectorAll('a[href*="t.me/Launch_Scout_bot"]').forEach((a) => { a.href = "https://t.me/Launch_Scout_bot?start=" + code; });
     // Синий ваучер над первым экраном: от какого мероприятия скидка и какой код.
-    const PARTNERS = { aipreneurs: ["AI-preneurs", false], tomorrowschool: ["Tomorrow School", false], digitalbridge: ["AI & Digital Bridge", true] };
-    const [pname, logo] = PARTNERS[code];
+    const pname = { aipreneurs: "AI-preneurs", tomorrowschool: "Tomorrow School" }[code];
     document.getElementById("vbGift").textContent = I.vGift;
     document.getElementById("vbTitle").textContent = I.vTitle;
     document.getElementById("vbDesc1").textContent = I.vDesc1;
@@ -77,7 +86,6 @@
     document.getElementById("vbNote").textContent = I.vNote;
     document.getElementById("vbCodeK").textContent = I.vCode;
     document.getElementById("vbCode").textContent = code.toUpperCase();
-    document.getElementById("vbLogo").hidden = !logo;
     document.getElementById("vbar").hidden = false;
     document.querySelectorAll(".langs a").forEach((a) => { a.href = a.getAttribute("href").split("?")[0] + "?promo=" + code; });
   });

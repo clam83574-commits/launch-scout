@@ -1300,7 +1300,7 @@ async function handleUpdate(env, update) {
   await ensureTables(env);
   if (msg && raw && cardOn(env) && await cardEmailReply(env, chatId, raw)) return;
   if (msg && raw.startsWith("/start")) await refCapture(env, chatId, raw);
-  if (msg && /^\/start\s+site\b/i.test(raw)) await setMeta(env, "from_site", String(Number((await meta(env, "from_site")) || 0) + 1));
+  if (msg && /^\/start\s+site(?:\b|_)/i.test(raw)) await setMeta(env, "from_site", String(Number((await meta(env, "from_site")) || 0) + 1));
   // Откуда пришёл новый человек — по ссылке первого /start: сайт, соцсети, реферал,
   // промокод или прямая ссылка / поиск в Telegram. Раньше метились только сайт и
   // соцсети — остальные оставались «неизвестно» (2026-10-09). До проверки доступа.
@@ -5310,6 +5310,7 @@ function srcLabel(raw) {
   if (!p) return "direct";
   if (/^(site|threads|instagram|x|tg)$/.test(p)) return p;
   if (/^tg_[a-z0-9]{1,30}$/.test(p)) return "tg:" + p.slice(3);   // рассылка в Telegram с названием: ?start=tg_<название>
+  if (/^site_[a-z0-9]{1,30}$/.test(p)) return "site:" + p.slice(5);   // сайт, на который пришли из канала: сайт?from=<канал>
   if (/^ref_\d{3,15}$/.test(p)) return "ref:" + p.slice(4);
   if (PROMOS[p]) return "promo:" + p;
   return "start:" + p.replace(/[^\w-]/g, "").slice(0, 30);
@@ -5322,7 +5323,7 @@ const srcGroup = (src) => (src ? String(src).split(":")[0] : "unknown");
 function channelName(src) {
   const g = srcGroup(src);
   const tail = src && src.includes(":") ? " " + src.split(":")[1] : "";
-  return (SRC_GROUP[g] || g) + (g === "ref" ? ` от ${tail.trim()}` : g === "promo" || g === "start" || g === "tg" ? tail : "");
+  return (SRC_GROUP[g] || g) + (g === "ref" ? ` от ${tail.trim()}` : g === "site" && tail ? ` ← ${tail.trim()}` : g === "promo" || g === "start" || g === "tg" ? tail : "");
 }
 
 /** /start ref_<id> от нового человека — запомнить пригласившего (один раз). */
