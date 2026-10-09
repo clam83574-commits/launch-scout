@@ -1311,7 +1311,7 @@ async function handleUpdate(env, update) {
       .bind(String(chatId), [from.first_name, from.last_name].filter(Boolean).join(" ").slice(0, 80), from.username || "", now).run().catch(() => null);
   }
   const promoStart = msg && /^\/start\s+([a-z0-9_]+)/i.exec(raw);
-  if (promoStart && PROMOS[promoStart[1].toLowerCase()]) await promoActivate(env, chatId, promoStart[1].toLowerCase(), "ru", false);
+  if (promoStart && PROMOS[promoStart[1].toLowerCase()] && !PROMOS[promoStart[1].toLowerCase()].personal) await promoActivate(env, chatId, promoStart[1].toLowerCase(), "ru", false);
   if (!(await hasAccess(env, chatId))) {
     // Закрытый доступ: выдаёт админ по ID (решение владельца 2026-10-02), кодов нет.
     await accessGate(env, chatId, msg, cb, data);
@@ -1360,7 +1360,7 @@ async function handleUpdate(env, update) {
   const lang = prefs.lang || "ru";
   const s = L(lang);
   const promoTyped = msg && /^\/?(?:promo\s+)?([a-z0-9_]{4,30})\s*$/i.exec(raw);
-  if (promoTyped && PROMOS[promoTyped[1].toLowerCase()]) { await promoActivate(env, chatId, promoTyped[1].toLowerCase(), lang); return; }
+  if (promoTyped && PROMOS[promoTyped[1].toLowerCase()] && !PROMOS[promoTyped[1].toLowerCase()].personal) { await promoActivate(env, chatId, promoTyped[1].toLowerCase(), lang); return; }
 
   if (data === "noop") return;
   if (data && (await settingsAction(env, chatId, msgId, data, prefs, lang))) return;
@@ -3205,6 +3205,10 @@ const PROMOS = {
   aipreneurs: { title: "AIPRENEURS", off: 0.3, days: 7 },
   tomorrowschool: { title: "TOMORROWSCHOOL", off: 0.3, days: 7 },
   digitalbridge: { title: "DIGITALBRIDGE", off: 0.3, days: 7 },
+  // Персональные: по ссылке и вводом кода не включаются — только владелец выдаёт
+  // командой /promo <id> <код> в служебном боте; действуют до конца дня по Астане.
+  friday40: { title: "ПЯТНИЦА", off: 0.4, days: 1, personal: true, eod: true,
+    intro: "🎉 <b>В честь пятницы — персональная скидка −40%</b>\nТолько для вас и только сегодня, до 23:59 по Астане. Действует на первую покупку тарифа или пакета LS." },
 };
 const promoStars = (stars, off) => Math.round(stars * (1 - off));
 const PROMO_TEXT = {
@@ -3234,7 +3238,8 @@ async function promoActivate(env, uid, code, lang, show = true) {
   let pr = null;
   try { pr = JSON.parse((await meta(env, "promo_" + uid)) || "null"); } catch { pr = null; }
   if (!pr || pr.code !== code) {
-    pr = { code, until: Math.floor(Date.now() / 1000) + P.days * 86400 };
+    const now = Math.floor(Date.now() / 1000);
+    pr = { code, until: P.eod ? thClock(now).mid + 86400 - 1 : now + P.days * 86400 };
     await setMeta(env, "promo_" + uid, JSON.stringify(pr));
     await setMeta(env, "promo_n_" + code, String(Number((await meta(env, "promo_n_" + code)) || 0) + 1));
     await ownerNotify(env, { text: `🎟 Промокод ${P.title} активировал ${uid}` });
@@ -3249,7 +3254,7 @@ async function promoActivate(env, uid, code, lang, show = true) {
     `${name} — <b>$${usdOf(k, P.off)}</b>${cardOn(env) ? "" : ` · ${n(promoStars(STAR_ITEMS[k].stars, P.off))} ⭐`}  <s>$${usdOf(k, 0)}</s>`);
   const btn = (k, name) => ({ text: `${name} · $${usdOf(k, P.off)}`, callback_data: (cardOn(env) ? "card:" : "buy:") + k });
   await tg(env, "sendMessage", { chat_id: uid, parse_mode: "HTML",
-    text: `${fmt(t.head, P.title, Math.round(P.off * 100), d)}\n\n<blockquote>${rows.join("\n")}</blockquote>\n\n<i>${cardOn(env) ? t.foot_card : t.foot}</i>`,
+    text: `${P.intro || fmt(t.head, P.title, Math.round(P.off * 100), d)}\n\n<blockquote>${rows.join("\n")}</blockquote>\n\n<i>${cardOn(env) ? t.foot_card : t.foot}</i>`,
     reply_markup: { inline_keyboard: [[btn("pro", "Pro"), btn("max", "Max")], [btn("promax", "Pro Max"), btn("pack", "+1 000 LS")]] } });
 }
 
@@ -4891,6 +4896,23 @@ async function handleAdminUpdate(env, update) {
   }
   if (data === "a:report" || text.startsWith("/report")) {
     await tg(aenv, "sendMessage", { chat_id: chatId, text: adminReport(await adminStats(env)), parse_mode: "HTML", reply_markup: adminKb() });
+    return;
+  }
+  if (/^\/promo\b/i.test(text)) {
+    // /promo <id> <код> — выдать человеку скидку (в т. ч. персональную) и сразу прислать ему цены.
+    const m = /^\/promo(?:@\w+)?\s+(\d{3,15})\s+([a-z0-9_]+)/i.exec(text.trim());
+    const code = m && m[2].toLowerCase();
+    if (!m || !PROMOS[code]) {
+      await tg(aenv, "sendMessage", { chat_id: chatId, text: `Формат: /promo <id> <код>\nКоды: ${Object.entries(PROMOS).map(([k, p]) => `${k} (−${Math.round(p.off * 100)}%${p.personal ? ", персональный" : ""})`).join(", ")}` });
+      return;
+    }
+    const uid = m[1];
+    if (await env.DB.prepare("SELECT 1 FROM payments WHERE user_id = ?1 LIMIT 1").bind(uid).first().catch(() => null)) {
+      await tg(aenv, "sendMessage", { chat_id: chatId, text: `У ${uid} уже были оплаты — скидка действует только на первую покупку.` });
+      return;
+    }
+    await promoActivate(env, uid, code, (await getPrefs(env, uid)).lang || "ru");
+    await tg(aenv, "sendMessage", { chat_id: chatId, text: `✅ ${PROMOS[code].title} (−${Math.round(PROMOS[code].off * 100)}%) выдан ${uid}, сообщение с ценами отправлено.` });
     return;
   }
   if (/^\/(grant|credit|costs)/i.test(text)) {
