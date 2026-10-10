@@ -555,8 +555,10 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
     Так каждая находка в ленте получает текст на языке пользователя, а не
     только те немногие, что дошли до полного разбора. Пачка, а не поштучно:
     весь поток (сотни записей в сутки) в бесплатную квоту иначе не влез бы.
-    Первыми идут находки с баллом выше нуля — их видят в ленте; нулевые
-    размечаются на остаток квоты (они нужны только трендам).
+    Первыми идут находки с самым высоким баллом — верх ленты; нулевые
+    размечаются на остаток квоты (они нужны только трендам). По баллу, а не
+    по свежести: после смены правила relevant старые находки из верха ленты
+    иначе ждали своей очереди полдня.
     Возвращает (размечено, ошибка).
     """
     ok, why = available()
@@ -579,7 +581,7 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
         "LEFT JOIN (SELECT item_id, MAX(score) AS s FROM scores GROUP BY item_id) sc "
         "  ON sc.item_id = i.item_id "
         "WHERE (t.item_id IS NULL OR t.gist IS NULL OR t.relevant IS NULL) AND i.first_seen >= ? "
-        "ORDER BY (COALESCE(sc.s, 0) > 0) DESC, i.first_seen DESC LIMIT ?",
+        "ORDER BY COALESCE(sc.s, 0) DESC, i.first_seen DESC LIMIT ?",
         (now - days * 86400, max_items)).fetchall()
     done, last_err = 0, None
     allowed = set(TOPICS)
