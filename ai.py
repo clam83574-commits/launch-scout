@@ -49,6 +49,11 @@ DEFAULT_DAILY_MAX = 900
 # прогон не успевала за потоком X (2026-09-29).
 NOTES_PER_RUN = 10
 TAGS_PER_RUN = 40
+# С ключом OpenRouter разметка не упирается в минутные пределы Groq: остаток
+# пачек уходит дешёвой модели. Так за прогон доразмечается хвост за неделю —
+# после добавления поля relevant (2026-10-10) переразметить надо было всю
+# ленту, а по 40 в час это заняло бы сутки. 20 находок — около 0,05 цента.
+TAGS_PER_RUN_OR = 240
 
 # Языки пользователей: Казахстан первым (решение владельца 2026-09-26),
 # затем англоязычный рынок. Всё, что видит пользователь, готовится сразу
@@ -557,6 +562,9 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
     _ensure_tables(conn)
     models = _tag_models()
     cap = _cap()
+    bulk = (os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL) if openrouter_key() else None
+    if bulk:
+        max_items = max(max_items, TAGS_PER_RUN_OR)
     rows = conn.execute(
         "SELECT i.item_id, i.source, i.title, i.body FROM items i "
         "LEFT JOIN item_topics t ON t.item_id = i.item_id "
@@ -593,6 +601,11 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
                 continue
             _count_call(conn, now, model)
             break
+        if data is None and bulk:
+            data, err = _chat_or(bulk, TAG_SYSTEM, json.dumps(payload, ensure_ascii=False), max_tokens=4000)
+            if data is None:
+                last_err = "разметка через %s: %s" % (bulk, err)
+                break
         if len(spent) >= len(models) and data is None:
             break
         if err or not isinstance(data, dict):
@@ -622,7 +635,8 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
             done += 1
         conn.commit()
     if verbose and (rows or last_err):
-        spent_tokens = ", ".join("%s %d" % (m.split("/")[-1], USAGE[m]) for m in models if USAGE.get(m))
+        spent_tokens = ", ".join("%s %d" % (m.split("/")[-1], USAGE[m])
+                                 for m in models + ([bulk] if bulk else []) if USAGE.get(m))
         print("  размечено (темы, аудитория, выжимка на 3 языках): %d из %d%s%s"
               % (done, len(rows), (" · токенов: " + spent_tokens) if spent_tokens else "",
                  (" — " + last_err) if last_err else ""))
