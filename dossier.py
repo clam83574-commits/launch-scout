@@ -30,7 +30,8 @@ HERE = pathlib.Path(__file__).resolve().parent
 WORKER = os.environ.get("WORKER_URL", "https://launch-scout-bot.clam83574.workers.dev")
 OR_API = "https://openrouter.ai/api/v1/chat/completions"
 # Gemini, как весь бот: PDF — хук для конверсии, а не заработок на генерации.
-MODELS = [os.environ.get("DZ_MODEL") or "google/gemini-3.8-flash", "google/gemini-3.1-flash-lite"]
+# Не ответил — Grok: в отчёте важно качество, лёгкая модель тут не годится.
+MODELS = [os.environ.get("DZ_MODEL") or "google/gemini-3.8-flash", "x-ai/grok-4.7"]
 COST = {"usd": 0.0}   # фактическая стоимость генерации — боту, в уведомление владельцу
 
 UI = {
@@ -50,6 +51,8 @@ UI = {
 
 SYSTEM = """You are a senior startup analyst. You write a paid PDF dossier for one founder, in %(lang)s.
 The dossier must feel personal: it answers what THIS founder asked about (their questions and profile are given) and stays practical.
+If the founder answered our follow-up questions (stage, budget, team, customer...), fit every recommendation, number and plan step to those answers.
+The RESEARCH FOCUS says what this founder needs to learn; facts marked WEB were found for it — use them first where they fit, and answer the focus explicitly.
 
 WHAT TO WRITE: %(brief)s
 The sections are fixed — write exactly one section per CONTENTS item, in the same order, using the item text as the section title.
@@ -100,9 +103,11 @@ def write(job):
     est = {"ru": "оценка", "kk": "бағалау"}.get(job["lang"], "estimate")
     system = SYSTEM % {"lang": job.get("lang_name") or "Russian", "brief": job["brief"], "est": est}
     facts = "\n".join("[F%d] %s" % (f["id"], f["text"]) for f in job.get("facts") or [])[:30000]
-    user = "TODAY: %s\nTITLE: %s\nNICHE: %s\nFOUNDER'S MARKET: %s\nPROFILE: %s\n\nFOUNDER'S QUESTIONS (newest first):\n%s\n\nCONTENTS:\n%s\n\nFACTS:\n%s" % (
+    # Ответы на уточнения бота — самое надёжное о человеке: идут отдельным блоком.
+    answers = "\n".join("- %s → %s" % (x.get("q", ""), x.get("a", "")) for x in job.get("answers") or [])
+    user = "TODAY: %s\nTITLE: %s\nNICHE: %s\nFOUNDER'S MARKET: %s\nPROFILE: %s\n\nFOUNDER'S ANSWERS TO OUR QUESTIONS (most reliable — build the report on them):\n%s\n\nRESEARCH FOCUS (what this report must find out for this founder; facts were gathered for it):\n%s\n\nFOUNDER'S QUESTIONS (newest first):\n%s\n\nCONTENTS:\n%s\n\nFACTS:\n%s" % (
         job.get("date"), job["title"], job.get("niche") or "-", job.get("country") or "-", job.get("profile") or "unknown",
-        "\n".join("- " + q for q in job.get("questions") or []) or "-",
+        answers or "-", job.get("focus") or "-", "\n".join("- " + q for q in job.get("questions") or []) or "-",
         "\n".join("%d. %s" % (i + 1, t) for i, t in enumerate(job["toc"])), facts or "(no facts)")
     err = None
     for model in MODELS:
@@ -274,7 +279,8 @@ def main():
     if a.sample:
         job = json.loads(pathlib.Path(a.sample).read_text(encoding="utf-8"))
     else:
-        r = requests.get(WORKER + "/dossier-job", params={"id": a.job}, headers=_hdr(), timeout=60)
+        # Задание собирается с живым веб-поиском по фокусу — до минуты.
+        r = requests.get(WORKER + "/dossier-job", params={"id": a.job}, headers=_hdr(), timeout=120)
         if r.status_code != 200:
             print("задание не получено: HTTP %d" % r.status_code)
             return 1
