@@ -1,0 +1,39 @@
+# PDF-досье: бот запускает после оплаты (подарок к первой покупке) или по /pdf
+# за LS — с номером задания. Сам разговор и факты в запуск не передаются
+# (логи публичного репозитория видны всем): dossier.py забирает их у Worker'а,
+# пишет текст через OpenRouter, верстает dossier/template.html в Chromium и
+# отправляет PDF обратно Worker'у, а тот — человеку.
+name: dossier
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Номер задания от бота"
+        required: true
+
+concurrency:
+  group: dossier-${{ github.event.inputs.job }}
+
+jobs:
+  dossier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      LS_INGEST_SECRET: ${{ secrets.LS_INGEST_SECRET }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      WORKER_URL: https://launch-scout-bot.clam83574.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt playwright
+      # Chromium с системными библиотеками — кэш браузера общий с threads.yml.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-v1
+      - run: python -m playwright install --with-deps chromium
+      - run: python dossier.py --job "${{ github.event.inputs.job }}"
