@@ -113,6 +113,16 @@ def snapshot(conn, now, window_hours=168, top_all=200, top_day=150):
         total, tier, b = scoring.score_item(conn, item, now)
         if total <= 0:
             continue
+        # Балл здесь пересчитывается заново, и понижение от ИИ, сделанное в
+        # scout.apply_ai, терялось: пост, который модель назвала «не запуском»,
+        # шёл в ленту с 🔥 (политика из X, 2026-10-10). В ленту — только
+        # релевантное: без вердикта «не запуск / исключённая ниша» и без
+        # пометки разметки «не про стартапы».
+        note = ai.get_note(conn, item["item_id"])
+        if ai.verdict(note, item["source"])[0] or ai.relevance(conn, item["item_id"]) is False:
+            continue
+        if tier == scoring.HOT and ai.not_business(note):
+            tier = scoring.DIGEST
         scored.append((total, tier, b, item))
     scored.sort(key=lambda t: -t[0])
     day = [s for s in scored if s[3]["first_seen"] >= now - 86400]

@@ -879,6 +879,8 @@ def apply_ai(conn, evaluated, now):
     for item, metrics, total, tier, breakdown in evaluated:
         note = ai.get_note(conn, item["item_id"], lang)
         demote, flag = ai.verdict(note, item["source"])
+        if not demote and ai.relevance(conn, item["item_id"]) is False:
+            demote, flag = True, "ИИ: не про стартапы и продукты"
         if flag:
             breakdown = dict(breakdown)
             breakdown[flag] = 0.0

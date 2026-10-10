@@ -133,7 +133,9 @@ For every item return:
 - topics: 1-2 topics ONLY from this list: %s. If none fits well, use "other" and put a short English name of the real topic (1-3 words, lowercase) in new_topic; otherwise new_topic is "".
 - audience: who pays: businesses "b2b", consumers "b2c", government "b2g"; one or two values.
 - gist: ONE plain sentence (max 15 words) saying what the product does and for whom, in Russian (ru), Kazakh in Cyrillic (kk) and English (en). Keep product names as in the original. No hype.
-Reply with JSON only: {"items": [{"id": <id>, "topics": [...], "new_topic": "...", "audience": [...], "gist": {"ru": "...", "kk": "...", "en": "..."}}]}, one entry per input item, same ids.""" % ", ".join(TOPICS)
+- relevant: true if the item is about a startup, a product or software/hardware tool, a tech company, a funding round or the craft of building and selling products. false for politics, crime, war, migration, general news, sports, celebrities, personal life, and opinions or jokes not about building products — even when posted by a famous founder or investor.
+Return an entry for EVERY input item, irrelevant ones too: for them set relevant to false, topics to ["other"] and let the gist say what the post is about.
+Reply with JSON only: {"items": [{"id": <id>, "relevant": true, "topics": [...], "new_topic": "...", "audience": [...], "gist": {"ru": "...", "kk": "...", "en": "..."}}]}, one entry per input item, same ids.""" % ", ".join(TOPICS)
 
 
 def _keys():
@@ -299,6 +301,26 @@ def _ensure_tables(conn):
     for col in ("audience", "gist"):
         if col not in have:
             conn.execute("ALTER TABLE item_topics ADD COLUMN %s TEXT" % col)
+    # relevant: 1 — про стартапы и продукты, 0 — нет, NULL — ещё не размечено.
+    if "relevant" not in have:
+        conn.execute("ALTER TABLE item_topics ADD COLUMN relevant INTEGER")
+
+
+def relevance(conn, item_id):
+    """
+    Относится ли находка к стартапам и продуктам: True / False / None
+    (ещё не размечена). Списки «умных денег» читаются без фильтра по
+    маркерам запуска, и в ленту с баллом 95 попадала политика из X
+    (пост @dhh про суд в Копенгагене, 2026-10-10).
+    """
+    try:
+        row = conn.execute("SELECT relevant FROM item_topics WHERE item_id = ?",
+                           (item_id,)).fetchone()
+    except Exception:
+        return None
+    if not row or row[0] is None:
+        return None
+    return bool(row[0])
 
 
 def get_note(conn, item_id, lang=None):
@@ -540,7 +562,7 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
         "LEFT JOIN item_topics t ON t.item_id = i.item_id "
         "LEFT JOIN (SELECT item_id, MAX(score) AS s FROM scores GROUP BY item_id) sc "
         "  ON sc.item_id = i.item_id "
-        "WHERE (t.item_id IS NULL OR t.gist IS NULL) AND i.first_seen >= ? "
+        "WHERE (t.item_id IS NULL OR t.gist IS NULL OR t.relevant IS NULL) AND i.first_seen >= ? "
         "ORDER BY (COALESCE(sc.s, 0) > 0) DESC, i.first_seen DESC LIMIT ?",
         (now - days * 86400, max_items)).fetchall()
     done, last_err = 0, None
@@ -589,10 +611,14 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
             aud = [a for a in (e.get("audience") or []) if a in AUDIENCES][:2]
             g = e.get("gist") if isinstance(e.get("gist"), dict) else {}
             gist = {k: str(g.get(k) or "").strip()[:200] for k in LANGS if g.get(k)}
+            rel = e.get("relevant")
+            # Модель пропустила поле — считаем релевантной: иначе находка
+            # возвращалась бы в очередь разметки каждый прогон.
+            rel = int(rel) if isinstance(rel, bool) else 1
             conn.execute("INSERT OR REPLACE INTO item_topics "
-                         "(item_id, topics, new_topic, ts, audience, gist) VALUES (?,?,?,?,?,?)",
+                         "(item_id, topics, new_topic, ts, audience, gist, relevant) VALUES (?,?,?,?,?,?,?)",
                          (iid, json.dumps(topics), new_topic if "other" in topics else "", now,
-                          json.dumps(aud), json.dumps(gist, ensure_ascii=False) if gist else None))
+                          json.dumps(aud), json.dumps(gist, ensure_ascii=False) if gist else None, rel))
             done += 1
         conn.commit()
     if verbose and (rows or last_err):
