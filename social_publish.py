@@ -17,6 +17,9 @@ IG_USER, X_USER, необязательно.
 Запуск:  python social_publish.py --job 12 --nets th,ig,x
 Проверка без публикации (всё, кроме последней кнопки, скриншот — владельцу):
          python social_publish.py --job 12 --nets ig --dry
+Промо-видео (promo.yml): пост из файла, ролик по ссылке из него, без Worker'а —
+ссылки на посты в лог, скриншоты в папку shots/:
+         python social_publish.py --promo threads/promo_video_ru.json --nets th,ig,x --dry
 """
 import argparse
 import json
@@ -107,6 +110,10 @@ def absolute(base, href):
     return href if href.startswith("http") else base + href
 
 
+def is_video(files):
+    return any(f.lower().endswith((".mp4", ".mov")) for f in files)
+
+
 def need_login(page):
     u = page.url
     return "/login" in u or "accounts/login" in u or "/i/flow/login" in u
@@ -170,9 +177,13 @@ def post_threads(page, job, files, dry):
     if files:
         inp = dlg.locator("input[type=file]")
         (inp.last if inp.count() else page.locator("input[type=file]").last).set_input_files(files)
-        # Превью всех картинок.
-        page.locator("img[src^='blob:']").nth(len(files) - 1).wait_for(timeout=60000)
-        pause(1, 2)
+        # Превью всех картинок (у ролика — <video>).
+        if is_video(files):
+            page.locator("video").first.wait_for(timeout=120000)
+            pause(3, 5)
+        else:
+            page.locator("img[src^='blob:']").nth(len(files) - 1).wait_for(timeout=60000)
+            pause(1, 2)
     post = page.locator("div[role=button], button").filter(has_text=re.compile("^(Post|Опубликовать)$")).last
     if dlg is not page:
         post = dlg.locator("div[role=button], button").filter(has_text=re.compile("^(Post|Опубликовать)$")).last
@@ -182,7 +193,7 @@ def post_threads(page, job, files, dry):
     # Тост «Опубликовано» со ссылкой «Посмотреть».
     try:
         a = page.locator("a[href*='/post/']").filter(has_text=re.compile("View|Посмотреть|Смотреть", re.I)).first
-        a.wait_for(timeout=90000)
+        a.wait_for(timeout=300000 if is_video(files) else 90000)   # ролик грузится после нажатия
         return absolute("https://www.threads.com", a.get_attribute("href"))
     except PwTimeout:
         return profile_last(page, "th")
@@ -214,6 +225,17 @@ def post_instagram(page, job, files, dry):
     dlg = page.get_by_role("dialog").last
     dlg.locator("input[type=file]").first.set_input_files(files)
     pause(2, 3)
+    video = is_video(files)
+    if video:
+        # «Видеопубликации теперь публикуются как Reels» — подтверждаем.
+        try:
+            ok = btn(page, "OK", "ОК")
+            if ok.is_visible(timeout=8000):
+                ok.click()
+                pause()
+        except Exception:
+            pass
+        dlg = page.get_by_role("dialog").last
     # Слайды 3:4 — без обрезки до квадрата: «Оригинал». Без него Instagram режет
     # карусель в квадрат, а сетка профиля — ещё и края (2026-10-09: текст обрезан).
     # Подпись кнопки — в aria-label или во вложенном <title>, ищем по смыслу.
@@ -233,7 +255,10 @@ def post_instagram(page, job, files, dry):
         original.click(timeout=6000)
         pause()
     except Exception:
-        raise Fail("не удалось выбрать формат «Оригинал» — Instagram обрезал бы слайды в квадрат, пост в Instagram пропущен")
+        # Reels и так 9:16, как наш ролик, — без «Оригинала» ничего не обрежется.
+        if not video:
+            raise Fail("не удалось выбрать формат «Оригинал» — Instagram обрезал бы слайды в квадрат, пост в Instagram пропущен")
+        print("Instagram: формат «Оригинал» не выбран, у Reels и так 9:16")
     for _ in range(2):   # обрезка → фильтры → подпись
         btn(dlg, "Next", "Далее").click(timeout=20000)
         pause(1.5, 2.5)
@@ -247,7 +272,7 @@ def post_instagram(page, job, files, dry):
     share.click()
     try:
         # Карусель Instagram иногда грузит минутами (2026-10-09: 3 минут не хватило).
-        page.get_by_text(re.compile("(post has been shared|reel has been shared|публикация опубликована|публикация размещена|вы поделились публикацией)", re.I)).first.wait_for(timeout=360000)
+        page.get_by_text(re.compile("(post has been shared|reel has been shared|публикация опубликована|публикация размещена|вы поделились публикацией|reels опубликовано|reels размещено|вы поделились (видео )?reels)", re.I)).first.wait_for(timeout=360000)
     except PwTimeout:
         # Подтверждения нет — смотрим профиль во второй вкладке (первую не трогаем:
         # уход со страницы оборвал бы загрузку). Новый пост наверху — значит, вышел.
@@ -273,17 +298,23 @@ def post_x(page, job, files, dry):
     box = page.locator("[data-testid='tweetTextarea_0']").first
     box.wait_for(timeout=30000)
     box.click()
-    text = re.sub(r"https?://\S+", "", job["x_text"]).strip()
+    # Ссылки режем (в обычных постах их нет по правилам), промо-пост может их оставить.
+    text = job["x_text"].strip() if job.get("x_links") else re.sub(r"https?://\S+", "", job["x_text"]).strip()
     page.keyboard.insert_text(text)
     pause()
     if files:
         page.locator("input[data-testid='fileInput']").first.set_input_files(files[:4])
-        page.locator("[data-testid='attachments'] img").nth(min(len(files), 4) - 1).wait_for(timeout=60000)
+        if is_video(files):
+            page.locator("[data-testid='attachments'] video").first.wait_for(timeout=120000)
+        else:
+            page.locator("[data-testid='attachments'] img").nth(min(len(files), 4) - 1).wait_for(timeout=60000)
         pause(1, 2)
     send = page.locator("[data-testid='tweetButton']").first
     if dry:
+        if is_video(files):   # для проверки дождёмся, что X дообработал ролик и кнопка активна
+            page.wait_for_function("() => { const b = document.querySelector(\"[data-testid='tweetButton']\"); return b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; }", timeout=300000)
         return None
-    send.click()
+    send.click(timeout=300000)   # пока ролик загружается, кнопка неактивна
     try:
         a = page.locator("[data-testid='toast'] a[href*='/status/']").first
         a.wait_for(timeout=60000)
@@ -298,7 +329,7 @@ def profile_last(page, net):
     if not user:
         return ""
     url = {"th": f"https://www.threads.com/@{user}", "ig": f"https://www.instagram.com/{user}/", "x": f"https://x.com/{user}"}[net]
-    sel = {"th": "a[href*='/post/']", "ig": "a[href*='/p/']", "x": "article a[href*='/status/']"}[net]
+    sel = {"th": "a[href*='/post/']", "ig": "a[href*='/p/'], a[href*='/reel/']", "x": "article a[href*='/status/']"}[net]
     try:
         page.goto(url, wait_until="domcontentloaded")
         a = page.locator(sel).first
@@ -324,25 +355,46 @@ def report(job_id, net, url="", err="", shot=b"", dry=False):
     print(SITES[net]["name"], "→ отчёт", r.status_code)
 
 
+def promo_report(_job, net, url="", err="", shot=b"", dry=False):
+    """Промо — не пост из плана: отчёт не Worker'у, а в лог и в папку shots/ (артефакт запуска)."""
+    print(SITES[net]["name"], "→", url or err or "готово")
+    if shot:
+        pathlib.Path("shots").mkdir(exist_ok=True)
+        (pathlib.Path("shots") / f"{net}.jpg").write_bytes(shot)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--job", required=True)
+    ap.add_argument("--job")
+    ap.add_argument("--promo", help="JSON промо-поста: text, ig_text, x_text, video (ссылка на mp4)")
     ap.add_argument("--nets", default="th,ig")
     ap.add_argument("--dry", action="store_true")
     a = ap.parse_args()
-    if not SECRET:
-        sys.exit("нужен LS_INGEST_SECRET")
-    r = requests.get(f"{WORKER}/th/job", params={"id": a.job}, headers=H, timeout=30)
-    r.raise_for_status()
-    job = r.json()
     tmp = pathlib.Path(tempfile.mkdtemp())
     files = []
-    for i in range(job.get("n_media") or 0):
-        img = requests.get(f"{WORKER}/th/m/{a.job}/{i}.jpg", timeout=30)
-        img.raise_for_status()
-        f = tmp / f"slide{i + 1}.jpg"
-        f.write_bytes(img.content)
+    if a.promo:
+        job = json.loads(pathlib.Path(a.promo).read_text(encoding="utf-8"))
+        vid = requests.get(job["video"], timeout=300)
+        vid.raise_for_status()
+        f = tmp / "video.mp4"
+        f.write_bytes(vid.content)
         files.append(str(f))
+        print("ролик:", len(vid.content) // 1024, "КБ")
+    else:
+        if not a.job:
+            sys.exit("нужен --job или --promo")
+        if not SECRET:
+            sys.exit("нужен LS_INGEST_SECRET")
+        r = requests.get(f"{WORKER}/th/job", params={"id": a.job}, headers=H, timeout=30)
+        r.raise_for_status()
+        job = r.json()
+        for i in range(job.get("n_media") or 0):
+            img = requests.get(f"{WORKER}/th/m/{a.job}/{i}.jpg", timeout=30)
+            img.raise_for_status()
+            f = tmp / f"slide{i + 1}.jpg"
+            f.write_bytes(img.content)
+            files.append(str(f))
+    send = promo_report if a.promo else report
     nets = [n for n in a.nets.split(",") if n in POSTERS]
     failed = 0
     with sync_playwright() as p:
@@ -354,9 +406,9 @@ def main():
                 ctx.add_cookies(cookies_for(net))
                 url = POSTERS[net](page, job, files, a.dry)
                 if a.dry:
-                    report(a.job, net, err="проверка: всё готово, публикацию не нажимал", shot=page.screenshot(type="jpeg", quality=70), dry=True)
+                    send(a.job, net, err="проверка: всё готово, публикацию не нажимал", shot=page.screenshot(type="jpeg", quality=70), dry=True)
                 else:
-                    report(a.job, net, url=url or "")
+                    send(a.job, net, url=url or "")
             except Exception as e:
                 failed += 1
                 why = str(e) if isinstance(e, Fail) else f"{type(e).__name__}: {str(e).splitlines()[0][:200]}"
@@ -365,7 +417,7 @@ def main():
                     shot = page.screenshot(type="jpeg", quality=70)
                 except Exception:
                     shot = b""
-                report(a.job, net, err=why, shot=shot, dry=a.dry)
+                send(a.job, net, err=why, shot=shot, dry=a.dry)
             finally:
                 ctx.close()
             pause(5, 15)   # между сетями — как человек, а не залпом
