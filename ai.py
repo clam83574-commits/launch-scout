@@ -49,11 +49,14 @@ DEFAULT_DAILY_MAX = 900
 # прогон не успевала за потоком X (2026-09-29).
 NOTES_PER_RUN = 10
 TAGS_PER_RUN = 40
-# С ключом OpenRouter разметка не упирается в минутные пределы Groq: остаток
-# пачек уходит дешёвой модели. Так за прогон доразмечается хвост за неделю —
+# С ключом OpenRouter разметка идёт через дешёвую модель и не упирается в
+# минутные пределы Groq. Так за прогон доразмечается хвост за неделю —
 # после добавления поля relevant (2026-10-10) переразметить надо было всю
 # ленту, а по 40 в час это заняло бы сутки. 20 находок — около 0,05 цента.
 TAGS_PER_RUN_OR = 240
+# Версия правила relevant: новая версия = переразметить находки за неделю.
+# v2 — «лента топ-новостей стартапов»: игры, музыка, мерч, токены — мимо.
+RELEVANCE_V = "2"
 
 # Языки пользователей: Казахстан первым (решение владельца 2026-09-26),
 # затем англоязычный рынок. Всё, что видит пользователь, готовится сразу
@@ -138,7 +141,7 @@ For every item return:
 - topics: 1-2 topics ONLY from this list: %s. If none fits well, use "other" and put a short English name of the real topic (1-3 words, lowercase) in new_topic; otherwise new_topic is "".
 - audience: who pays: businesses "b2b", consumers "b2c", government "b2g"; one or two values.
 - gist: ONE plain sentence (max 15 words) saying what the product does and for whom, in Russian (ru), Kazakh in Cyrillic (kk) and English (en). Keep product names as in the original. No hype.
-- relevant: true if the item is about a startup, a product or software/hardware tool, a tech company, a funding round or the craft of building and selling products. false for politics, crime, war, migration, general news, sports, celebrities, personal life, and opinions or jokes not about building products — even when posted by a famous founder or investor.
+- relevant: does this belong in a feed of top startup news for founders? Entertainment and consumer goods are not startup news even when they "launch": a game, a song, a shoe. true for: a startup, company or software/hardware product launching or shipping, a funding round or acquisition, a developer or business tool, notable product moves of tech companies, lessons about building and selling products. false for: politics, crime, war, migration, general news, sports; video game releases, early access, game updates, trailers and reviews (a tool for making games, or a game studio raising money, is true); music, K-pop, albums, vinyl, concerts, merch, fashion and luxury goods, art prints and commissions; celebrity and fan content; crypto tokens, staking, airdrops, NFTs and memecoins; YouTube channels, courses and personal milestones; opinions or jokes not about building products — even when posted by a famous founder or investor. When unsure or the text is too short to tell, answer true.
 Return an entry for EVERY input item, irrelevant ones too: for them set relevant to false, topics to ["other"] and let the gist say what the post is about.
 Reply with JSON only: {"items": [{"id": <id>, "relevant": true, "topics": [...], "new_topic": "...", "audience": [...], "gist": {"ru": "...", "kk": "...", "en": "..."}}]}, one entry per input item, same ids.""" % ", ".join(TOPICS)
 
@@ -565,6 +568,11 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
     bulk = (os.environ.get("LS_BULK_MODEL") or OR_BULK_MODEL) if openrouter_key() else None
     if bulk:
         max_items = max(max_items, TAGS_PER_RUN_OR)
+    if db.kv_get(conn, "relevance_v") != RELEVANCE_V:
+        conn.execute("UPDATE item_topics SET relevant = NULL WHERE item_id IN "
+                     "(SELECT item_id FROM items WHERE first_seen >= ?)", (now - days * 86400,))
+        db.kv_set(conn, "relevance_v", RELEVANCE_V)
+        conn.commit()
     rows = conn.execute(
         "SELECT i.item_id, i.source, i.title, i.body FROM items i "
         "LEFT JOIN item_topics t ON t.item_id = i.item_id "
@@ -582,7 +590,14 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
                     "text": ((r["title"] or "") + " — " + (r["body"] or ""))[:240]}
                    for r in chunk]
         data, err = None, None
-        for _ in range(len(models)):
+        # С ключом OpenRouter пачку размечает дешёвая модель, Groq — запасной:
+        # gpt-oss-20b путал релевантность (пропускал игры и туфли, выкидывал
+        # раунды, проба 2026-10-10), а квоту 120b делят разборы и чат.
+        if bulk:
+            data, err = _chat_or(bulk, TAG_SYSTEM, json.dumps(payload, ensure_ascii=False), max_tokens=4000)
+            if data is None:
+                last_err = "разметка через %s: %s" % (bulk, err)
+        for _ in range(len(models) if data is None else 0):
             model = models[turn % len(models)]
             turn += 1
             if model in spent:
@@ -601,11 +616,6 @@ def enrich_items(conn, now, max_items=TAGS_PER_RUN, days=8, verbose=True):
                 continue
             _count_call(conn, now, model)
             break
-        if data is None and bulk:
-            data, err = _chat_or(bulk, TAG_SYSTEM, json.dumps(payload, ensure_ascii=False), max_tokens=4000)
-            if data is None:
-                last_err = "разметка через %s: %s" % (bulk, err)
-                break
         if len(spent) >= len(models) and data is None:
             break
         if err or not isinstance(data, dict):
